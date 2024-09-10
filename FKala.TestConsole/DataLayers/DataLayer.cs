@@ -5,14 +5,15 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using FKala.TestConsole.Model;
 using Newtonsoft.Json;
 
-namespace FKala.TestConsole
+namespace FKala.TestConsole.DataLayers
 {
 
     public class DataLayer : IDisposable
     {
-        private const string DataDirectory = "data";        
+        private const string DataDirectory = "data";
         private static readonly ReaderWriterLockSlim Locker = new ReaderWriterLockSlim();
         private readonly ConcurrentDictionary<string, BufferedWriter> _bufferedWriters = new ConcurrentDictionary<string, BufferedWriter>();
         //public void Insert(string rawData)
@@ -32,7 +33,7 @@ namespace FKala.TestConsole
         //        // Create the directory path
         //        var measurementPath = measurement.Replace('/', '$');
         //        var directoryPath = Path.Combine(DataDirectory, measurementPath, timestamp.ToString("yyyy"), timestamp.ToString("MM"));
-                
+
         //        Directory.CreateDirectory(directoryPath);
 
         //        // Create the file path
@@ -88,7 +89,7 @@ namespace FKala.TestConsole
                 throw new ArgumentException("Das Intervall muss größer als null sein.");
             }
 
-            if ((endTime - startTime) < windowSize)
+            if (endTime - startTime < windowSize)
             {
                 throw new ArgumentException("Das Intervall ist größer als der angegebene Zeitbereich.");
             }
@@ -246,8 +247,8 @@ namespace FKala.TestConsole
             return aggregatedResults;
         }
 
-        
-        
+
+
 
         public DataLayer()
         {

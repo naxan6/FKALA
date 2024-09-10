@@ -8,26 +8,32 @@ namespace FKala.TestConsole
 {
     public class PathSanitizer
     {
+        static Dictionary<string, string> sanitizedCache = new Dictionary<string, string>();
         public static string SanitizePath(string path)
         {
-            if (path == null) throw new ArgumentNullException(nameof(path));
-
-            var invalidChars = Path.GetInvalidFileNameChars();
-            var sanitizedPath = new StringBuilder(path.Length);
-
-            foreach (var ch in path)
+            if (!sanitizedCache.ContainsKey(path))
             {
-                if (Array.Exists(invalidChars, invalidChar => invalidChar == ch))
-                {
-                    sanitizedPath.Append('$');
-                }
-                else
-                {
-                    sanitizedPath.Append(ch);
-                }
-            }
 
-            return sanitizedPath.ToString();
+                if (path == null) throw new ArgumentNullException(nameof(path));
+
+                var invalidChars = Path.GetInvalidFileNameChars();
+                var sanitizedPath = new StringBuilder(path.Length);
+
+                foreach (var ch in path)
+                {
+                    if (Array.Exists(invalidChars, invalidChar => invalidChar == ch))
+                    {
+                        sanitizedPath.Append('$');
+                    }
+                    else
+                    {
+                        sanitizedPath.Append(ch);
+                    }
+                }
+
+                sanitizedCache.Add(path, sanitizedPath.ToString());
+            }
+            return sanitizedCache[path];
         }
     }
 }

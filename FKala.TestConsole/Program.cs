@@ -1,11 +1,12 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using FKala.TestConsole;
 using System.Diagnostics.Metrics;
+using System.Text;
 
 Console.WriteLine("Hello, World!");
 
 
-using var dl = new DataLayer();
+using var dl = new DataLayer_ChatGPT_Buffered();
 
 
 
@@ -41,30 +42,47 @@ using var dl = new DataLayer();
 InfluxLineProtocolImporter imp = new InfluxLineProtocolImporter(dl);
 //var lines = File.ReadAllLines(@"C:\tmp\backup.txt");
 
-string filePath = @"E:\backup4.txt";
+string filePath = @"C:\Users\Frank\Downloads\backup4.txt";
 int lines = 0;
-using (var reader = new StreamReader(filePath))
-{
-    while ((reader.ReadLine()) != null)
-    {
-        lines++;
-        if (lines % 1000000 == 0)
-        {
-            Console.WriteLine($"Count: {lines}");
-        }
-    }
-}
+//using (var reader = new StreamReader(filePath))
+//{
+//    while ((reader.ReadLine()) != null)
+//    {
+//        lines++;
+//        if (lines % 1000000 == 0)
+//        {
+//            Console.WriteLine($"Count: {lines}");
+//        }
+//    }
+//}
+
+const Int32 BufferSize = 16384;
+//using (var fileStream = File.OpenRead(filePath))
+//using (var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize))
+//{
+//    String line;
+//    while ((line = streamReader.ReadLine()) != null)
+//    {
+//        lines++;
+//        if (lines % 1000000 == 0)
+//        {
+//            Console.WriteLine($"Count: {lines}");
+//        }
+//    }
+//}
+
 
 long i = 0;
-using (var reader = new StreamReader(filePath))
+using (var reader = new StreamReader(filePath, Encoding.UTF8, true, BufferSize))
 {
     string line;
     while ((line = reader.ReadLine()) != null)
-    {
+    {        
         imp.Import(line);
-        if (i++ % 10000 == 0)
+        i++;
+        if (i % 1000000 == 0)
         {
-            Console.WriteLine($"Count: {i}/{lines} {100.0 * i / lines}%");
+            Console.WriteLine($"Lines: {i} {100 * reader.BaseStream.Position / reader.BaseStream.Length}%");
         }
     }
 }

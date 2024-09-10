@@ -1,21 +1,25 @@
 ﻿using System;
 using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
+using FKala.TestConsole.DataLayers;
+using FKala.TestConsole.Interfaces;
 
 namespace FKala.TestConsole
 {
     public class InfluxLineProtocolImporter
     {
-        private readonly DataLayer _dataLayer;
+        private readonly IDataLayer _dataLayer;
         // Regex to match the InfluxDB Line Protocol with optional tags and required fields and timestamp
-        private static readonly Regex LineProtocolRegex = new Regex(@"^(?<measurement>[^,]+)(?:,(?<tags>[^ ]+))? (?<fields>[^ ]+) (?<timestamp>\d+)$");
+        private static readonly Regex LineProtocolRegex = new Regex(@"^(?<measurement>[^,]+)(?:,(?<tags>[^ ]+))? (?<fields>[^ ]+) (?<timestamp>\d+)$", RegexOptions.Compiled);
 
-        public InfluxLineProtocolImporter(DataLayer dataLayer)
+        public InfluxLineProtocolImporter(IDataLayer dataLayer)
         {
             _dataLayer = dataLayer;
         }
+        StringBuilder sb = new StringBuilder();
 
-        public void Import(string lineProtocolData)
+        public void Import(string lineProtocolData, bool locking = true)
         {
             var lines = lineProtocolData.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var line in lines)
@@ -64,15 +68,25 @@ namespace FKala.TestConsole
                     var fieldName = fieldKeyValue[0];
                     var fieldValue = fieldKeyValue[1];
 
+                    var fieldExt = fieldName == "value" ? "" : $"_{fieldName}";
+
                     if (!decimal.TryParse(fieldValue, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsedValue))
                     {
                         throw new FormatException($"Ungültiger Feldwert: {fieldValue}");
                     }
 
                     var newMeasurement = string.IsNullOrEmpty(topic) ? measurement : topic;
-                    var rawData = $"{newMeasurement} {parsedTimestamp:yyyy-MM-ddTHH:mm:ss.ffffff} {parsedValue.ToString(CultureInfo.InvariantCulture)}";
 
-                    _dataLayer.Insert(rawData);
+                    sb.Clear();
+                    sb.Append(newMeasurement);                    
+                    sb.Append(fieldExt);
+                    sb.Append(' ');
+                    sb.Append(parsedTimestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffffff"));
+                    sb.Append(' ');
+                    sb.Append(parsedValue.ToString(CultureInfo.InvariantCulture));
+                    //var rawData = $"{newMeasurement}{fieldExt} {parsedTimestamp:yyyy-MM-ddTHH:mm:ss.fffffff} {parsedValue.ToString(CultureInfo.InvariantCulture)}";
+
+                    _dataLayer.Insert(sb.ToString(), locking);
                 }
             }
         }

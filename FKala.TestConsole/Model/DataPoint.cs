@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FKala.TestConsole
+namespace FKala.TestConsole.Model
 {
     public class DataPoint
     {
