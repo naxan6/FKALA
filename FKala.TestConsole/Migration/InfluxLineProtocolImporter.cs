@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using FKala.TestConsole.DataLayers;
 using FKala.TestConsole.Interfaces;
 
-namespace FKala.TestConsole
+namespace FKala.TestConsole.Migration
 {
     public class InfluxLineProtocolImporter
     {
@@ -78,7 +78,7 @@ namespace FKala.TestConsole
                     var newMeasurement = string.IsNullOrEmpty(topic) ? measurement : topic;
 
                     sb.Clear();
-                    sb.Append(newMeasurement);                    
+                    sb.Append(newMeasurement);
                     sb.Append(fieldExt);
                     sb.Append(' ');
                     sb.Append(parsedTimestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffffff"));

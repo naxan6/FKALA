@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using FKala.TestConsole;
+using FKala.TestConsole.Migration;
 using System.Diagnostics.Metrics;
 using System.Text;
 
