@@ -141,24 +141,27 @@ namespace FKala.TestConsole
                 var filePath = Path.Combine(directoryPath, sb.ToString());
 
                 // Buffer the line
-                if (!_bufferedWriters.TryGetValue(filePath, out var writer))
+                lock (filePath)
                 {
-                    writer = new BufferedWriter(filePath);
-                    _bufferedWriters[filePath] = writer;
-                }
+                    if (!_bufferedWriters.TryGetValue(filePath, out var writer))
+                    {
+                        writer = new BufferedWriter(filePath);
+                        _bufferedWriters[filePath] = writer;
+                    }
 
-                // Format the line to write
-                writer.Append(timestamp.ToString("HH:mm:ss.fffffff"));
-                writer.Append(" ");
-                writer.Append(value.ToString(CultureInfo.InvariantCulture));
-
-                if (!string.IsNullOrEmpty(text))
-                {
+                    // Format the line to write
+                    writer.Append(timestamp.ToString("HH:mm:ss.fffffff"));
                     writer.Append(" ");
-                    writer.Append(text);
-                }
+                    writer.Append(value.ToString(CultureInfo.InvariantCulture));
 
-                writer.AppendNewline();
+                    if (!string.IsNullOrEmpty(text))
+                    {
+                        writer.Append(" ");
+                        writer.Append(text);
+                    }
+
+                    writer.AppendNewline();
+                }
             }
             finally
             {
@@ -171,9 +174,13 @@ namespace FKala.TestConsole
             while (true)
             {
                 await Task.Delay(TimeSpan.FromSeconds(10));
-                foreach (var writer in _bufferedWriters.Values)
+                foreach (var writer in _bufferedWriters)
                 {
-                    writer.Flush();
+                    lock(writer.Key)
+                    {                        
+                        writer.Value.Dispose();
+                        _bufferedWriters.Remove(writer.Key, out var removed);
+                    }
                 }
             }
         }
@@ -199,7 +206,7 @@ namespace FKala.TestConsole
         {
             _filePath = filePath;
             _fileStream = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.Read);
-            _streamWriter = new StreamWriter(_fileStream);
+            _streamWriter = new StreamWriter(_fileStream, Encoding.UTF8);
         }
 
 
