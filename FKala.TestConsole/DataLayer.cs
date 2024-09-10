@@ -1,66 +1,171 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Newtonsoft.Json;
 
 namespace FKala.TestConsole
 {
-    public class DataLayer
+
+    public class DataLayer : IDisposable
     {
-        private const string DataDirectory = "data";
+        private const string DataDirectory = "data";        
         private static readonly ReaderWriterLockSlim Locker = new ReaderWriterLockSlim();
+        private readonly ConcurrentDictionary<string, BufferedWriter> _bufferedWriters = new ConcurrentDictionary<string, BufferedWriter>();
+        //public void Insert(string rawData)
+        //{
+        //    try
+        //    {
+        //        //Locker.EnterWriteLock();
 
-        public void Insert(string rawData)
+        //        // Parse the raw data
+        //        var parts = rawData.Split(' ');
+        //        var measurement = parts[0];
+        //        measurement = PathSanitizer.SanitizePath(measurement);
+        //        var timestamp = DateTime.ParseExact(parts[1], "yyyy-MM-ddTHH:mm:ss.ffffff", CultureInfo.InvariantCulture);
+        //        var value = decimal.Parse(parts[2], CultureInfo.InvariantCulture);
+        //        var text = parts.Length > 3 ? string.Join(" ", parts.Skip(3)) : string.Empty;
+
+        //        // Create the directory path
+        //        var measurementPath = measurement.Replace('/', '$');
+        //        var directoryPath = Path.Combine(DataDirectory, measurementPath, timestamp.ToString("yyyy"), timestamp.ToString("MM"));
+                
+        //        Directory.CreateDirectory(directoryPath);
+
+        //        // Create the file path
+        //        var filePath = Path.Combine(directoryPath, $"{measurementPath}_{timestamp:yyyy-MM-dd}.dat");                
+
+        //        // Format the line to write
+        //        var line = $"{timestamp:HH:mm:ss.ffffff} {value.ToString(CultureInfo.InvariantCulture)}";
+        //        if (!string.IsNullOrEmpty(text))
+        //        {
+        //            line += $" {text}";
+        //        }
+
+        //        // Write the line to the file
+        //        using (var fileStream = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.Read))
+        //        using (var writer = new StreamWriter(fileStream))
+        //        {
+        //            writer.WriteLine(line);
+        //        }
+        //    }
+        //    finally
+        //    {
+        //        //Locker.ExitWriteLock();
+        //    }
+        //}
+
+        public List<DataPoint> Query(string measurement, DateTime startTime, DateTime endTime)
         {
-            try
+            var results = ReadData(measurement, startTime, endTime);
+
+            var jsonResults = results.Select(result => new DataPoint
             {
-                Locker.EnterWriteLock();
+                Time = result.Time,
+                Value = result.Value,
+                Text = string.IsNullOrEmpty(result.Text) ? null : result.Text
+            }).ToList();
 
-                // Parse the raw data
-                var parts = rawData.Split(' ');
-                var measurement = parts[0];
-                var timestamp = DateTime.ParseExact(parts[1], "yyyy-MM-ddTHH:mm:ss.ffffff", CultureInfo.InvariantCulture);
-                var value = decimal.Parse(parts[2], CultureInfo.InvariantCulture);
-                var text = parts.Length > 3 ? string.Join(" ", parts.Skip(3)) : string.Empty;
-
-                // Create the directory path
-                var measurementPath = measurement.Replace('/', '$');
-                var directoryPath = Path.Combine(DataDirectory, measurementPath, timestamp.ToString("yyyy"), timestamp.ToString("MM"));
-                Directory.CreateDirectory(directoryPath);
-
-                // Create the file path
-                var filePath = Path.Combine(directoryPath, $"{measurementPath}_{timestamp:yyyy-MM-dd}.dat");
-
-                // Format the line to write
-                var line = $"{timestamp:HH:mm:ss.ffffff} {value.ToString(CultureInfo.InvariantCulture)}";
-                if (!string.IsNullOrEmpty(text))
-                {
-                    line += $" {text}";
-                }
-
-                // Write the line to the file
-                using (var fileStream = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.Read))
-                using (var writer = new StreamWriter(fileStream))
-                {
-                    writer.WriteLine(line);
-                }
-            }
-            finally
-            {
-                Locker.ExitWriteLock();
-            }
+            return jsonResults;
         }
 
-        public string Query(string measurement, DateTime startTime, DateTime endTime)
+        public string SerializeDatapoints(List<DataPoint> results)
         {
-            var results = new List<object>();
+            var settings = new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore
+            };
+            return JsonConvert.SerializeObject(results, settings);
+        }
+
+        public List<DataPoint> Aggregate(string measurement, DateTime startTime, DateTime endTime, TimeSpan windowSize, string aggregationFunction, bool includeEmptyIntervals = false, decimal? emptyIntervalValue = null)
+        {
+            if (windowSize <= TimeSpan.Zero)
+            {
+                throw new ArgumentException("Das Intervall muss größer als null sein.");
+            }
+
+            if ((endTime - startTime) < windowSize)
+            {
+                throw new ArgumentException("Das Intervall ist größer als der angegebene Zeitbereich.");
+            }
+
+            var dataPoints = ReadData(measurement, startTime, endTime)
+                .OrderBy(dp => dp.Time)
+                .ToList();
+
+            var results = new List<DataPoint>();
+            var currentIntervalStart = startTime;
+            var currentIntervalEnd = startTime.Add(windowSize);
+
+            while (currentIntervalStart < endTime)
+            {
+                var intervalDataPoints = dataPoints
+                    .Where(dp => dp.Time >= currentIntervalStart && dp.Time < currentIntervalEnd)
+                    .ToList();
+
+                if (intervalDataPoints.Any())
+                {
+                    decimal? aggregatedValue;
+
+                    switch (aggregationFunction.ToUpper())
+                    {
+                        case "AVG":
+                            aggregatedValue = intervalDataPoints.Average(dp => dp.Value);
+                            break;
+                        case "FIRST":
+                            aggregatedValue = intervalDataPoints.First().Value;
+                            break;
+                        case "LAST":
+                            aggregatedValue = intervalDataPoints.Last().Value;
+                            break;
+                        case "MIN":
+                            aggregatedValue = intervalDataPoints.Min(dp => dp.Value);
+                            break;
+                        case "MAX":
+                            aggregatedValue = intervalDataPoints.Max(dp => dp.Value);
+                            break;
+                        case "COUNT":
+                            aggregatedValue = intervalDataPoints.Count();
+                            break;
+                        default:
+                            throw new ArgumentException("Ungültige Aggregationsfunktion");
+                    }
+
+                    results.Add(new DataPoint()
+                    {
+                        Time = currentIntervalStart,
+                        Value = aggregatedValue
+                    });
+                }
+                else if (includeEmptyIntervals)
+                {
+                    results.Add(new DataPoint()
+                    {
+                        Time = currentIntervalStart,
+                        Value = emptyIntervalValue
+                    });
+                }
+
+                currentIntervalStart = currentIntervalEnd;
+                currentIntervalEnd = currentIntervalStart.Add(windowSize);
+            }
+
+            return results;
+        }
+
+        private List<DataPoint> ReadData(string measurement, DateTime startTime, DateTime endTime)
+        {
+            var results = new List<DataPoint>();
+
             try
             {
-                Locker.EnterReadLock();
-
+                //Locker.EnterReadLock();
                 var measurementPath = measurement.Replace('/', '$');
+                measurementPath = PathSanitizer.SanitizePath(measurementPath);
                 var startYear = startTime.Year;
                 var endYear = endTime.Year;
 
@@ -93,14 +198,12 @@ namespace FKala.TestConsole
                                         var value = decimal.Parse(lineParts[1], CultureInfo.InvariantCulture);
                                         var text = lineParts.Length > 2 ? string.Join(" ", lineParts.Skip(2)) : null;
 
-                                        var result = new
+                                        results.Add(new DataPoint
                                         {
-                                            t = dateTimeString,
-                                            v = value,
-                                            txt = text
-                                        };
-
-                                        results.Add(result);
+                                            Time = lineTime,
+                                            Value = value,
+                                            Text = text
+                                        });
                                     }
                                 }
                             }
@@ -110,123 +213,151 @@ namespace FKala.TestConsole
             }
             finally
             {
-                Locker.ExitReadLock();
+                //Locker.ExitReadLock();
             }
-            var settings = new JsonSerializerSettings
-            {
-                NullValueHandling = NullValueHandling.Ignore
-            };
-            return JsonConvert.SerializeObject(results, settings);
+
+            return results;
         }
 
-        public string Aggregate(string measurement, DateTime startTime, DateTime endTime, TimeSpan interval, string aggregationFunction, bool includeEmptyIntervals = false, decimal? emptyIntervalValue = null)
+
+        public List<DataPoint> AddAggregatedMeasurements(string measurement1, string measurement2, DateTime startTime, DateTime endTime, TimeSpan interval, string aggregationFunction)
         {
-            var results = new List<object>();
+            var aggregatedData1 = Aggregate(measurement1, startTime, endTime, interval, aggregationFunction);
+            var aggregatedData2 = Aggregate(measurement2, startTime, endTime, interval, aggregationFunction);
+
+            var aggregatedResults = new List<DataPoint>();
+            var data1Dict = aggregatedData1.ToDictionary(dp => dp.Time);
+            var data2Dict = aggregatedData2.ToDictionary(dp => dp.Time);
+
+            var allKeys = data1Dict.Keys.Union(data2Dict.Keys).Distinct().OrderBy(k => k);
+
+            foreach (var key in allKeys)
+            {
+                var value1 = data1Dict.ContainsKey(key) ? data1Dict[key].Value : 0;
+                var value2 = data2Dict.ContainsKey(key) ? data2Dict[key].Value : 0;
+
+                aggregatedResults.Add(new DataPoint()
+                {
+                    Time = key,
+                    Value = value1 + value2
+                });
+            }
+
+            return aggregatedResults;
+        }
+
+        
+        
+
+        public DataLayer()
+        {
+            Task.Run(() => FlushBuffersPeriodically());
+        }
+
+        public void Insert(string rawData)
+        {
             try
             {
-                Locker.EnterReadLock();
+                Locker.EnterWriteLock();
 
+                // Parse the raw data
+                var parts = rawData.Split(' ');
+                var measurement = parts[0];
+                measurement = PathSanitizer.SanitizePath(measurement);
+                var timestamp = DateTime.ParseExact(parts[1], "yyyy-MM-ddTHH:mm:ss.ffffff", CultureInfo.InvariantCulture);
+                var value = decimal.Parse(parts[2], CultureInfo.InvariantCulture);
+                var text = parts.Length > 3 ? string.Join(" ", parts.Skip(3)) : string.Empty;
+
+                // Create the directory path
                 var measurementPath = measurement.Replace('/', '$');
-                var startYear = startTime.Year;
-                var endYear = endTime.Year;
+                var directoryPath = Path.Combine(DataDirectory, measurementPath, timestamp.ToString("yyyy"), timestamp.ToString("MM"));
+                Directory.CreateDirectory(directoryPath);
 
-                var allDataPoints = new List<(DateTime Time, decimal Value)>();
+                // Create the file path
+                var filePath = Path.Combine(directoryPath, $"{measurementPath}_{timestamp:yyyy-MM-dd}.dat");
 
-                for (int year = startYear; year <= endYear; year++)
+                // Format the line to write
+                var line = $"{timestamp:HH:mm:ss.ffffff} {value.ToString(CultureInfo.InvariantCulture)}";
+                if (!string.IsNullOrEmpty(text))
                 {
-                    var yearPath = Path.Combine(DataDirectory, measurementPath, year.ToString());
-                    if (!Directory.Exists(yearPath)) continue;
-
-                    foreach (var monthDir in Directory.GetDirectories(yearPath))
-                    {
-                        var month = int.Parse(Path.GetFileName(monthDir));
-                        if (month < startTime.Month && year == startYear) continue;
-                        if (month > endTime.Month && year == endYear) continue;
-
-                        foreach (var file in Directory.GetFiles(monthDir, $"{measurementPath}_*.dat"))
-                        {
-                            if (File.Exists(file))
-                            {
-                                var lines = File.ReadAllLines(file);
-                                foreach (var line in lines)
-                                {
-                                    var lineParts = line.Split(' ');
-                                    var timePart = lineParts[0];
-                                    var datePart = Path.GetFileNameWithoutExtension(file).Split('_')[1];
-                                    var dateTimeString = $"{datePart}T{timePart}";
-                                    var lineTime = DateTime.ParseExact(dateTimeString, "yyyy-MM-ddTHH:mm:ss.ffffff", CultureInfo.InvariantCulture);
-
-                                    if (lineTime >= startTime && lineTime <= endTime)
-                                    {
-                                        var value = decimal.Parse(lineParts[1], CultureInfo.InvariantCulture);
-                                        allDataPoints.Add((lineTime, value));
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    line += $" {text}";
                 }
 
-                allDataPoints = allDataPoints.OrderBy(dp => dp.Time).ToList();
-                var currentIntervalStart = startTime;
-                var currentIntervalEnd = startTime.Add(interval);
-
-                while (currentIntervalStart < endTime)
+                // Buffer the line
+                if (!_bufferedWriters.TryGetValue(filePath, out var writer))
                 {
-                    var intervalDataPoints = allDataPoints
-                        .Where(dp => dp.Time >= currentIntervalStart && dp.Time < currentIntervalEnd)
-                        .ToList();
-
-                    if (intervalDataPoints.Any())
-                    {
-                        decimal aggregatedValue;
-
-                        switch (aggregationFunction.ToUpper())
-                        {
-                            case "AVG":
-                                aggregatedValue = intervalDataPoints.Average(dp => dp.Value);
-                                break;
-                            case "FIRST":
-                                aggregatedValue = intervalDataPoints.First().Value;
-                                break;
-                            case "LAST":
-                                aggregatedValue = intervalDataPoints.Last().Value;
-                                break;
-                            case "MIN":
-                                aggregatedValue = intervalDataPoints.Min(dp => dp.Value);
-                                break;
-                            case "MAX":
-                                aggregatedValue = intervalDataPoints.Max(dp => dp.Value);
-                                break;
-                            default:
-                                throw new ArgumentException("Invalid aggregation function");
-                        }
-
-                        results.Add(new
-                        {
-                            t = currentIntervalStart.ToString("yyyy-MM-ddTHH:mm:ss.ffffff"),
-                            v = aggregatedValue
-                        });
-                    }
-                    else if (includeEmptyIntervals)
-                    {
-                        results.Add(new
-                        {
-                            t = currentIntervalStart.ToString("yyyy-MM-ddTHH:mm:ss.ffffff"),
-                            v = emptyIntervalValue
-                        });
-                    }
-
-                    currentIntervalStart = currentIntervalEnd;
-                    currentIntervalEnd = currentIntervalStart.Add(interval);
+                    writer = new BufferedWriter(filePath);
+                    _bufferedWriters[filePath] = writer;
                 }
+                writer.WriteLine(line);
             }
             finally
             {
-                Locker.ExitReadLock();
+                Locker.ExitWriteLock();
             }
+        }
 
-            return JsonConvert.SerializeObject(results);
+        private async Task FlushBuffersPeriodically()
+        {
+            while (true)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(10));
+                foreach (var writer in _bufferedWriters.Values)
+                {
+                    writer.Flush();
+                }
+            }
+        }
+
+        public void Dispose()
+        {
+            foreach (var writer in _bufferedWriters.Values)
+            {
+                writer.Dispose();
+            }
+        }
+    }
+
+    public class BufferedWriter : IDisposable
+    {
+        private readonly string _filePath;
+        private readonly StringBuilder _buffer = new StringBuilder();
+        private readonly object _lock = new object();
+        private FileStream _fileStream;
+        private StreamWriter _streamWriter;
+
+        public BufferedWriter(string filePath)
+        {
+            _filePath = filePath;
+            _fileStream = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.Read);
+            _streamWriter = new StreamWriter(_fileStream);
+        }
+
+        public void WriteLine(string line)
+        {
+            lock (_lock)
+            {
+                _buffer.AppendLine(line);
+            }
+        }
+
+        public void Flush()
+        {
+            lock (_lock)
+            {
+                if (_buffer.Length == 0) return;
+
+                _streamWriter.Write(_buffer.ToString());
+                _buffer.Clear();
+                _streamWriter.Flush();
+            }
+        }
+
+        public void Dispose()
+        {
+            Flush();
+            _streamWriter?.Dispose();
+            _fileStream?.Dispose();
         }
     }
 }

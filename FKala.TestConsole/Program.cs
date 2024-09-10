@@ -1,20 +1,52 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using FKala.TestConsole;
+using System.Diagnostics.Metrics;
 
 Console.WriteLine("Hello, World!");
 
 
-var dl = new DataLayer();
-dl.Insert("/Cars/Tesla/nxCar3/SOC 2024-09-10T09:37:16.000000 87");
-dl.Insert("/Cars/Tesla/nxCar3/SOC 2024-09-10T09:38:00.000000 86");
-dl.Insert("/Cars/Tesla/nxCar3/SOC 2024-09-10T09:58:16.000000 85");
+using var dl = new DataLayer();
 
 
-var result = dl.Query("/Cars/Tesla/nxCar3/SOC", new DateTime(2024, 09, 10, 9, 37, 0), new DateTime(2024, 09, 10, 9, 38, 0));
-Console.WriteLine(result);
+
+//    dl.Insert("/Cars/Tesla/nxCar3/SOC 2024-09-10T09:37:16.000000 10");
+//dl.Insert("/Cars/Tesla/nxCar3/SOC 2024-09-10T09:38:00.000000 11");
+//dl.Insert("/Cars/Tesla/nxCar3/SOC 2024-09-10T09:43:16.000000 12");
+//dl.Insert("/Cars/Tesla/nxCar3/SOC 2024-09-10T09:58:16.000000 13");
+//dl.Insert("/Cars/Tesla/nxCar3/SOC 2024-09-10T11:03:16.000000 14");
 
 
-var result2 = dl.Aggregate("/Cars/Tesla/nxCar3/SOC", new DateTime(2024, 09, 10, 9, 37, 0), new DateTime(2024, 09, 10, 9, 38, 0), new TimeSpan(0,15,0), "AVG", true, -1);
-Console.WriteLine(result2);
+//dl.Insert("/Cars/Benz/eqa/SOC 2024-09-10T09:15:16.000000 1");
+//dl.Insert("/Cars/Benz/eqa/SOC 2024-09-10T09:34:00.000000 2");
+//dl.Insert("/Cars/Benz/eqa/SOC 2024-09-10T09:42:16.000000 3");
+//dl.Insert("/Cars/Benz/eqa/SOC 2024-09-10T09:46:16.000000 4");
+//dl.Insert("/Cars/Benz/eqa/SOC 2024-09-10T11:15:16.000000 5");
 
 
+//var result = dl.Query("/Cars/Tesla/nxCar3/SOC", new DateTime(2024, 09, 10, 9, 37, 0), new DateTime(2024, 09, 10, 9, 38, 0));
+//Console.WriteLine(dl.SerializeDatapoints(result));
+
+//invalid query
+//result = dl.Aggregate("/Cars/Tesla/nxCar3/SOC", new DateTime(2024, 09, 10, 9, 37, 0), new DateTime(2024, 09, 10, 9, 38, 0), new TimeSpan(0,15,0), "AVG", true, -1);
+//Console.WriteLine(result);
+
+//result = dl.Aggregate("/Cars/Tesla/nxCar3/SOC", new DateTime(2024, 09, 10, 9, 0, 0), new DateTime(2024, 09, 10, 9, 45, 0), new TimeSpan(0, 15, 0), "AVG", true, 0);
+//Console.WriteLine(dl.SerializeDatapoints(result));
+
+
+//result = dl.AddAggregatedMeasurements("/Cars/Tesla/nxCar3/SOC", "/Cars/Benz/eqa/SOC", new DateTime(2024, 09, 10, 9, 0, 0), new DateTime(2024, 09, 10, 9, 45, 0), new TimeSpan(0, 15, 0), "AVG");
+//Console.WriteLine(dl.SerializeDatapoints(result));
+
+
+InfluxLineProtocolImporter imp = new InfluxLineProtocolImporter(dl);
+var lines = File.ReadAllLines(@"C:\tmp\backup.txt");
+Console.WriteLine("Count: " + lines.Count());
+long i = 1;
+foreach (var line in lines)
+{
+    imp.Import(line);
+    if (i++ % 1000 == 0)
+    {
+        Console.WriteLine($"Count: {i}/{lines.Count()}");
+    }
+}
