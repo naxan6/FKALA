@@ -39,14 +39,32 @@ using var dl = new DataLayer();
 
 
 InfluxLineProtocolImporter imp = new InfluxLineProtocolImporter(dl);
-var lines = File.ReadAllLines(@"C:\tmp\backup.txt");
-Console.WriteLine("Count: " + lines.Count());
-long i = 1;
-foreach (var line in lines)
+//var lines = File.ReadAllLines(@"C:\tmp\backup.txt");
+
+string filePath = @"E:\backup4.txt";
+int lines = 0;
+using (var reader = new StreamReader(filePath))
 {
-    imp.Import(line);
-    if (i++ % 1000 == 0)
+    while ((reader.ReadLine()) != null)
     {
-        Console.WriteLine($"Count: {i}/{lines.Count()}");
+        lines++;
+        if (lines % 1000000 == 0)
+        {
+            Console.WriteLine($"Count: {lines}");
+        }
+    }
+}
+
+long i = 0;
+using (var reader = new StreamReader(filePath))
+{
+    string line;
+    while ((line = reader.ReadLine()) != null)
+    {
+        imp.Import(line);
+        if (i++ % 10000 == 0)
+        {
+            Console.WriteLine($"Count: {i}/{lines} {100.0 * i / lines}%");
+        }
     }
 }
