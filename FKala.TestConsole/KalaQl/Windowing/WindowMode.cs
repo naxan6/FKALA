@@ -2,13 +2,15 @@
 {
     public enum WindowMode
     {
-        FixedIntervall,
+        FixedIntervall,        
         Aligned5Minutes,
         Aligned15Minutes,
         AlignedHour,
         AlignedDay,
         AlignedWeek,
         AlignedMonth,
-        AlignedYear
+        AlignedYear,
+        UnalignedMonth,
+        UnalignedYear,
     }
 }

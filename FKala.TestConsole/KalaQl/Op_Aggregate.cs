@@ -29,7 +29,9 @@ namespace FKala.TestConsole.KalaQl
         public override void Execute(KalaQlContext context)
         {
             var input = context.IntermediateResults.First(x => x.Name == InputDataSetName);
-            var result = InternalExecute(context, input);
+            // Dieses ToList ist wichtig, da bei Expresso mit Vermarmelung mehrerer Serien und gleichzeitiger Ausgabe aller dieser Serien
+            // sich die Zugriffe auf den Enumerable überschneiden und das ganze dann buggt.
+            var result = InternalExecute(context, input).ToList();
             context.IntermediateResults.Add(new Result() { Name = this.Name, Resultset = result, StartTime = input.StartTime, EndTime = input.EndTime, Creator = this });
             this.hasExecuted = true;
         }
@@ -39,7 +41,7 @@ namespace FKala.TestConsole.KalaQl
             
             Window.Init(input.StartTime);
 
-            var dataPointsEnumerator = input.Resultset.GetEnumerator();
+            var dataPointsEnumerator = input.Resultset.OrderBy(dp => dp.Time).GetEnumerator();
             var currentDataPoint = new DataPoint() { Time = Window.StartTime };
             var currentAggregator = new StreamingAggregator(AggregateFunc);
 
@@ -52,13 +54,13 @@ namespace FKala.TestConsole.KalaQl
                 {
                     currentAggregator.AddValue(c.Value.Value);
                 }
-                else if (Window.IsBefore(c.Time))
+                else if (Window.DateTimeIsBeforeWindow(c.Time))
                 {
                     throw new Exception("Bug 1, Datenpunkt übersehen einzusortieren");
                 }
-                else if (Window.IsAfter(c.Time))
+                else if (Window.DateTimeIsAfterWindow(c.Time))
                 {
-                    while (Window.IsAfter(c.Time))
+                    while (Window.DateTimeIsAfterWindow(c.Time))
                     {
                         currentDataPoint.Value = currentAggregator.GetAggregatedValue();
                         yield return currentDataPoint;
@@ -67,6 +69,10 @@ namespace FKala.TestConsole.KalaQl
 
                         currentDataPoint = new DataPoint() { Time = Window.StartTime };
                         currentAggregator = new StreamingAggregator(AggregateFunc);
+                        if (Window.IsInWindow(c.Time))
+                        {
+                            currentAggregator.AddValue(c.Value.Value);
+                        }
                     }
                 }
 

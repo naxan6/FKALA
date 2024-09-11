@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 
 namespace FKala.TestConsole.Logic
 {
-    public static class DatasetsSynchronizer
+    public static class DatasetsCombiner
     {
-        public static IEnumerable<IGrouping<DateTime, (string ResultName, DataPoint DataPoint)>> SynchronizeResults(List<Result> results)
+        public static IEnumerable<IGrouping<DateTime, (string ResultName, DataPoint DataPoint)>> CombineSynchronizedResults(List<Result> results)
         {
             var enumerators = results.Select(result => result.Resultset.GetEnumerator()).ToList();
             var currentItems = new SortedList<DateTime, List<(string ResultName, DataPoint DataPoint)>>();

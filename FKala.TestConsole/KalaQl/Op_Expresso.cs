@@ -15,10 +15,9 @@ namespace FKala.TestConsole.KalaQl
         public string Fieldname { get; }
         public string Expresso { get; }
 
-        public Op_Expresso(string name, string fieldNameFutureUse, string expresso)
+        public Op_Expresso(string name, string expresso)
         {
             Name = name;
-            Fieldname = fieldNameFutureUse;
             Expresso = expresso;
 
             Interpreter = new Interpreter();
@@ -47,9 +46,8 @@ namespace FKala.TestConsole.KalaQl
         {
             var combined = new List<(DateTime Timestamp, int ListIndex, Result Item)>();
 
-            foreach (var synchronizedItems in DatasetsSynchronizer.SynchronizeResults(datenquellen.ToList()))
+            foreach (var synchronizedItems in DatasetsCombiner.CombineSynchronizedResults(datenquellen.ToList()))
             {
-                Console.WriteLine($"Timestamp: {synchronizedItems.Key}");
                 foreach (var item in synchronizedItems)
                 {
                     Interpreter.SetVariable(item.ResultName, item.DataPoint);

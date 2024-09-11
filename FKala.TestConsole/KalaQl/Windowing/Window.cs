@@ -9,9 +9,7 @@ using System.Threading.Tasks;
 namespace FKala.TestConsole.KalaQl.Windowing
 {
     public class Window
-    {
-        public static Window Relative_15Min { get { return new Window() { Mode = WindowMode.FixedIntervall, Interval = new TimeSpan(0, 15, 0) }; } }
-        public static Window Relative_1Day { get { return new Window() { Mode = WindowMode.FixedIntervall, Interval = new TimeSpan(1, 0, 0, 0) }; } }
+    {        
         public static Window Aligned_5Minutes { get { return new Window() { Mode = WindowMode.Aligned5Minutes, Interval = new TimeSpan(0, 0, 5, 0) }; } }
         public static Window Aligned_15Minutes { get { return new Window() { Mode = WindowMode.Aligned15Minutes, Interval = new TimeSpan(0, 0, 15, 0) }; } }
         public static Window Aligned_1Hour { get { return new Window() { Mode = WindowMode.AlignedHour, Interval = new TimeSpan(0, 1, 0, 0) }; } }
@@ -19,18 +17,35 @@ namespace FKala.TestConsole.KalaQl.Windowing
         public static Window Aligned_1Week { get { return new Window() { Mode = WindowMode.AlignedWeek, Interval = new TimeSpan(7, 0, 0, 0) }; } }
         public static Window Aligned_1Month { get { return new Window() { Mode = WindowMode.AlignedMonth, Interval = TimeSpan.MaxValue }; } }
         public static Window Aligned_1Year { get { return new Window() { Mode = WindowMode.AlignedYear, Interval = TimeSpan.MaxValue }; } }
+        public static Window Unaligned_1Month { get { return new Window() { Mode = WindowMode.UnalignedMonth, Interval = TimeSpan.MaxValue }; } }
+        public static Window Unaligned_1Year { get { return new Window() { Mode = WindowMode.UnalignedYear, Interval = TimeSpan.MaxValue }; } }
+        public static Window Infinite { get { return new Window() { Mode = WindowMode.FixedIntervall, Interval = TimeSpan.MaxValue }; } }
 
-        public DateTime StartTime;
-        public DateTime EndTime;
-        public TimeSpan Interval;
+        public DateTime StartTime { get; private set; }
+        public DateTime EndTime { get; private set; }
+        public TimeSpan Interval = TimeSpan.MaxValue;
         public WindowMode Mode;
 
+        public Window()
+        {            
+        }
+
+        public Window(WindowMode Mode) {
+            this.Mode = Mode;
+        }
+
+        public Window(WindowMode Mode, TimeSpan Interval) {
+            this.Mode = Mode;
+            this.Interval = Interval;
+        }
         public void Init(DateTime starttime)
         {
             
             switch (Mode)
             {
                 case WindowMode.FixedIntervall:
+                case WindowMode.UnalignedMonth:
+                case WindowMode.UnalignedYear:
                     this.StartTime = starttime;
                     break;
                 case WindowMode.Aligned5Minutes:
@@ -72,12 +87,21 @@ namespace FKala.TestConsole.KalaQl.Windowing
                 case WindowMode.AlignedHour:
                 case WindowMode.AlignedDay:
                 case WindowMode.AlignedWeek:
-                    this.EndTime = this.StartTime.Add(Interval);
+                    if (Interval == TimeSpan.MaxValue)
+                    {
+                        this.EndTime = DateTime.MaxValue;
+                    } 
+                    else
+                    {
+                        this.EndTime = this.StartTime.Add(Interval);
+                    }                    
                     break;
+                case WindowMode.UnalignedMonth:                
                 case WindowMode.AlignedMonth:
                     this.EndTime = this.StartTime.AddMonths(1);
                     break;
                 case WindowMode.AlignedYear:
+                case WindowMode.UnalignedYear:
                     this.EndTime = this.StartTime.AddYears(1);
                     break;
                 default:
@@ -97,11 +121,11 @@ namespace FKala.TestConsole.KalaQl.Windowing
             return time >= StartTime && time < EndTime;
         }
 
-        public bool IsBefore(DateTime time)
+        public bool DateTimeIsBeforeWindow(DateTime time)
         {
             return time < StartTime;
         }
-        public bool IsAfter(DateTime time)
+        public bool DateTimeIsAfterWindow(DateTime time)
         {
             return time >= EndTime;
         }
