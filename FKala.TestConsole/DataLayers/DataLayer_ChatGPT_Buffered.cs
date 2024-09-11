@@ -148,6 +148,7 @@ namespace FKala.TestConsole
                 // Create the file path
                 sb.Clear();
                 sb.Append(measurement);
+                sb.Append('_');
                 sb.Append(timestamp.ToString("yyyy-MM-dd"));
                 sb.Append(".dat");
 
