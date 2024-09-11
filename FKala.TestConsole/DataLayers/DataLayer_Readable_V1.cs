@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using FKala.TestConsole.DataLayers;
 using FKala.TestConsole.Interfaces;
 using FKala.TestConsole.Logic;
 using FKala.TestConsole.Model;
@@ -13,15 +14,16 @@ using Newtonsoft.Json;
 
 namespace FKala.TestConsole
 {
-
-    public class DataLayer_ChatGPT_Buffered : IDataLayer, IDisposable
+    //NOT FUNCTIONAL AND TOO BIG FILES
+    public class DataLayer_Readable_V1 : IDataLayer, IDisposable
     {
-        private const string DataDirectory = "data";
+        private string DataDirectory = "data";
         private static readonly ReaderWriterLockSlim Locker = new ReaderWriterLockSlim();
-        private readonly ConcurrentDictionary<string, BufferedWriter> _bufferedWriters = new ConcurrentDictionary<string, BufferedWriter>();
+        private readonly ConcurrentDictionary<string, IBufferedWriter> _bufferedWriters = new ConcurrentDictionary<string, IBufferedWriter>();
 
-        public DataLayer_ChatGPT_Buffered()
+        public DataLayer_Readable_V1(string datapath = null)
         {
+            this.DataDirectory = datapath ?? DataDirectory;
             Task.Run(() => FlushBuffersPeriodically());
         }
 
@@ -55,15 +57,16 @@ namespace FKala.TestConsole
                                 var datePart = fn.Substring(fn.Length - 10, 10);
                                 ReadOnlySpan<char> dateSpan = datePart.AsSpan();
                                 DateOnly dt = new DateOnly(int.Parse(dateSpan.Slice(0, 4)), int.Parse(dateSpan.Slice(5, 2)), int.Parse(dateSpan.Slice(8, 2)));
-                                
+
                                 var sr = new StreamReader(file, Encoding.UTF8, false, 16384);
                                 string? line;
-                                while ((line = sr.ReadLine()) != null) {
+                                while ((line = sr.ReadLine()) != null)
+                                {
                                     ReadOnlySpan<char> span = line.AsSpan();
 
                                     //var time = span.Slice(0, 16).ToString();
                                     var tt = new TimeOnly(int.Parse(span.Slice(0, 2)), int.Parse(span.Slice(3, 2)), int.Parse(span.Slice(6, 2)));
-                                    
+
                                     var dateTime = new DateTime(dt, tt);
                                     dateTime.AddTicks(int.Parse(span.Slice(9, 7)));
                                     span = span.Slice(17);
@@ -82,12 +85,15 @@ namespace FKala.TestConsole
                                         var valueRaw = span.Slice(0);
                                         value = decimal.Parse(valueRaw, CultureInfo.InvariantCulture);
                                     }
-                                    yield return new DataPoint
+                                    if (dateTime >= startTime && dateTime < endTime)
                                     {
-                                        Time = dateTime,
-                                        Value = value,
-                                        Text = text
-                                    };
+                                        yield return new DataPoint
+                                        {
+                                            Time = dateTime,
+                                            Value = value,
+                                            Text = text
+                                        };
+                                    }
                                 }
                             }
                         }
@@ -116,28 +122,31 @@ namespace FKala.TestConsole
                 measurement = PathSanitizer.SanitizePath(measurement);
 
                 span = span.Slice(index + 1);
-                index = span.IndexOf(' ');
+                //index = span.IndexOf(' ');
+                index = 27; //Länge von yyyy-MM-ddTHH:mm:ss.fffffff hartkodiert statt Ende suchen
                 var datetime = span.Slice(0, index);
-                var timestamp = DateTime.ParseExact(datetime, "yyyy-MM-ddTHH:mm:ss.fffffff", CultureInfo.InvariantCulture);
+                //var timestamp = DateTime.ParseExact(datetime, "yyyy-MM-ddTHH:mm:ss.fffffff", CultureInfo.InvariantCulture);
+                
 
                 span = span.Slice(index + 1);
                 index = span.IndexOf(' ');
                 decimal value;
-                string? text = null;
+                ReadOnlySpan<char> valueRaw = null;
+                ReadOnlySpan<char> text = null;
                 if (index != -1)
                 {
-                    var valueRaw = span.Slice(0, index);
-                    value = decimal.Parse(valueRaw, CultureInfo.InvariantCulture);
-                    text = span.Slice(index + 1).ToString();
+                    valueRaw = span.Slice(0, index);
+                    // value = decimal.Parse(valueRaw, CultureInfo.InvariantCulture);
+                    text = span.Slice(index + 1);
                 }
                 else
                 {
-                    var valueRaw = span.Slice(0);
-                    value = decimal.Parse(valueRaw, CultureInfo.InvariantCulture);
+                    valueRaw = span.Slice(0);
+                    // value = decimal.Parse(valueRaw, CultureInfo.InvariantCulture);
                 }
 
                 // Create the directory path
-                var directoryPath = Path.Combine(DataDirectory, measurement, timestamp.ToString("yyyy"), timestamp.ToString("MM"));
+                var directoryPath = Path.Combine(DataDirectory, measurement, datetime.Slice(0,4).ToString(), datetime.Slice(5,2).ToString());
                 if (!CreatedDirectories.Contains(directoryPath))
                 {
                     Directory.CreateDirectory(directoryPath);
@@ -149,7 +158,7 @@ namespace FKala.TestConsole
                 sb.Clear();
                 sb.Append(measurement);
                 sb.Append('_');
-                sb.Append(timestamp.ToString("yyyy-MM-dd"));
+                sb.Append(datetime.Slice(0,10));
                 sb.Append(".dat");
 
                 var filePath = Path.Combine(directoryPath, sb.ToString());
@@ -159,16 +168,24 @@ namespace FKala.TestConsole
                 {
                     if (!_bufferedWriters.TryGetValue(filePath, out var writer))
                     {
-                        writer = new BufferedWriter(filePath);
+                        if (locking)
+                        {
+                            writer = new BufferedWriter_Locking(filePath);
+                        } 
+                        else
+                        {
+                            writer = new BufferedWriter_NonLocking(filePath);
+                        }
+                        
                         _bufferedWriters[filePath] = writer;
                     }
 
                     // Format the line to write
-                    writer.Append(timestamp.ToString("HH:mm:ss.fffffff"));
+                    writer.Append(datetime.Slice(11));
                     writer.Append(" ");
-                    writer.Append(value.ToString(CultureInfo.InvariantCulture));
+                    writer.Append(valueRaw);
 
-                    if (!string.IsNullOrEmpty(text))
+                    if (text != null)
                     {
                         writer.Append(" ");
                         writer.Append(text);
@@ -190,8 +207,8 @@ namespace FKala.TestConsole
                 await Task.Delay(TimeSpan.FromSeconds(10));
                 foreach (var writer in _bufferedWriters)
                 {
-                    lock(writer.Key)
-                    {                        
+                    lock (writer.Key)
+                    {
                         writer.Value.Dispose();
                         _bufferedWriters.Remove(writer.Key, out var removed);
                     }
@@ -205,57 +222,6 @@ namespace FKala.TestConsole
             {
                 writer.Dispose();
             }
-        }
-    }
-
-    public class BufferedWriter : IDisposable
-    {
-        private readonly string _filePath;
-        private readonly StringBuilder _buffer = new StringBuilder();
-        private readonly object _lock = new object();
-        private FileStream _fileStream;
-        private StreamWriter _streamWriter;
-
-        public BufferedWriter(string filePath)
-        {
-            _filePath = filePath;
-            _fileStream = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.Read);
-            _streamWriter = new StreamWriter(_fileStream, Encoding.UTF8);
-        }
-
-
-        public void Append(string text)
-        {
-            lock (_lock)
-            {
-                _buffer.Append(text);
-            }
-        }
-        public void AppendNewline()
-        {
-            lock (_lock)
-            {
-                _buffer.Append("\n");
-            }
-        }
-
-        public void Flush()
-        {
-            lock (_lock)
-            {
-                if (_buffer.Length == 0) return;
-
-                _streamWriter.Write(_buffer.ToString());
-                _buffer.Clear();
-                _streamWriter.Flush();
-            }
-        }
-
-        public void Dispose()
-        {
-            Flush();
-            _streamWriter?.Dispose();
-            _fileStream?.Dispose();
         }
     }
 }

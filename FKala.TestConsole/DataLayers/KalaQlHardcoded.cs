@@ -1,11 +1,7 @@
 ﻿using FKala.TestConsole.Interfaces;
+using FKala.TestConsole.Logic;
 using FKala.TestConsole.Model;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FKala.TestConsole.DataLayers
 {
@@ -13,14 +9,15 @@ namespace FKala.TestConsole.DataLayers
     {
         public IDataLayer DataLayer { get; }
 
-        public KalaQlHardcoded(IDataLayer dataLayer) {
+        public KalaQlHardcoded(IDataLayer dataLayer)
+        {
             this.DataLayer = dataLayer;
         }
 
 
         public IEnumerable<DataPoint> Query(string measurement, DateTime startTime, DateTime endTime)
         {
-            var results = this.DataLayer.ReadData(measurement, startTime, endTime);          
+            var results = this.DataLayer.ReadData(measurement, startTime, endTime);
 
             return results;
         }
@@ -46,7 +43,86 @@ namespace FKala.TestConsole.DataLayers
             }
         }
 
-        public List<DataPoint> Aggregate(string measurement, DateTime startTime, DateTime endTime, TimeSpan windowSize, string aggregationFunction, bool includeEmptyIntervals = false, decimal? emptyIntervalValue = null)
+        public IEnumerable<DataPoint> Aggregate(string measurement, DateTime startTime, DateTime endTime, TimeSpan windowSize, string aggregationFunction, bool includeEmptyIntervals = false, decimal? emptyIntervalValue = null)
+        {
+            if (windowSize <= TimeSpan.Zero)
+            {
+                throw new ArgumentException("Das Intervall muss größer als null sein.");
+            }
+
+            if (endTime - startTime < windowSize)
+            {
+                throw new ArgumentException("Das Intervall ist größer als der angegebene Zeitbereich.");
+            }
+
+            var dataPointsEnumerator = this.DataLayer.ReadData(measurement, startTime, endTime)
+                .OrderBy(dp => dp.Time).GetEnumerator();
+            ;
+            var currentDataPoint = new DataPoint() { Time = startTime };
+            var currentAggregator = new StreamingAggregator(aggregationFunction);
+
+            var results = new List<DataPoint>();
+            var currentIntervalStart = startTime;
+            var currentIntervalEnd = startTime.Add(windowSize);
+
+            while (dataPointsEnumerator.MoveNext())
+            {
+                var c = dataPointsEnumerator.Current;
+                if (c.Time >= currentIntervalStart && c.Time < currentIntervalEnd)
+                {
+                    currentAggregator.AddValue(c.Value.Value);
+                }
+                else if (c.Time < currentIntervalStart)
+                {
+                    throw new Exception("Bug 1, Datenpunkt übersehen einzusortieren");
+                }
+                else if (c.Time >= currentIntervalEnd)
+                {
+                    while (c.Time >= currentIntervalEnd)
+                    {
+                        currentDataPoint.Value = currentAggregator.GetAggregatedValue();
+                        yield return currentDataPoint;
+                        
+                        currentIntervalStart = currentIntervalEnd;
+                        currentIntervalEnd = currentIntervalStart.Add(windowSize);
+                        
+                        currentDataPoint = new DataPoint() { Time = currentIntervalStart };
+                        currentAggregator = new StreamingAggregator(aggregationFunction);
+                    }
+                }
+
+                // Abbruchbedingung: Interval durchlaufen
+                if (currentIntervalStart >= endTime)
+                {
+                    if (dataPointsEnumerator.MoveNext() == true)
+                    {
+                        if (dataPointsEnumerator.Current.Time > startTime && dataPointsEnumerator.Current.Time < endTime)
+                        {
+                            throw new Exception("Bug 2, Datenpunkt übersehen einzusortieren");
+                        }
+                    }
+                    break;
+                }
+            }
+            // finales Interval hinzufügen
+            currentDataPoint.Value = currentAggregator.GetAggregatedValue();
+            yield return currentDataPoint;
+
+            while (currentIntervalStart < endTime)
+            {
+                currentIntervalStart = currentIntervalEnd;
+                currentIntervalEnd = currentIntervalStart.Add(windowSize);
+
+                currentDataPoint = new DataPoint() { Time = currentIntervalStart };
+                currentAggregator = new StreamingAggregator(aggregationFunction);
+                currentDataPoint.Value = currentAggregator.GetAggregatedValue();
+                yield return currentDataPoint;
+            }
+        }
+
+       
+
+        public List<DataPoint> AggregateSlow(string measurement, DateTime startTime, DateTime endTime, TimeSpan windowSize, string aggregationFunction, bool includeEmptyIntervals = false, decimal? emptyIntervalValue = null)
         {
             if (windowSize <= TimeSpan.Zero)
             {
@@ -121,7 +197,6 @@ namespace FKala.TestConsole.DataLayers
 
             return results;
         }
-
 
     }
 }

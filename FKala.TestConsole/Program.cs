@@ -8,7 +8,7 @@ using System.Text;
 Console.WriteLine("Hello, World!");
 
 
-using var dl = new DataLayer_ChatGPT_Buffered();
+using var dl = new DataLayer_Readable_V1();
 
 
 
@@ -37,11 +37,12 @@ using var dl = new DataLayer_ChatGPT_Buffered();
 //Console.WriteLine(dl.SerializeDatapoints(result));
 
 //ABFRAGE 1a
-//var ql = new KalaQlHardcoded(dl);
+var ql = new KalaQlHardcoded(dl);
 //var result = ql.Query("Sofar$measure$PVInput1$0x586_Leistung_PV1[kW]", new DateTime(2023, 08, 01, 0, 0, 0), new DateTime(2024, 08, 01, 0, 0, 0));
-////var result = dl.Aggregate("EASun/measure/0x110_Total_Generation_High[kWh]", new DateTime(2023, 08, 01, 0, 0, 0), new DateTime(2024, 08, 01, 0, 0, 0), new TimeSpan(0, 15, 0), "AVG", true, 0);
-//var list = result.ToList(); // Daten laden
-////var resultList = ql.SerializeDatapoints(list); // JSON serialize
+var result = ql.Aggregate("Sofar$measure$PVInput1$0x586_Leistung_PV1[kW]", new DateTime(2023, 08, 01, 0, 0, 0), new DateTime(2024, 08, 01, 0, 0, 0), new TimeSpan(24, 00, 0), "MEAN", true, 0);
+var list = result.ToList(); // Daten laden
+var jsonResult = ql.SerializeDatapoints(list); // JSON serialize
+Console.WriteLine(jsonResult);
 
 
 //result = dl.AddAggregatedMeasurements("/Cars/Tesla/nxCar3/SOC", "/Cars/Benz/eqa/SOC", new DateTime(2024, 09, 10, 9, 0, 0), new DateTime(2024, 09, 10, 9, 45, 0), new TimeSpan(0, 15, 0), "AVG");
@@ -53,20 +54,20 @@ using var dl = new DataLayer_ChatGPT_Buffered();
 
 
 ////Import InfluxBackUP
-InfluxLineProtocolImporter imp = new InfluxLineProtocolImporter(dl);
-string filePath = @"E:\backup4.txt";
-const Int32 BufferSize = 16384;
-long i = 0;
-using (var reader = new StreamReader(filePath, Encoding.UTF8, false, BufferSize))
-{
-    string line;
-    while ((line = reader.ReadLine()) != null)
-    {
-        imp.Import(line);
-        i++;
-        if (i % 1000000 == 0)
-        {
-            Console.WriteLine($"Lines: {i} {100 * reader.BaseStream.Position / reader.BaseStream.Length}%");
-        }
-    }
-}
+//InfluxLineProtocolImporter imp = new InfluxLineProtocolImporter(dl);
+//string filePath = @"E:\backup4.txt";
+//const Int32 BufferSize = 16384;
+//long i = 0;
+//using (var reader = new StreamReader(filePath, Encoding.UTF8, false, BufferSize))
+//{
+//    string line;
+//    while ((line = reader.ReadLine()) != null)
+//    {
+//        imp.Import(line, false);
+//        i++;
+//        if (i % 1000000 == 0)
+//        {
+//            Console.WriteLine($"Lines: {i} {100 * reader.BaseStream.Position / reader.BaseStream.Length}%");
+//        }
+//    }
+//}
