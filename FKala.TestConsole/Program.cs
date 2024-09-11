@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using FKala.TestConsole;
+using FKala.TestConsole.DataLayers;
 using FKala.TestConsole.Migration;
 using System.Diagnostics.Metrics;
 using System.Text;
@@ -35,55 +36,41 @@ using var dl = new DataLayer_ChatGPT_Buffered();
 //result = dl.Aggregate("/Cars/Tesla/nxCar3/SOC", new DateTime(2024, 09, 10, 9, 0, 0), new DateTime(2024, 09, 10, 9, 45, 0), new TimeSpan(0, 15, 0), "AVG", true, 0);
 //Console.WriteLine(dl.SerializeDatapoints(result));
 
+var ql = new KalaQlHardcoded(dl);
+var result = ql.Query("Sofar$measure$PVInput1$0x586_Leistung_PV1[kW]", new DateTime(2023, 08, 01, 0, 0, 0), new DateTime(2024, 08, 01, 0, 0, 0));
+//var result = dl.Aggregate("EASun/measure/0x110_Total_Generation_High[kWh]", new DateTime(2023, 08, 01, 0, 0, 0), new DateTime(2024, 08, 01, 0, 0, 0), new TimeSpan(0, 15, 0), "AVG", true, 0);
+var list = result.ToList(); // Daten laden
+//var resultList = ql.SerializeDatapoints(list); // JSON serialize
+//var resultList = ql.SerializeDatapointsStreamed(result).ToList();
+//foreach (var json in )
+//{
+//    Console.WriteLine(json;
+//};
+
 
 //result = dl.AddAggregatedMeasurements("/Cars/Tesla/nxCar3/SOC", "/Cars/Benz/eqa/SOC", new DateTime(2024, 09, 10, 9, 0, 0), new DateTime(2024, 09, 10, 9, 45, 0), new TimeSpan(0, 15, 0), "AVG");
 //Console.WriteLine(dl.SerializeDatapoints(result));
 
+//var result = dl.AddAggregatedMeasurements("/Cars/Tesla/nxCar3/SOC", "/Cars/Benz/eqa/SOC", new DateTime(2024, 09, 10, 9, 0, 0), new DateTime(2024, 09, 10, 9, 45, 0), new TimeSpan(0, 15, 0), "AVG");
+//Console.WriteLine(dl.SerializeDatapoints(result));
 
-InfluxLineProtocolImporter imp = new InfluxLineProtocolImporter(dl);
-//var lines = File.ReadAllLines(@"C:\tmp\backup.txt");
 
-string filePath = @"C:\Users\Frank\Downloads\backup4.txt";
-int lines = 0;
-//using (var reader = new StreamReader(filePath))
+
+////IMport InfluxBackUP
+//InfluxLineProtocolImporter imp = new InfluxLineProtocolImporter(dl);
+//string filePath = @"C:\Users\Frank\Downloads\backup4.txt";
+//const Int32 BufferSize = 16384;
+//long i = 0;
+//using (var reader = new StreamReader(filePath, Encoding.UTF8, true, BufferSize))
 //{
-//    while ((reader.ReadLine()) != null)
-//    {
-//        lines++;
-//        if (lines % 1000000 == 0)
+//    string line;
+//    while ((line = reader.ReadLine()) != null)
+//    {        
+//        imp.Import(line);
+//        i++;
+//        if (i % 1000000 == 0)
 //        {
-//            Console.WriteLine($"Count: {lines}");
+//            Console.WriteLine($"Lines: {i} {100 * reader.BaseStream.Position / reader.BaseStream.Length}%");
 //        }
 //    }
 //}
-
-const Int32 BufferSize = 16384;
-//using (var fileStream = File.OpenRead(filePath))
-//using (var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize))
-//{
-//    String line;
-//    while ((line = streamReader.ReadLine()) != null)
-//    {
-//        lines++;
-//        if (lines % 1000000 == 0)
-//        {
-//            Console.WriteLine($"Count: {lines}");
-//        }
-//    }
-//}
-
-
-long i = 0;
-using (var reader = new StreamReader(filePath, Encoding.UTF8, true, BufferSize))
-{
-    string line;
-    while ((line = reader.ReadLine()) != null)
-    {        
-        imp.Import(line);
-        i++;
-        if (i % 1000000 == 0)
-        {
-            Console.WriteLine($"Lines: {i} {100 * reader.BaseStream.Position / reader.BaseStream.Length}%");
-        }
-    }
-}

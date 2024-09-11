@@ -25,15 +25,14 @@ namespace FKala.TestConsole
             Task.Run(() => FlushBuffersPeriodically());
         }
 
-        public List<DataPoint> ReadData(string measurement, DateTime startTime, DateTime endTime)
+        public IEnumerable<DataPoint> ReadData(string measurement, DateTime startTime, DateTime endTime)
         {
-            var results = new List<DataPoint>();
+            //var results = new List<DataPoint>();
 
             try
             {
                 //Locker.EnterReadLock();
-                var measurementPath = measurement.Replace('/', '$');
-                measurementPath = PathSanitizer.SanitizePath(measurementPath);
+                var measurementPath = PathSanitizer.SanitizePath(measurement);
                 var startYear = startTime.Year;
                 var endYear = endTime.Year;
 
@@ -48,31 +47,47 @@ namespace FKala.TestConsole
                         if (month < startTime.Month && year == startYear) continue;
                         if (month > endTime.Month && year == endYear) continue;
 
-                        foreach (var file in Directory.GetFiles(monthDir, $"{measurementPath}_*.dat"))
+                        foreach (var file in Directory.GetFiles(monthDir, $"{measurementPath}*.dat"))
                         {
                             if (File.Exists(file))
                             {
-                                var lines = File.ReadAllLines(file);
-                                foreach (var line in lines)
-                                {
-                                    var lineParts = line.Split(' ');
-                                    var timePart = lineParts[0];
-                                    var datePart = Path.GetFileNameWithoutExtension(file).Split('_')[1];
-                                    var dateTimeString = $"{datePart}T{timePart}";
-                                    var lineTime = DateTime.ParseExact(dateTimeString, "yyyy-MM-ddTHH:mm:ss.ffffff", CultureInfo.InvariantCulture);
+                                var fn = Path.GetFileNameWithoutExtension(file);
+                                var datePart = fn.Substring(fn.Length - 10, 10);
+                                ReadOnlySpan<char> dateSpan = datePart.AsSpan();
+                                DateOnly dt = new DateOnly(int.Parse(dateSpan.Slice(0, 4)), int.Parse(dateSpan.Slice(5, 2)), int.Parse(dateSpan.Slice(8, 2)));
+                                
+                                var sr = new StreamReader(file, Encoding.UTF8, false, 16384);
+                                string? line;
+                                while ((line = sr.ReadLine()) != null) {
+                                    ReadOnlySpan<char> span = line.AsSpan();
 
-                                    if (lineTime >= startTime && lineTime <= endTime)
+                                    //var time = span.Slice(0, 16).ToString();
+                                    var tt = new TimeOnly(int.Parse(span.Slice(0, 2)), int.Parse(span.Slice(3, 2)), int.Parse(span.Slice(6, 2)));
+                                    
+                                    var dateTime = new DateTime(dt, tt);
+                                    dateTime.AddTicks(int.Parse(span.Slice(9, 7)));
+                                    span = span.Slice(17);
+
+                                    int index = span.IndexOf(' ');
+                                    decimal value;
+                                    string? text = null;
+                                    if (index != -1)
                                     {
-                                        var value = decimal.Parse(lineParts[1], CultureInfo.InvariantCulture);
-                                        var text = lineParts.Length > 2 ? string.Join(" ", lineParts.Skip(2)) : null;
-
-                                        results.Add(new DataPoint
-                                        {
-                                            Time = lineTime,
-                                            Value = value,
-                                            Text = text
-                                        });
+                                        var valueRaw = span.Slice(0, index);
+                                        value = decimal.Parse(valueRaw, CultureInfo.InvariantCulture);
+                                        text = span.Slice(index + 1).ToString();
                                     }
+                                    else
+                                    {
+                                        var valueRaw = span.Slice(0);
+                                        value = decimal.Parse(valueRaw, CultureInfo.InvariantCulture);
+                                    }
+                                    yield return new DataPoint
+                                    {
+                                        Time = dateTime,
+                                        Value = value,
+                                        Text = text
+                                    };
                                 }
                             }
                         }
@@ -83,8 +98,6 @@ namespace FKala.TestConsole
             {
                 //Locker.ExitReadLock();
             }
-
-            return results;
         }
 
         HashSet<string> CreatedDirectories = new HashSet<string>();

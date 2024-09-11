@@ -9,7 +9,7 @@ namespace FKala.TestConsole.Interfaces
 {
     public interface IDataLayer
     {
-        List<DataPoint> ReadData(string measurement, DateTime startTime, DateTime endTime);
+        IEnumerable<DataPoint> ReadData(string measurement, DateTime startTime, DateTime endTime);
         void Insert(string rawData, bool locking = true);
     }
 }
