@@ -213,6 +213,7 @@ namespace FKala.TestConsole
                         _bufferedWriters.Remove(writer.Key, out var removed);
                     }
                 }
+                CreatedDirectories = new HashSet<string>();
             }
         }
 

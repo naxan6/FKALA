@@ -29,8 +29,10 @@ namespace FKala.TestConsole.KalaQl
         public override void Execute(KalaQlContext context)
         {
             var input = context.IntermediateResults.First(x => x.Name == InputDataSetName);
-            // Dieses ToList ist wichtig, da bei Expresso mit Vermarmelung mehrerer Serien und gleichzeitiger Ausgabe aller dieser Serien
-            // sich die Zugriffe auf den Enumerable überschneiden und das ganze dann buggt.
+            // Dieses ToList ist wichtig, da bei nachfolgendem Expresso mit Vermarmelung mehrerer Serien
+            // und gleichzeitiger Ausgabe aller dieser Serien im Publish
+            // sich die Zugriffe auf den Enumerable überschneiden und das ganze dann buggt
+            // (noch nicht final geklärt, z.B. siehe BUGTEST_KalaQl_2_Datasets_Aggregated_Expresso). 
             var result = InternalExecute(context, input).ToList();
             context.IntermediateResults.Add(new Result() { Name = this.Name, Resultset = result, StartTime = input.StartTime, EndTime = input.EndTime, Creator = this });
             this.hasExecuted = true;
@@ -38,7 +40,6 @@ namespace FKala.TestConsole.KalaQl
 
         private IEnumerable<DataPoint> InternalExecute(KalaQlContext context, Result input)
         {
-            
             Window.Init(input.StartTime);
 
             var dataPointsEnumerator = input.Resultset.OrderBy(dp => dp.Time).GetEnumerator();
