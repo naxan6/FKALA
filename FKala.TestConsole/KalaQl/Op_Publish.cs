@@ -50,7 +50,7 @@ namespace FKala.TestConsole.KalaQl
                     
                     foreach (var item in syncedResult)
                     {
-                        expandoDict["Time"] = item.DataPoint.Time;
+                        expandoDict["time"] = item.DataPoint.Time;
                         expandoDict[item.ResultName] = item.DataPoint.Value;
                     }
                     resultRows.Add(row);

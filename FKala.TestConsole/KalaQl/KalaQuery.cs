@@ -135,6 +135,8 @@ namespace FKala.TestConsole.KalaQl
             string[] dateFormats = {
                 "yyyy-MM-ddTHH:mm:ss.ffffffZ",
                 "yyyy-MM-ddTHH:mm:ss.ffffff",
+                "yyyy-MM-ddTHH:mm:ss.fffZ",
+                "yyyy-MM-ddTHH:mm:ss.fff",
                 "yyyy-MM-ddTHH:mm:ss",
                 "yyyy-MM-dd"
             };
@@ -145,7 +147,7 @@ namespace FKala.TestConsole.KalaQl
             {
                 if (DateTime.TryParseExact(v, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedDate))
                 {
-                    return parsedDate;
+                    return parsedDate.ToUniversalTime();
                 }
             }
             throw new Exception($"Zeitangabe {v} ist ungültig");
@@ -179,7 +181,16 @@ namespace FKala.TestConsole.KalaQl
                 case "Infinite":
                     return Window.Infinite;
                 default:
-                    var timespan = TimeSpan.Parse(v);
+                    TimeSpan timespan;
+                    if (int.TryParse(v, out int vint))
+                    {
+                        timespan = TimeSpan.FromMilliseconds(vint);
+                    } 
+                    else
+                    {
+                        timespan = TimeSpan.Parse(v);
+                    }
+                    
                     return new Window() { Mode = WindowMode.FixedIntervall, Interval = timespan };
 
             }
