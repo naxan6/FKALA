@@ -10,7 +10,6 @@ namespace FKala.TestConsole.KalaQl
 {
     public class KalaResult
     {
-        public required KalaQlContext Context {  get; set; }
         public List<Result> ResultSets { get; set; }
         public List<ExpandoObject> ResultTable { get; set; }
     }

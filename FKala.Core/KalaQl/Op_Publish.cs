@@ -37,8 +37,7 @@ namespace FKala.TestConsole.KalaQl
             if (PublishMode == PublishMode.MultipleResultsets)
             {
                 context.Result = new KalaResult()
-                {
-                    Context = context,
+                {                    
                     ResultSets = resultsets
                 };
                 hasExecuted = true;
@@ -61,8 +60,7 @@ namespace FKala.TestConsole.KalaQl
                     resultRows.Add(row);
                 }
                 context.Result = new KalaResult()
-                {
-                    Context = context,
+                {                    
                     ResultTable = resultRows
                 };
                 hasExecuted = true;

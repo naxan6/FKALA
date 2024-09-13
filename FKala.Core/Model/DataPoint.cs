@@ -10,7 +10,7 @@ namespace FKala.TestConsole.Model
     {
         public DateTime Time { get; set; }
         public decimal? Value { get; set; }
-        public string Text { get; set; }
+        public string? ValueText { get; set; }
     }
 
 }

@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FKala.TestConsole\FKala.TestConsole.csproj" />
+    <ProjectReference Include="..\FKala.Core\FKala.Core.csproj" />
   </ItemGroup>
 
 </Project>

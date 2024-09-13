@@ -3,12 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35219.272
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FKala.TestConsole", "FKala.TestConsole\FKala.TestConsole.csproj", "{5A1C35C3-1591-404B-8868-D7CCBD39D051}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FKala.Unittests", "FKala.Unittests\FKala.Unittests.csproj", "{D3CF60CA-376B-4CDA-9ED9-F7E87D0877D3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FKala.Unittests", "FKala.Unittests\FKala.Unittests.csproj", "{D3CF60CA-376B-4CDA-9ED9-F7E87D0877D3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FKala.WebApi", "FKala.WebApi\FKala.WebApi.csproj", "{F4F99854-3FC9-4C29-8C2F-6E3DA4E419C4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FKala.WebApi", "FKala.WebApi\FKala.WebApi.csproj", "{F4F99854-3FC9-4C29-8C2F-6E3DA4E419C4}"
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FKala.Api", "FKala.Api\FKala.Api.csproj", "{CD56E35C-F4BB-4390-A999-E39233564E9F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FKala.Api", "FKala.Api\FKala.Api.csproj", "{CD56E35C-F4BB-4390-A999-E39233564E9F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FKala.Core", "FKala.Core\FKala.Core.csproj", "{BB89E13A-652C-49C6-91C5-7B447560B60A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -16,10 +17,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{5A1C35C3-1591-404B-8868-D7CCBD39D051}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5A1C35C3-1591-404B-8868-D7CCBD39D051}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5A1C35C3-1591-404B-8868-D7CCBD39D051}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5A1C35C3-1591-404B-8868-D7CCBD39D051}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D3CF60CA-376B-4CDA-9ED9-F7E87D0877D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D3CF60CA-376B-4CDA-9ED9-F7E87D0877D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D3CF60CA-376B-4CDA-9ED9-F7E87D0877D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -32,6 +29,10 @@ Global
 		{CD56E35C-F4BB-4390-A999-E39233564E9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CD56E35C-F4BB-4390-A999-E39233564E9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CD56E35C-F4BB-4390-A999-E39233564E9F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB89E13A-652C-49C6-91C5-7B447560B60A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB89E13A-652C-49C6-91C5-7B447560B60A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB89E13A-652C-49C6-91C5-7B447560B60A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB89E13A-652C-49C6-91C5-7B447560B60A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

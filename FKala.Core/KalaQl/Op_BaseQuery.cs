@@ -35,7 +35,7 @@ namespace FKala.TestConsole.KalaQl
 
         public override void Execute(KalaQlContext context)
         {
-            var result = context.DataLayer.ReadData(this.Measurement, this.StartTime, this.EndTime, CacheResolution);
+            var result = context.DataLayer.LoadData(this.Measurement, this.StartTime, this.EndTime, CacheResolution);
             // bei ForceRebuild auch ohne Ausgabe etc. den Rebuild durchführen, ..was erst geschieht beim Materialisieren
             if (CacheResolution.ForceRebuild) result = result.ToList();
             context.IntermediateResults.Add(new Result() { Name = this.Name, Resultset = result, StartTime = StartTime, EndTime = EndTime, Creator = this });

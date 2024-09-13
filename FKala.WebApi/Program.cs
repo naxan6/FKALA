@@ -39,7 +39,7 @@ app.MapPost("/qi", async (IConfiguration config, HttpContext context) =>
      Publ StromVerbrauch_Month Default
      */
     var dataStorage = config["DataStorage"] ??  Path.Combine(".", "fkala_data");
-    using var dl = new DataLayer_Readable_V1(dataStorage);
+    using var dl = new DataLayer_Readable_Caching_V1(dataStorage);
 
     var q = KalaQuery.Start().FromQuery(query);            
     var result = q.Execute(dl);
