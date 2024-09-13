@@ -338,5 +338,5 @@ ASALocalRun/
 .localhistory/
 
 # Local developer settings
-**/*.appsettings.Development.json
+**/appsettings.Development.json
 
