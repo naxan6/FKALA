@@ -148,6 +148,15 @@ namespace FKala.TestConsole.KalaQl
             {
                 return Resolution.Hourly;
             }
+            else if (v.ToUpper().StartsWith("AUTO("))
+            {
+                var parts = v.Split(['(', ')']);
+                if (long.Parse(parts[1]) <= 60L * 24L * 3600L * 1000L)
+                {
+                    return Resolution.Minutely;
+                }
+                return Resolution.Hourly;
+            }
             return null;
         }
 
