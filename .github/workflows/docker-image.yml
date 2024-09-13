@@ -8,14 +8,14 @@ on:
 
 jobs:
 
-  build:
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag fkala:$(date +%s)
+# build:
+#
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#    - uses: actions/checkout@v4
+#    - name: Build the Docker image
+#      run: docker build . --file Dockerfile --tag fkala:$(date +%s)
   
   # Dieser Workflow verwendet Aktionen, die nicht von GitHub zertifiziert sind.
   # Sie werden von einem Drittanbieter bereitgestellt und unterliegen
