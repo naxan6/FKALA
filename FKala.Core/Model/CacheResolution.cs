@@ -17,8 +17,7 @@ namespace FKala.TestConsole.Model
 
     public static class PredefinedCacheResolutions
     {
-        public static CacheResolution FullResolution { get { return new CacheResolution() { Resolution = Resolution.Full, AggregateFunction = AggregateFunction.None, ForceRebuild = false }; } }
-        public static CacheResolution NoCache => FullResolution;
+        public static CacheResolution NoCache { get { return new CacheResolution() { Resolution = Resolution.Full, AggregateFunction = AggregateFunction.None, ForceRebuild = false }; } }
         public static CacheResolution UseHourlyAvgCache { get { return new CacheResolution() { Resolution = Resolution.Hourly, AggregateFunction = AggregateFunction.Avg, ForceRebuild = false }; } }
         public static CacheResolution UseMinutelyAvgCache { get { return new CacheResolution() { Resolution = Resolution.Hourly, AggregateFunction = AggregateFunction.Avg, ForceRebuild = false }; } }
         public static CacheResolution RebuildHourlyAvgCache { get { return new CacheResolution() { Resolution = Resolution.Hourly, AggregateFunction = AggregateFunction.Avg, ForceRebuild = true }; } }

@@ -10,10 +10,10 @@ namespace FKala.TestConsole.Interfaces
 {
     public interface IDataLayer
     {
-        IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution);
+        IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool NewestOnly);
         void Insert(string kalaLinedata, bool locking = true);
         List<int> LoadAvailableYears(string measurement);
         List<string> LoadMeasurementList(string measurement);
-        DataPoint LoadNewestDatapoint(string measurement);
+        IEnumerable<DataPoint> LoadNewestDatapoint(string measurement);
     }
 }

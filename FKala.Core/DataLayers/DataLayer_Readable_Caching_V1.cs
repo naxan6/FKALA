@@ -42,9 +42,13 @@ namespace FKala.TestConsole
             Task.Run(() => FlushBuffersPeriodically());
         }
 
-        public IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution = null)
+        public IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly)
         {
-            if (cacheResolution?.Resolution == Resolution.Hourly)
+            if (newestOnly)
+            {
+                return this.LoadNewestDatapoint(measurement);
+            } 
+            else if (cacheResolution?.Resolution == Resolution.Hourly)
             {
                 return CachingLayer.LoadHourlyResolution(measurement, startTime, endTime, cacheResolution);
             }
@@ -68,7 +72,7 @@ namespace FKala.TestConsole
         }
 
 
-        public DataPoint LoadNewestDatapoint(string measurement)
+        public IEnumerable<DataPoint> LoadNewestDatapoint(string measurement)
         {
             var measurementSubPath = PathSanitizer.SanitizePath(measurement);
             var measurementPath = Path.Combine(DataDirectory, measurementSubPath);
@@ -83,7 +87,8 @@ namespace FKala.TestConsole
                         var lastLine = LastLineReader.ReadLastLine(file);
                         if (string.IsNullOrEmpty(lastLine))
                         {
-                            return null;
+                            yield return null;
+                            yield break;
                         }
                         var fn = Path.GetFileNameWithoutExtension(file);
                         var datePart = fn.Substring(fn.Length - 10, 10);
@@ -92,11 +97,11 @@ namespace FKala.TestConsole
                         int filemonth = int.Parse(dateSpan.Slice(5, 2));
                         int fileday = int.Parse(dateSpan.Slice(8, 2));
                         var dp = ParseLine(DateTime.MinValue, DateTime.MaxValue, fileyear, filemonth, fileday, lastLine);
-                        return dp;
+                        yield return dp;
+                        yield break;
                     }
                 }
             }
-            throw new Exception("No Latest Datapoint found.");
         }
         private IEnumerable<DataPoint> LoadFullResolution(string measurement, DateTime startTime, DateTime endTime)
         {

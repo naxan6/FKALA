@@ -61,3 +61,11 @@ Aggr SOCwavgM1: rSOC Aligned_1Month WAvg
 Aggr SOCwavgM2: SOCwavgh Aligned_1Month WAvg
 
 Publ "SOCavgM1,SOCavgM2,SOCwavgM1,SOCwavgM2" Table
+
+### NewestOnly
+POST {{FKala.Api_HostAddress}}/api/Query
+Accept: application/json
+Content-Type: text/plain
+
+Load SOC: Sofar/measure/batteryInput1/0x608_SOC_Bat1[%] NewestOnly
+Publ "SOC" Table

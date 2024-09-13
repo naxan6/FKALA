@@ -16,16 +16,16 @@ namespace FKala.TestConsole.KalaQl
         public DateTime StartTime { get; }
         public DateTime EndTime { get; }
         public CacheResolution CacheResolution { get; }
-        
+        public bool NewestOnly { get; }
 
-        public Op_BaseQuery(string name, string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution)
+        public Op_BaseQuery(string name, string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly = true)
         {
             this.Name = name;
             this.Measurement = measurement;
             this.StartTime = startTime;
             this.EndTime = endTime;
             this.CacheResolution = cacheResolution;
-            
+            this.NewestOnly = newestOnly;
         }
 
         public override bool CanExecute(KalaQlContext context)
@@ -35,7 +35,7 @@ namespace FKala.TestConsole.KalaQl
 
         public override void Execute(KalaQlContext context)
         {
-            var result = context.DataLayer.LoadData(this.Measurement, this.StartTime, this.EndTime, CacheResolution);
+            var result = context.DataLayer.LoadData(this.Measurement, this.StartTime, this.EndTime, CacheResolution, NewestOnly);
             // bei ForceRebuild auch ohne Ausgabe etc. den Rebuild durchführen, ..was erst geschieht beim Materialisieren
             if (CacheResolution.ForceRebuild) result = result.ToList();
             context.IntermediateResults.Add(new Result() { Name = this.Name, Resultset = result, StartTime = StartTime, EndTime = EndTime, Creator = this });
