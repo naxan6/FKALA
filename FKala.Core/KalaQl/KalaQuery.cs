@@ -151,7 +151,7 @@ namespace FKala.TestConsole.KalaQl
             else if (v.ToUpper().StartsWith("AUTO("))
             {
                 var parts = v.Split(['(', ')']);
-                if (long.Parse(parts[1]) <= 60L * 24L * 3600L * 1000L)
+                if (long.Parse(parts[1]) <= 3600 * 1000)
                 {
                     return Resolution.Minutely;
                 }
