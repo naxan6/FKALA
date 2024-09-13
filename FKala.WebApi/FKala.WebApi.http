@@ -1,0 +1,6 @@
+@FKala.WebApi_HostAddress = http://localhost:5017
+
+POST {{FKala.WebApi_HostAddress}}/qi/
+Accept: text/plain
+
+###
