@@ -2,6 +2,7 @@ using FKala.TestConsole;
 using FKala.TestConsole.KalaQl;
 using FKala.TestConsole.KalaQl.Windowing;
 using FKala.TestConsole.Logic;
+using FKala.TestConsole.Model;
 using System.Security.Principal;
 
 namespace FKala.Unittests
@@ -23,8 +24,8 @@ namespace FKala.Unittests
             var endTime = new DateTime(2024, 08, 01, 0, 0, 0);
 
             var q = KalaQuery.Start()
-                .Add(new Op_BaseQuery("PV1", "Sofar/measure/PVInput1/0x586_Leistung_PV1[kW]", startTime, endTime))
-                .Add(new Op_BaseQuery("PV2", "Sofar/measure/PVInput1/0x589_Leistung_PV2[kW]", startTime, endTime))
+                .Add(new Op_BaseQuery("PV1", "Sofar/measure/PVInput1/0x586_Leistung_PV1[kW]", startTime, endTime, PredefinedCacheResolutions.NoCache))
+                .Add(new Op_BaseQuery("PV2", "Sofar/measure/PVInput1/0x589_Leistung_PV2[kW]", startTime, endTime, PredefinedCacheResolutions.NoCache))
                 .Add(new Op_Publish(new List<string>() { "PV1", "PV2" }, PublishMode.MultipleResultsets));
 
             var result = q.Execute(dl);
@@ -50,8 +51,8 @@ namespace FKala.Unittests
             var endTime = new DateTime(2024, 06, 01, 0, 0, 0);
 
             var q = KalaQuery.Start()
-                .Add(new Op_BaseQuery("PV1", "Sofar/measure/PVInput1/0x586_Leistung_PV1[kW]", startTime, endTime))
-                .Add(new Op_BaseQuery("PV2", "Sofar/measure/PVInput1/0x589_Leistung_PV2[kW]", startTime, endTime))
+                .Add(new Op_BaseQuery("PV1", "Sofar/measure/PVInput1/0x586_Leistung_PV1[kW]", startTime, endTime, PredefinedCacheResolutions.NoCache))
+                .Add(new Op_BaseQuery("PV2", "Sofar/measure/PVInput1/0x589_Leistung_PV2[kW]", startTime, endTime, PredefinedCacheResolutions.NoCache))
                 .Add(new Op_Aggregate("PV1_Windowed", "PV1", Window.Aligned_1Day, AggregateFunction.Avg, true))
                 .Add(new Op_Aggregate("PV2_Windowed", "PV2", Window.Aligned_1Day, AggregateFunction.Avg, true))
                 .Add(new Op_Publish(new List<string>() { "PV1_Windowed", "PV2_Windowed" }, PublishMode.MultipleResultsets));
@@ -80,7 +81,7 @@ namespace FKala.Unittests
             var endTime = new DateTime(2024, 08, 01, 0, 0, 0);
 
             var q = KalaQuery.Start()
-                .Add(new Op_BaseQuery("PV1", "Sofar/measure/PVInput1/0x586_Leistung_PV1[kW]", startTime, endTime))                
+                .Add(new Op_BaseQuery("PV1", "Sofar/measure/PVInput1/0x586_Leistung_PV1[kW]", startTime, endTime, PredefinedCacheResolutions.NoCache))
                 .Add(new Op_Aggregate("PV1_Windowed", "PV1", Window.Aligned_1Day, AggregateFunction.First, true))
                 .Add(new Op_Publish(new List<string>() { "PV1_Windowed" }, PublishMode.MultipleResultsets));
 
@@ -115,7 +116,7 @@ namespace FKala.Unittests
                     Aggr PV2_Windowed: PV2 Unaligned_1Month Avg
                     Expr PVSumInWatt: ""(PV1_Windowed.Value + PV2_Windowed.Value) * 1000""
                     Publ ""PVSumInWatt, PV1_Windowed"" Default
-                ");                
+                ");
 
             var result = q.Execute(dl);
 
@@ -143,8 +144,8 @@ namespace FKala.Unittests
             var endTime = new DateTime(2024, 08, 01, 0, 0, 0);
 
             var q = KalaQuery.Start()
-                .Add(new Op_BaseQuery("PV1", "Sofar/measure/PVInput1/0x586_Leistung_PV1[kW]", startTime, endTime))
-                .Add(new Op_BaseQuery("PV2", "Sofar/measure/PVInput1/0x589_Leistung_PV2[kW]", startTime, endTime))
+                .Add(new Op_BaseQuery("PV1", "Sofar/measure/PVInput1/0x586_Leistung_PV1[kW]", startTime, endTime, PredefinedCacheResolutions.NoCache))
+                .Add(new Op_BaseQuery("PV2", "Sofar/measure/PVInput1/0x589_Leistung_PV2[kW]", startTime, endTime, PredefinedCacheResolutions.NoCache))
                 .Add(new Op_Aggregate("PV1_Windowed", "PV1", Window.Aligned_1Day, AggregateFunction.Avg, true))
                 .Add(new Op_Aggregate("PV2_Windowed", "PV2", Window.Aligned_1Day, AggregateFunction.Avg, true))
                 .Add(new Op_Expresso("PVSumInWatt", "(PV1_Windowed.Value + PV2_Windowed.Value) * 1000"))
@@ -180,7 +181,7 @@ namespace FKala.Unittests
                 ");
 
             var result = q.Execute(dl);
-          
+
             sw.Stop();
             var ts = sw.Elapsed;
             string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}", ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds);

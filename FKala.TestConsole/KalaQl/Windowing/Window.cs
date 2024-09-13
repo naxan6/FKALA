@@ -9,7 +9,8 @@ using System.Threading.Tasks;
 namespace FKala.TestConsole.KalaQl.Windowing
 {
     public class Window
-    {        
+    {
+        public static Window Aligned_1Minute { get { return new Window() { Mode = WindowMode.Aligned1Minute, Interval = new TimeSpan(0, 0, 1, 0) }; } }
         public static Window Aligned_5Minutes { get { return new Window() { Mode = WindowMode.Aligned5Minutes, Interval = new TimeSpan(0, 0, 5, 0) }; } }
         public static Window Aligned_15Minutes { get { return new Window() { Mode = WindowMode.Aligned15Minutes, Interval = new TimeSpan(0, 0, 15, 0) }; } }
         public static Window Aligned_1Hour { get { return new Window() { Mode = WindowMode.AlignedHour, Interval = new TimeSpan(0, 1, 0, 0) }; } }
@@ -27,20 +28,22 @@ namespace FKala.TestConsole.KalaQl.Windowing
         public WindowMode Mode;
 
         public Window()
-        {            
+        {
         }
 
-        public Window(WindowMode Mode) {
+        public Window(WindowMode Mode)
+        {
             this.Mode = Mode;
         }
 
-        public Window(WindowMode Mode, TimeSpan Interval) {
+        public Window(WindowMode Mode, TimeSpan Interval)
+        {
             this.Mode = Mode;
             this.Interval = Interval;
         }
         public void Init(DateTime starttime)
         {
-            
+
             switch (Mode)
             {
                 case WindowMode.FixedIntervall:
@@ -48,8 +51,11 @@ namespace FKala.TestConsole.KalaQl.Windowing
                 case WindowMode.UnalignedYear:
                     this.StartTime = starttime;
                     break;
+                case WindowMode.Aligned1Minute:
+                    this.StartTime = RoundToPreviousFullMinute(starttime);
+                    break;
                 case WindowMode.Aligned5Minutes:
-                    this.StartTime = RoundToPreviousFiveMinutes(starttime);                    
+                    this.StartTime = RoundToPreviousFiveMinutes(starttime);
                     break;
                 case WindowMode.Aligned15Minutes:
                     this.StartTime = RoundToPreviousFifteenMinutes(starttime);
@@ -79,36 +85,44 @@ namespace FKala.TestConsole.KalaQl.Windowing
 
         private void CalcTimes()
         {
-            switch (Mode)
+            try
             {
-                case WindowMode.FixedIntervall:
-                case WindowMode.Aligned5Minutes:
-                case WindowMode.Aligned15Minutes:
-                case WindowMode.AlignedHour:
-                case WindowMode.AlignedDay:
-                case WindowMode.AlignedWeek:
-                    if (Interval == TimeSpan.MaxValue)
-                    {
-                        this.EndTime = DateTime.MaxValue;
-                    } 
-                    else
-                    {
-                        this.EndTime = this.StartTime.Add(Interval);
-                    }                    
-                    break;
-                case WindowMode.UnalignedMonth:                
-                case WindowMode.AlignedMonth:
-                    this.EndTime = this.StartTime.AddMonths(1);
-                    break;
-                case WindowMode.AlignedYear:
-                case WindowMode.UnalignedYear:
-                    this.EndTime = this.StartTime.AddYears(1);
-                    break;
-                default:
-                    throw new Exception("Mode not implemented");
-
+                switch (Mode)
+                {
+                    case WindowMode.FixedIntervall:
+                    case WindowMode.Aligned1Minute:
+                    case WindowMode.Aligned5Minutes:
+                    case WindowMode.Aligned15Minutes:
+                    case WindowMode.AlignedHour:
+                    case WindowMode.AlignedDay:
+                    case WindowMode.AlignedWeek:
+                        if (Interval == TimeSpan.MaxValue || this.StartTime == DateTime.MaxValue)
+                        {
+                            this.EndTime = DateTime.MaxValue;
+                        }
+                        else
+                        {
+                            this.EndTime = this.StartTime.Add(Interval);
+                        }
+                        break;
+                    case WindowMode.UnalignedMonth:
+                    case WindowMode.AlignedMonth:
+                        this.EndTime = this.StartTime.AddMonths(1);
+                        break;
+                    case WindowMode.AlignedYear:
+                    case WindowMode.UnalignedYear:
+                        this.EndTime = this.StartTime.AddYears(1);
+                        break;
+                    default:
+                        throw new Exception("Mode not implemented");
+                }
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                this.EndTime = DateTime.MaxValue;
             }
         }
+
 
         public void Next()
         {
@@ -168,6 +182,11 @@ namespace FKala.TestConsole.KalaQl.Windowing
             return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, previousQuarterHour, 0);
         }
 
+
+        private static DateTime RoundToPreviousFullMinute(DateTime dateTime)
+        {
+            return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, dateTime.Minute, 0);
+        }
         private static DateTime RoundToPreviousFiveMinutes(DateTime dateTime)
         {
             int minutes = dateTime.Minute;

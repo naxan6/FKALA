@@ -14,14 +14,16 @@ namespace FKala.TestConsole.KalaQl
         public Window Window { get; }
         public AggregateFunction AggregateFunc { get; }
         public bool EmptyWindows { get; }
+        public bool UseMaterializing { get; }
 
-        public Op_Aggregate(string name, string inputDataSet, Window window, AggregateFunction aggregate, bool emptyWindows)
+        public Op_Aggregate(string name, string inputDataSet, Window window, AggregateFunction aggregate, bool emptyWindows, bool useMaterializing = true)
         {
             Name = name;
             InputDataSetName = inputDataSet;
             Window = window;
             AggregateFunc = aggregate;
-            this.EmptyWindows = emptyWindows;
+            EmptyWindows = emptyWindows;
+            UseMaterializing = useMaterializing;
         }
 
         public override bool CanExecute(KalaQlContext context)
@@ -36,7 +38,11 @@ namespace FKala.TestConsole.KalaQl
             // und gleichzeitiger Ausgabe aller dieser Serien im Publish
             // sich die Zugriffe auf den Enumerable überschneiden und das ganze dann buggt
             // (noch nicht final geklärt, z.B. siehe BUGTEST_KalaQl_2_Datasets_Aggregated_Expresso). 
-            var result = InternalExecute(context, input).ToList();
+            var result = InternalExecute(context, input);
+            if (UseMaterializing)
+            {
+                result = result.ToList();
+            }
             context.IntermediateResults.Add(new Result() { Name = this.Name, Resultset = result, StartTime = input.StartTime, EndTime = input.EndTime, Creator = this });
             this.hasExecuted = true;
         }

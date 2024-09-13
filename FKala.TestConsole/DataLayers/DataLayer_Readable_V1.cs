@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using FKala.TestConsole.Interfaces;
+using FKala.TestConsole.KalaQl.Windowing;
 using FKala.TestConsole.Logic;
 using FKala.TestConsole.Model;
 using Newtonsoft.Json;
@@ -26,7 +27,7 @@ namespace FKala.TestConsole
             Task.Run(() => FlushBuffersPeriodically());
         }
 
-        public IEnumerable<DataPoint> ReadData(string measurement, DateTime startTime, DateTime endTime)
+        public IEnumerable<DataPoint> ReadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution UNSUSED_cacheResolution)
         {
             //var results = new List<DataPoint>();
 

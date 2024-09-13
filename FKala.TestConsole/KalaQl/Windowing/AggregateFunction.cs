@@ -2,6 +2,7 @@
 {
     public enum AggregateFunction
     {
+        None,
         Avg,
         First,
         Last,

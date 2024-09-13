@@ -14,9 +14,10 @@ builder.Services.AddControllers(
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var dataStorage = builder.Configuration["DataStorage"] ?? Path.Combine(".", "fkala_data");
-string dataPath = Path.Combine(dataStorage, "data");// "C:\\git\\FKALA\\FKala.TestConsole\\bin\\Debug\\net8.0\\data";
-builder.Services.AddSingleton<IDataLayer>(new DataLayer_Readable_V1(dataPath));
+var dataStorage = builder.Configuration["DataStorage"] ?? "C:\\git\\FKALA\\DataStore";
+string dataPath = Path.Combine(dataStorage, "data");
+string cachePath = Path.Combine(dataStorage, "cache");
+builder.Services.AddSingleton<IDataLayer>(new DataLayer_Readable_Caching_V1(dataPath, cachePath));
 
 var app = builder.Build();
 

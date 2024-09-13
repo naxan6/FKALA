@@ -340,3 +340,5 @@ ASALocalRun/
 # Local developer settings
 **/appsettings.Development.json
 
+/DataStore
+/kala_v01.tar

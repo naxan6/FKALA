@@ -1,5 +1,6 @@
 ﻿using FKala.TestConsole.Interfaces;
 using FKala.TestConsole.KalaQl.Windowing;
+using FKala.TestConsole.Model;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -79,7 +80,7 @@ namespace FKala.TestConsole.KalaQl
 
             string pattern = @"(?<element>[^\s""]+)|\""(?<quotedElement>[^""]*)\""";
             var matches = Regex.Matches(line, pattern);
-           
+
 
             List<string> fields = new List<string>();
             int pos = 0;
@@ -105,7 +106,8 @@ namespace FKala.TestConsole.KalaQl
             switch (verb)
             {
                 case "Load":
-                    return new Op_BaseQuery(fields[1].Trim(':'), fields[2], ParseDateTime(fields[3]), ParseDateTime(fields[4]));
+                    if (fields.Count < 6) throw new Exception("6 Parameters needed. Example: Load NAME: mesaurename 0001-01-01T00:00:00 9999-12-31T00:00:00 NoCache");
+                    return new Op_BaseQuery(fields[1].Trim(':'), fields[2], ParseDateTime(fields[3]), ParseDateTime(fields[4]), ParseCacheResolution(fields[5]));
                 case "Aggr":
                     return new Op_Aggregate(fields[1].Trim(':'), fields[2], ParseWindow(fields[3]), ParseAggregate(fields[4]), ParseEmptyWindows(fields.Count > 5 ? fields[5] : ""));
                 case "Expr":
@@ -115,6 +117,38 @@ namespace FKala.TestConsole.KalaQl
                 default:
                     throw new Exception($"Unkown Verb <{verb}>");
             }
+        }
+
+        private CacheResolution ParseCacheResolution(string v)
+        {
+            v = v.Trim();
+
+            var parts = v.Split('_');
+            
+            Resolution? resolution = ParseResolution(parts[0]);
+            if (resolution != null)
+            {
+                var aggregate = ParseAggregate(parts[1]);
+                var forceRebuild = parts.Length > 2 && parts[2].ToUpper().Contains("REBUILD");
+                return new CacheResolution() { Resolution = resolution.Value, AggregateFunction = aggregate, ForceRebuild = forceRebuild };
+            }
+            else
+            {
+                return PredefinedCacheResolutions.NoCache;
+            }
+        }
+
+        private Resolution? ParseResolution(string v)
+        {
+            if (v.ToUpper() == "MINUTELY")
+            {
+                return Resolution.Minutely;
+            }
+            else if (v.ToUpper() == "HOURLY")
+            {
+                return Resolution.Hourly;
+            }
+            return null;
         }
 
         private bool ParseEmptyWindows(string v)
@@ -133,7 +167,7 @@ namespace FKala.TestConsole.KalaQl
             {
                 case "CombinedResultset":
                 case "Table":
-                    return PublishMode.CombinedResultset;                
+                    return PublishMode.CombinedResultset;
                 default:
                     return PublishMode.MultipleResultsets;
             }
@@ -194,12 +228,12 @@ namespace FKala.TestConsole.KalaQl
                     if (int.TryParse(v, out int vint))
                     {
                         timespan = TimeSpan.FromMilliseconds(vint);
-                    } 
+                    }
                     else
                     {
                         timespan = TimeSpan.Parse(v);
                     }
-                    
+
                     return new Window() { Mode = WindowMode.FixedIntervall, Interval = timespan };
 
             }

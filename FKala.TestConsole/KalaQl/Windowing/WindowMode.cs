@@ -2,7 +2,8 @@
 {
     public enum WindowMode
     {
-        FixedIntervall,        
+        FixedIntervall,
+        Aligned1Minute,
         Aligned5Minutes,
         Aligned15Minutes,
         AlignedHour,
