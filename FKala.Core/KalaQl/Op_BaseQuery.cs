@@ -18,7 +18,7 @@ namespace FKala.TestConsole.KalaQl
         public CacheResolution CacheResolution { get; }
         public bool NewestOnly { get; }
 
-        public Op_BaseQuery(string name, string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly = true)
+        public Op_BaseQuery(string name, string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly = false)
         {
             this.Name = name;
             this.Measurement = measurement;
