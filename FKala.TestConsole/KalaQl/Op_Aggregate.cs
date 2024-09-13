@@ -53,7 +53,7 @@ namespace FKala.TestConsole.KalaQl
 
             var dataPointsEnumerator = input.Resultset.OrderBy(dp => dp.Time).GetEnumerator();
             var currentDataPoint = new DataPoint() { Time = Window.StartTime };
-            var currentAggregator = new StreamingAggregator(AggregateFunc);
+            var currentAggregator = new StreamingAggregator(AggregateFunc, Window, 0);
 
             var results = new List<DataPoint>();
 
@@ -62,7 +62,7 @@ namespace FKala.TestConsole.KalaQl
                 var c = dataPointsEnumerator.Current;
                 if (Window.IsInWindow(c.Time))
                 {
-                    currentAggregator.AddValue(c.Value);
+                    currentAggregator.AddValue(c.Time, c.Value);
                 }
                 else if (Window.DateTimeIsBeforeWindow(c.Time))
                 {
@@ -78,10 +78,10 @@ namespace FKala.TestConsole.KalaQl
                         Window.Next();
 
                         currentDataPoint = new DataPoint() { Time = Window.StartTime };
-                        currentAggregator = new StreamingAggregator(AggregateFunc);
+                        currentAggregator = new StreamingAggregator(AggregateFunc, Window, currentAggregator.LastAggregatedValue);
                         if (Window.IsInWindow(c.Time))
                         {
-                            currentAggregator.AddValue(c.Value);
+                            currentAggregator.AddValue(c.Time, c.Value);
                         }
                     }
                 }
@@ -108,7 +108,7 @@ namespace FKala.TestConsole.KalaQl
                 Window.Next();
 
                 currentDataPoint = new DataPoint() { Time = Window.StartTime };
-                currentAggregator = new StreamingAggregator(AggregateFunc);
+                currentAggregator = new StreamingAggregator(AggregateFunc, Window, currentAggregator.LastAggregatedValue);
                 currentDataPoint.Value = currentAggregator.GetAggregatedValue();
                 if (EmptyWindows || currentDataPoint.Value != null) yield return currentDataPoint;
             }

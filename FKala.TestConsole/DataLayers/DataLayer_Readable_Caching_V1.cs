@@ -215,8 +215,8 @@ namespace FKala.TestConsole
         {
             if (!File.Exists(yearFilePath)) yield break;
             int fileyear = year;
-            var _fs = new FileStream(yearFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            var sr = new StreamReader(_fs, Encoding.UTF8, false, 16384);
+            using var _fs = new FileStream(yearFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var sr = new StreamReader(_fs, Encoding.UTF8, false, 16384);
             string? line;
             while ((line = sr.ReadLine()) != null)
             {
@@ -299,8 +299,8 @@ namespace FKala.TestConsole
                             int filemonth = int.Parse(dateSpan.Slice(5, 2));
                             int fileday = int.Parse(dateSpan.Slice(8, 2));
 
-                            var _fs = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                            var sr = new StreamReader(_fs, Encoding.UTF8, false, 16384);
+                            using var _fs = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                            using var sr = new StreamReader(_fs, Encoding.UTF8, false, 16384);
                             string? line;
                             while ((line = sr.ReadLine()) != null)
                             {

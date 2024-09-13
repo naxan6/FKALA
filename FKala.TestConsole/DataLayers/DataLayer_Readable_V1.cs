@@ -62,7 +62,7 @@ namespace FKala.TestConsole
                                 int fileday = int.Parse(dateSpan.Slice(8, 2));
 
                                 var _fs = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                                var sr = new StreamReader(_fs, Encoding.UTF8, false, 16384);
+                                using var sr = new StreamReader(_fs, Encoding.UTF8, false, 16384);
                                 string? line;
                                 while ((line = sr.ReadLine()) != null)
                                 {

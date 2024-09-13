@@ -6,6 +6,9 @@ View e.g. in https://dillinger.io/
 
 # Kala TQL - Kala Time Query Language
 
+## Build
+C:\git\FKALA> docker build . --progress=plain --no-cache
+
 ## /api/Insert
 - PUT
 - Body ```text/plain```
@@ -85,6 +88,24 @@ Aggregates Data.
   Can  be any available streamable aggregate:
   ```Avg```, ```First```, ```Last```, ```Min```, ```Max```,```Count```, ```Sum```
 - [EmptyWindows] - optional, if set/added, it generates empty windows (if no datapoint is available for a window in the Source). "empty window" means: the windows value is null.
+
+#### Aggregate-Function
+- ```Avg``` - takes the sum of all values within a window and divides them by the count of the values (mean)
+- ```WAvg``` - takes the sum of all values times ticks within a window and divides them by the total ticks (time-weighted mean)
+  Expected to be more stable over multiple aggregations. Also takes the previous' windows last value into account until the first value in the current window (not for the very first window!).
+  Example: 
+    - Say you have a window of length 10 seconds. 
+    - At time 0s, Value 5 is valid
+    - At time 9s, Value 20 is valid
+    - Avg would give you ```(5+20)/2 = 12.5```
+    - WAvg would give you ```((5*9)+(1*20))/10 = 6.5``` - so WAvg takes into account that 5 was valid for much longer, which may be worthy in some cases (and bad in others).
+- ```First``` - takes the first value in a window
+- ```Last``` - takes the last value in a window
+- ```Min``` - takes the minimum value in the window
+- ```Max``` - takes the maximum value in the window
+- ```Count``` - counts the values in a window
+- ```Sum``` - sums all the values in a window
+
 
 #### Examples
 - ```Aggr SOC: rSOC Aligned_1Month Avg``` - the first windows starts at 00:00 of the first day of the month of the first datapoint in the source. Windowsize is 1 Month, so each window/month gets assigned the average value found within the month.

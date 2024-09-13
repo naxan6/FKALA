@@ -29,18 +29,23 @@ namespace FKala.TestConsole.KalaQl
 
         public override void Execute(KalaQlContext context)
         {
+            var resultsets = context.IntermediateResults
+                        .Where(x => NamesToPublish.Any(ntp => ntp == x.Name))
+                        .OrderBy(n => NamesToPublish.IndexOf(n.Name)) // Ausgabereihenfolge so sortieren wie vorgegeben
+                        .ToList();
+
             if (PublishMode == PublishMode.MultipleResultsets)
             {
                 context.Result = new KalaResult()
                 {
                     Context = context,
-                    ResultSets = context.IntermediateResults.Where(x => NamesToPublish.Any(ntp => ntp == x.Name)).ToList()
+                    ResultSets = resultsets
                 };
                 hasExecuted = true;
             }
             else if (PublishMode == PublishMode.CombinedResultset)
             {
-                var synced = DatasetsCombiner.CombineSynchronizedResults(context.IntermediateResults.Where(x => NamesToPublish.Any(ntp => ntp == x.Name)).ToList());
+                var synced = DatasetsCombiner.CombineSynchronizedResults(resultsets);
 
                 List<ExpandoObject> resultRows = new List<ExpandoObject>();
                 foreach (var syncedResult in synced)

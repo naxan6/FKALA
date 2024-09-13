@@ -1,7 +1,9 @@
 ﻿using FKala.TestConsole.KalaQl.Windowing;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -10,48 +12,47 @@ namespace FKala.TestConsole.Logic
 
     public class StreamingAggregator
     {
-        private string aggregationFunction;
-        decimal? aggregatedValue = null;
+        private AggregateFunction AggregationFunction { get; set; }
+        private decimal? aggregatedValue { get; set; } = null;
+        private int _count { get; set; }
 
-        private int _count;
+        private decimal previousTicks { get; set; }
+        private decimal? LastValuePreviousWindow { get; set; }
+        private decimal durationTickSum { get; set; }
 
-        public StreamingAggregator(string aggregationFunction)
+        public decimal? LastAggregatedValue { get; private set; }
+        public Window Window { get; private set; }
+
+        public StreamingAggregator(AggregateFunction aggregationFunction, Window window, decimal? lastValuePreviousWindow)
         {
-            this.aggregationFunction = aggregationFunction;
+            this.AggregationFunction = aggregationFunction;
+            this.Window = window;
 
-            InitAggregatedValue(aggregationFunction);
-            _count = 0;
-        }
-
-        public StreamingAggregator(AggregateFunction aggregationFunction)
-        {
-            this.aggregationFunction = aggregationFunction.ToString();
-
-            InitAggregatedValue(this.aggregationFunction);
-            _count = 0;
-        }
-
-        private void InitAggregatedValue(string aggregationFunction)
-        {
-            switch (aggregationFunction.ToUpper())
+            switch (AggregationFunction)
             {
-                
-                case "FIRST":
-                case "LAST":
-                case "MIN":
-                case "MAX":
-                case "SUM":
-                case "AVG":
-                case "MEAN":
+
+                case AggregateFunction.First:
+                case AggregateFunction.Last:
+                case AggregateFunction.Min:
+                case AggregateFunction.Max:
+                case AggregateFunction.Sum:
                     aggregatedValue = null;
                     break;
+                case AggregateFunction.Avg:
+                    _count = 0;
+                    aggregatedValue = null;
+                    break;
+                case AggregateFunction.WAvg:
+                    aggregatedValue = null;
+                    previousTicks = window.StartTime.Ticks;
+                    this.LastAggregatedValue = lastValuePreviousWindow;
+                    break;
 
-                
-                case "COUNT":
-                
+                case AggregateFunction.Count:
+
                     aggregatedValue = 0;
                     break;
-                
+
                 default:
                     throw new ArgumentException("Ungültige Aggregationsfunktion");
             }
@@ -68,41 +69,69 @@ namespace FKala.TestConsole.Logic
             aggregatedValue += (value - aggregatedValue) / _count;
         }
 
+        private void AddWeightedMeanValue(DateTime time, decimal? toIntegrate)
+        {
+            if (toIntegrate == null)
+            {
+                return;
+            }
+            decimal durationTicks = time.Ticks - previousTicks;
+            decimal totalticks = durationTickSum + durationTicks;
+            if (totalticks != 0)
+            {
+                aggregatedValue = aggregatedValue ?? 0;
+                aggregatedValue = ((durationTicks * LastAggregatedValue) + (durationTickSum * aggregatedValue)) / (durationTickSum + durationTicks);
+            }
+
+            previousTicks = time.Ticks;
+            durationTickSum += durationTicks;            
+            LastAggregatedValue = toIntegrate;
+        }
+
         public decimal? GetAggregatedValue()
         {
+            switch (AggregationFunction)
+            {
+                case AggregateFunction.WAvg:
+                    AddWeightedMeanValue(this.Window.EndTime, LastAggregatedValue);
+                    break;
+            }
             return aggregatedValue;
         }
 
-        public void AddValue(decimal? toIntegrate)
+        public void AddValue(DateTime time, decimal? toIntegrate)
         {
-            
-            switch (aggregationFunction.ToUpper())
+            switch (AggregationFunction)
             {
-                case "AVG":
-                case "MEAN":
+                case AggregateFunction.Avg:
                     AddMeanValue(toIntegrate);
                     break;
-                case "FIRST":
+                case AggregateFunction.WAvg:
+                    AddWeightedMeanValue(time, toIntegrate);                    
+                    break;
+                case AggregateFunction.First:
                     aggregatedValue = aggregatedValue ?? toIntegrate;
                     break;
-                case "LAST":
+                case AggregateFunction.Last:
                     aggregatedValue = toIntegrate;
                     break;
-                case "MIN":
+                case AggregateFunction.Min:
                     aggregatedValue = aggregatedValue != null && toIntegrate != null ? decimal.Min(aggregatedValue.Value, toIntegrate.Value) : toIntegrate;
                     break;
-                case "MAX":
+                case AggregateFunction.Max:
                     aggregatedValue = aggregatedValue != null && toIntegrate != null ? decimal.Max(aggregatedValue.Value, toIntegrate.Value) : toIntegrate;
                     break;
-                case "COUNT":
+                case AggregateFunction.Count:
                     aggregatedValue = aggregatedValue != null ? aggregatedValue.Value + 1 : 1;
                     break;
-                case "SUM":
-                    aggregatedValue = (toIntegrate ==  null) ? aggregatedValue : aggregatedValue + toIntegrate;
+                case AggregateFunction.Sum:
+                    aggregatedValue = (toIntegrate == null) ? aggregatedValue : aggregatedValue + toIntegrate;
                     break;
                 default:
                     throw new ArgumentException("Ungültige Aggregationsfunktion");
             }
         }
+
+
     }
 }

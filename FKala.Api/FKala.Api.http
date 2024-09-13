@@ -43,3 +43,21 @@ Content-Type: text/plain
 
 Load rSOC: Sofar/measure/batteryInput1/0x608_SOC_Bat1[%] 0001-01-01T00:00:00 9999-12-31T00:00:00 Minutely_Avg_Rebuild
 #Load rSOH: Sofar/measure/batteryInput1/0x609_SOH_Bat1[%] 0001-01-01T00:00:00 9999-12-31T00:00:00 Minutely_Avg_Rebuild
+
+### Beispiel: time-weighted Average
+
+POST {{FKala.Api_HostAddress}}/api/Query
+Accept: application/json
+Content-Type: text/plain
+
+Load rSOC: Sofar/measure/batteryInput1/0x608_SOC_Bat1[%] 2024-04-01T00:00:00Z 2024-09-01T00:00:00Z Minutely_WAvg
+Aggr SOCavgh: rSOC 01:26:00 Avg
+Aggr SOCwavgh: rSOC 01:26:00 WAvg
+
+Aggr SOCavgM1: rSOC Aligned_1Month Avg
+Aggr SOCavgM2: SOCavgh Aligned_1Month Avg
+
+Aggr SOCwavgM1: rSOC Aligned_1Month WAvg
+Aggr SOCwavgM2: SOCwavgh Aligned_1Month WAvg
+
+Publ "SOCavgM1,SOCavgM2,SOCwavgM1,SOCwavgM2" Table

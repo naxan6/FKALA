@@ -4,6 +4,7 @@
     {
         None,
         Avg,
+        WAvg,
         First,
         Last,
         Min,

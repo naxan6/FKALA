@@ -180,7 +180,9 @@ namespace FKala.TestConsole.KalaQl
                 "yyyy-MM-ddTHH:mm:ss.ffffff",
                 "yyyy-MM-ddTHH:mm:ss.fffZ",
                 "yyyy-MM-ddTHH:mm:ss.fff",
+                "yyyy-MM-ddTHH:mm:ssZ",
                 "yyyy-MM-ddTHH:mm:ss",
+                "yyyy-MM-ddZ",
                 "yyyy-MM-dd"
             };
             var ci = CultureInfo.InvariantCulture;
@@ -189,7 +191,7 @@ namespace FKala.TestConsole.KalaQl
             foreach (var format in dateFormats)
             {
                 if (DateTime.TryParseExact(v, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedDate))
-                {
+                {                    
                     return parsedDate.ToUniversalTime();
                 }
             }
@@ -245,7 +247,10 @@ namespace FKala.TestConsole.KalaQl
             switch (v)
             {
                 case "AVG":
+                case "MEAN":
                     return AggregateFunction.Avg;
+                case "WAVG":
+                    return AggregateFunction.WAvg;
                 case "FIRST":
                     return AggregateFunction.First;
                 case "LAST":

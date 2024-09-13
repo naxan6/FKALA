@@ -14,7 +14,7 @@ builder.Services.AddControllers(
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var dataStorage = builder.Configuration["DataStorage"] ?? "C:\\git\\FKALA\\DataStore";
+var dataStorage = builder.Configuration["DataStorage"] ?? "C:\\FKALA\\DataStore";
 string dataPath = Path.Combine(dataStorage, "data");
 string cachePath = Path.Combine(dataStorage, "cache");
 builder.Services.AddSingleton<IDataLayer>(new DataLayer_Readable_Caching_V1(dataPath, cachePath));
