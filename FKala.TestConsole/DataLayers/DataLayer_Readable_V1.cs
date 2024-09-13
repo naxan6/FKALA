@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using FKala.TestConsole.DataLayers;
 using FKala.TestConsole.Interfaces;
 using FKala.TestConsole.Logic;
 using FKala.TestConsole.Model;

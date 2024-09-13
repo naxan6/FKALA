@@ -1,6 +1,5 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using FKala.TestConsole;
-using FKala.TestConsole.DataLayers;
 using FKala.TestConsole.Migration;
 using System.Diagnostics.Metrics;
 using System.Text;
@@ -37,12 +36,12 @@ using var dl = new DataLayer_Readable_V1();
 //Console.WriteLine(dl.SerializeDatapoints(result));
 
 //ABFRAGE 1a
-var ql = new KalaQlHardcoded(dl);
-//var result = ql.Query("Sofar$measure$PVInput1$0x586_Leistung_PV1[kW]", new DateTime(2023, 08, 01, 0, 0, 0), new DateTime(2024, 08, 01, 0, 0, 0));
-var result = ql.Aggregate("Sofar$measure$PVInput1$0x586_Leistung_PV1[kW]", new DateTime(2023, 08, 01, 0, 0, 0), new DateTime(2024, 08, 01, 0, 0, 0), new TimeSpan(24, 00, 0), "MEAN", true, 0);
-var list = result.ToList(); // Daten laden
-var jsonResult = ql.SerializeDatapoints(list); // JSON serialize
-Console.WriteLine(jsonResult);
+//var ql = new KalaQlHardcoded(dl);
+////var result = ql.Query("Sofar$measure$PVInput1$0x586_Leistung_PV1[kW]", new DateTime(2023, 08, 01, 0, 0, 0), new DateTime(2024, 08, 01, 0, 0, 0));
+//var result = ql.Aggregate("Sofar$measure$PVInput1$0x586_Leistung_PV1[kW]", new DateTime(2023, 08, 01, 0, 0, 0), new DateTime(2024, 08, 01, 0, 0, 0), new TimeSpan(24, 00, 0), "MEAN", true, 0);
+//var list = result.ToList(); // Daten laden
+//var jsonResult = ql.SerializeDatapoints(list); // JSON serialize
+//Console.WriteLine(jsonResult);
 
 
 //result = dl.AddAggregatedMeasurements("/Cars/Tesla/nxCar3/SOC", "/Cars/Benz/eqa/SOC", new DateTime(2024, 09, 10, 9, 0, 0), new DateTime(2024, 09, 10, 9, 45, 0), new TimeSpan(0, 15, 0), "AVG");

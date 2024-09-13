@@ -2,7 +2,6 @@
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
-using FKala.TestConsole.DataLayers;
 using FKala.TestConsole.Interfaces;
 
 namespace FKala.TestConsole.Migration
