@@ -53,11 +53,13 @@ app.MapPost("/qi", async (IConfiguration config, HttpContext context) =>
 .WithOpenApi(op => 
 {
     var example = @"
-Load Last: watt/haus/0 2024-06-01T00:00:00 2024-09-01T00:00:00 
-Aggr StromVerbrauch_WH: Last Aligned_1Hour Avg  
+Load Last: watt/haus/0 2024-06-01T00:00:00 2024-09-01T00:00:00
+Aggr StromVerbrauch_WH: Last Aligned_1Hour Avg EmptyWindows
 Expr StromVerbrauch_KWH: ""(StromVerbrauch_WH.Value) / 1000""
-Aggr StromVerbrauch_Month: StromVerbrauch_KWH Aligned_1Month Sum   
-Publ StromVerbrauch_Month Default";
+Aggr StromVerbrauch_Month: StromVerbrauch_KWH Aligned_1Month Sum EmptyWindows
+Expr StromVerbrauch_Month_0: ""StromVerbrauch_Month.Value ?? 1""
+Publ StromVerbrauch_Month_0 Default
+";
     // Configure Swagger to show the request body as text input
     op.RequestBody = new Microsoft.OpenApi.Models.OpenApiRequestBody
     {

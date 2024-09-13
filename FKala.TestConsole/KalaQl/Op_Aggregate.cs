@@ -13,12 +13,15 @@ namespace FKala.TestConsole.KalaQl
         public string InputDataSetName { get; }
         public Window Window { get; }
         public AggregateFunction AggregateFunc { get; }
-        public Op_Aggregate(string name, string inputDataSet, Window window, AggregateFunction aggregate)
+        public bool EmptyWindows { get; }
+
+        public Op_Aggregate(string name, string inputDataSet, Window window, AggregateFunction aggregate, bool emptyWindows)
         {
             Name = name;
             InputDataSetName = inputDataSet;
             Window = window;
             AggregateFunc = aggregate;
+            this.EmptyWindows = emptyWindows;
         }
 
         public override bool CanExecute(KalaQlContext context)
@@ -53,7 +56,7 @@ namespace FKala.TestConsole.KalaQl
                 var c = dataPointsEnumerator.Current;
                 if (Window.IsInWindow(c.Time))
                 {
-                    currentAggregator.AddValue(c.Value.Value);
+                    currentAggregator.AddValue(c.Value);
                 }
                 else if (Window.DateTimeIsBeforeWindow(c.Time))
                 {
@@ -64,7 +67,7 @@ namespace FKala.TestConsole.KalaQl
                     while (Window.DateTimeIsAfterWindow(c.Time))
                     {
                         currentDataPoint.Value = currentAggregator.GetAggregatedValue();
-                        yield return currentDataPoint;
+                        if (EmptyWindows || currentDataPoint.Value != null) yield return currentDataPoint;
 
                         Window.Next();
 
@@ -72,7 +75,7 @@ namespace FKala.TestConsole.KalaQl
                         currentAggregator = new StreamingAggregator(AggregateFunc);
                         if (Window.IsInWindow(c.Time))
                         {
-                            currentAggregator.AddValue(c.Value.Value);
+                            currentAggregator.AddValue(c.Value);
                         }
                     }
                 }
@@ -92,7 +95,7 @@ namespace FKala.TestConsole.KalaQl
             }
             // finales Interval hinzufügen
             currentDataPoint.Value = currentAggregator.GetAggregatedValue();
-            yield return currentDataPoint;
+            if (EmptyWindows || currentDataPoint.Value != null) yield return currentDataPoint;
 
             while (Window.EndTime < input.EndTime)
             {
@@ -101,7 +104,7 @@ namespace FKala.TestConsole.KalaQl
                 currentDataPoint = new DataPoint() { Time = Window.StartTime };
                 currentAggregator = new StreamingAggregator(AggregateFunc);
                 currentDataPoint.Value = currentAggregator.GetAggregatedValue();
-                yield return currentDataPoint;
+                if (EmptyWindows || currentDataPoint.Value != null) yield return currentDataPoint;
             }
         }
     }

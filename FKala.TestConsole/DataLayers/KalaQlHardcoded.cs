@@ -70,7 +70,7 @@ namespace FKala.TestConsole.DataLayers
                 var c = dataPointsEnumerator.Current;
                 if (c.Time >= currentIntervalStart && c.Time < currentIntervalEnd)
                 {
-                    currentAggregator.AddValue(c.Value.Value);
+                    currentAggregator.AddValue(c.Value);
                 }
                 else if (c.Time < currentIntervalStart)
                 {

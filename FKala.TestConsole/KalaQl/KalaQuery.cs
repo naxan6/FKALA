@@ -107,7 +107,7 @@ namespace FKala.TestConsole.KalaQl
                 case "Load":
                     return new Op_BaseQuery(fields[1].Trim(':'), fields[2], ParseDateTime(fields[3]), ParseDateTime(fields[4]));
                 case "Aggr":
-                    return new Op_Aggregate(fields[1].Trim(':'), fields[2], ParseWindow(fields[3]), ParseAggregate(fields[4]));
+                    return new Op_Aggregate(fields[1].Trim(':'), fields[2], ParseWindow(fields[3]), ParseAggregate(fields[4]), ParseEmptyWindows(fields.Count > 5 ? fields[5] : ""));
                 case "Expr":
                     return new Op_Expresso(fields[1].Trim(':'), fields[2]);
                 case "Publ":
@@ -115,6 +115,15 @@ namespace FKala.TestConsole.KalaQl
                 default:
                     throw new Exception($"Unkown Verb <{verb}>");
             }
+        }
+
+        private bool ParseEmptyWindows(string v)
+        {
+            if (v.Contains("EmptyWindows"))
+            {
+                return true;
+            }
+            return false;
         }
 
         private PublishMode ParsePublishMode(string v)

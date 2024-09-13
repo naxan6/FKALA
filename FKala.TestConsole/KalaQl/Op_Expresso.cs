@@ -52,7 +52,7 @@ namespace FKala.TestConsole.KalaQl
                 {
                     Interpreter.SetVariable(item.ResultName, item.DataPoint);
                 }
-                decimal expressoResultValue = (decimal)Interpreter.Eval(Expresso);
+                decimal? expressoResultValue = (decimal?)Interpreter.Eval(Expresso);
                 var currentDataPoint = new DataPoint()
                 {
                     Time = synchronizedItems.First().DataPoint.Time,

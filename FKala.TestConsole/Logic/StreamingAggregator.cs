@@ -40,13 +40,15 @@ namespace FKala.TestConsole.Logic
                 case "LAST":
                 case "MIN":
                 case "MAX":
+                case "SUM":
+                case "AVG":
+                case "MEAN":
                     aggregatedValue = null;
                     break;
 
-                case "AVG":
-                case "MEAN":
+                
                 case "COUNT":
-                case "SUM":
+                
                     aggregatedValue = 0;
                     break;
                 
@@ -55,9 +57,14 @@ namespace FKala.TestConsole.Logic
             }
         }
 
-        private void AddMeanValue(decimal value)
+        private void AddMeanValue(decimal? value)
         {
+            if (value == null)
+            {
+                return;
+            }
             _count++;
+            aggregatedValue = aggregatedValue ?? 0;
             aggregatedValue += (value - aggregatedValue) / _count;
         }
 
@@ -66,7 +73,7 @@ namespace FKala.TestConsole.Logic
             return aggregatedValue;
         }
 
-        public void AddValue(decimal toIntegrate)
+        public void AddValue(decimal? toIntegrate)
         {
             
             switch (aggregationFunction.ToUpper())
@@ -82,16 +89,16 @@ namespace FKala.TestConsole.Logic
                     aggregatedValue = toIntegrate;
                     break;
                 case "MIN":
-                    aggregatedValue = aggregatedValue != null ? decimal.Min(aggregatedValue.Value, toIntegrate) : toIntegrate;
+                    aggregatedValue = aggregatedValue != null && toIntegrate != null ? decimal.Min(aggregatedValue.Value, toIntegrate.Value) : toIntegrate;
                     break;
                 case "MAX":
-                    aggregatedValue = aggregatedValue != null ? decimal.Max(aggregatedValue.Value, toIntegrate) : toIntegrate;
+                    aggregatedValue = aggregatedValue != null && toIntegrate != null ? decimal.Max(aggregatedValue.Value, toIntegrate.Value) : toIntegrate;
                     break;
                 case "COUNT":
                     aggregatedValue = aggregatedValue != null ? aggregatedValue.Value + 1 : 1;
                     break;
                 case "SUM":
-                    aggregatedValue = aggregatedValue + toIntegrate;
+                    aggregatedValue = (toIntegrate ==  null) ? aggregatedValue : aggregatedValue + toIntegrate;
                     break;
                 default:
                     throw new ArgumentException("Ungültige Aggregationsfunktion");

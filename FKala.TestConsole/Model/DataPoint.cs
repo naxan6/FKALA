@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FKala.TestConsole.Model
 {
-    public struct DataPoint
+    public class DataPoint
     {
         public DateTime Time { get; set; }
         public decimal? Value { get; set; }

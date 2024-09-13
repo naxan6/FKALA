@@ -2,6 +2,7 @@
 using FKala.TestConsole.Interfaces;
 using FKala.TestConsole.KalaQl;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace FKala.Api.Controller
 {
@@ -32,7 +33,13 @@ namespace FKala.Api.Controller
 
         // GET api/string
         [HttpPost]
-        [Consumes("application/json", "text/plain")]
+        //[Consumes("application/json", "text/plain")]
+        [Consumes("text/plain")]
+        [SwaggerOperation(
+            Summary = "Create a new weather forecast",
+            Description = "Creates a new weather forecast and returns the created forecast."
+        )]
+        //[SwaggerRequestBody("Weather forecast data", Required = true)]
         public IActionResult QueryPost([FromBody] string input)
         {
             if (string.IsNullOrEmpty(input))

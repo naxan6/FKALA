@@ -53,8 +53,8 @@ namespace FKala.Unittests
             var q = KalaQuery.Start()
                 .Add(new Op_BaseQuery("PV1", "Sofar/measure/PVInput1/0x586_Leistung_PV1[kW]", startTime, endTime))
                 .Add(new Op_BaseQuery("PV2", "Sofar/measure/PVInput1/0x589_Leistung_PV2[kW]", startTime, endTime))
-                .Add(new Op_Aggregate("PV1_Windowed", "PV1", Window.Aligned_1Day, AggregateFunction.Avg))
-                .Add(new Op_Aggregate("PV2_Windowed", "PV2", Window.Aligned_1Day, AggregateFunction.Avg))
+                .Add(new Op_Aggregate("PV1_Windowed", "PV1", Window.Aligned_1Day, AggregateFunction.Avg, true))
+                .Add(new Op_Aggregate("PV2_Windowed", "PV2", Window.Aligned_1Day, AggregateFunction.Avg, true))
                 .Add(new Op_Publish(new List<string>() { "PV1_Windowed", "PV2_Windowed" }, PublishMode.MultipleResultsets));
 
             var result = q.Execute(dl);
@@ -82,7 +82,7 @@ namespace FKala.Unittests
 
             var q = KalaQuery.Start()
                 .Add(new Op_BaseQuery("PV1", "Sofar/measure/PVInput1/0x586_Leistung_PV1[kW]", startTime, endTime))                
-                .Add(new Op_Aggregate("PV1_Windowed", "PV1", Window.Aligned_1Day, AggregateFunction.First))                
+                .Add(new Op_Aggregate("PV1_Windowed", "PV1", Window.Aligned_1Day, AggregateFunction.First, true))
                 .Add(new Op_Publish(new List<string>() { "PV1_Windowed" }, PublishMode.MultipleResultsets));
 
             var result = q.Execute(dl);
@@ -146,8 +146,8 @@ namespace FKala.Unittests
             var q = KalaQuery.Start()
                 .Add(new Op_BaseQuery("PV1", "Sofar/measure/PVInput1/0x586_Leistung_PV1[kW]", startTime, endTime))
                 .Add(new Op_BaseQuery("PV2", "Sofar/measure/PVInput1/0x589_Leistung_PV2[kW]", startTime, endTime))
-                .Add(new Op_Aggregate("PV1_Windowed", "PV1", Window.Aligned_1Day, AggregateFunction.Avg))
-                .Add(new Op_Aggregate("PV2_Windowed", "PV2", Window.Aligned_1Day, AggregateFunction.Avg))
+                .Add(new Op_Aggregate("PV1_Windowed", "PV1", Window.Aligned_1Day, AggregateFunction.Avg, true))
+                .Add(new Op_Aggregate("PV2_Windowed", "PV2", Window.Aligned_1Day, AggregateFunction.Avg, true))
                 .Add(new Op_Expresso("PVSumInWatt", "(PV1_Windowed.Value + PV2_Windowed.Value) * 1000"))
                 .Add(new Op_Publish(new List<string>() { "PVSumInWatt", "PV1_Windowed", "PV2_Windowed" }, PublishMode.CombinedResultset));
 
