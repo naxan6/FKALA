@@ -56,18 +56,24 @@ namespace FKala.TestConsole
                                 var fn = Path.GetFileNameWithoutExtension(file);
                                 var datePart = fn.Substring(fn.Length - 10, 10);
                                 ReadOnlySpan<char> dateSpan = datePart.AsSpan();
-                                DateOnly dt = new DateOnly(int.Parse(dateSpan.Slice(0, 4)), int.Parse(dateSpan.Slice(5, 2)), int.Parse(dateSpan.Slice(8, 2)));
+                                // DateOnly dt = new DateOnly(int.Parse(dateSpan.Slice(0, 4)), int.Parse(dateSpan.Slice(5, 2)), int.Parse(dateSpan.Slice(8, 2)));
+                                int fileyear = int.Parse(dateSpan.Slice(0, 4));
+                                int filemonth = int.Parse(dateSpan.Slice(5, 2));
+                                int fileday = int.Parse(dateSpan.Slice(8, 2));
 
-                                var sr = new StreamReader(file, Encoding.UTF8, false, 16384);
+                                var _fs = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                                var sr = new StreamReader(_fs, Encoding.UTF8, false, 16384);
                                 string? line;
                                 while ((line = sr.ReadLine()) != null)
                                 {
                                     ReadOnlySpan<char> span = line.AsSpan();
 
                                     //var time = span.Slice(0, 16).ToString();
-                                    var tt = new TimeOnly(int.Parse(span.Slice(0, 2)), int.Parse(span.Slice(3, 2)), int.Parse(span.Slice(6, 2)));
+                                    //var tt = new TimeOnly(int.Parse(span.Slice(0, 2)), int.Parse(span.Slice(3, 2)), int.Parse(span.Slice(6, 2)));
 
-                                    var dateTime = new DateTime(dt, tt);
+                                    //var dateTime = new DateTime(dt, tt);
+                                    var dateTime = new DateTime(fileyear, filemonth, fileday, int.Parse(span.Slice(0, 2)), int.Parse(span.Slice(3, 2)), int.Parse(span.Slice(6, 2)), DateTimeKind.Utc);
+
                                     dateTime.AddTicks(int.Parse(span.Slice(9, 7)));
                                     span = span.Slice(17);
 
@@ -214,6 +220,7 @@ namespace FKala.TestConsole
                         _bufferedWriters.Remove(writer.Key, out var removed);
                     }
                 }
+                CreatedDirectories = new HashSet<string>();
             }
         }
 

@@ -10,13 +10,15 @@ namespace FKala.Unittests
     [TestClass]
     public class KalaQl
     {
+        string testdata = "C:\\git\\FKALA\\FKala.TestConsole\\bin\\Debug\\net8.0\\data";
+
         [TestMethod]
         public void KalaQl_2_Datasets()
         {
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
             sw.Start();
-            using var dl = new DataLayer_Readable_V1("E:\\git\\FKALA\\FKala.TestConsole\\bin\\Debug\\net8.0\\data");
+            using var dl = new DataLayer_Readable_V1(testdata);
 
             var startTime = new DateTime(2024, 07, 20, 0, 0, 0);
             var endTime = new DateTime(2024, 08, 01, 0, 0, 0);
@@ -43,7 +45,7 @@ namespace FKala.Unittests
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
             sw.Start();
-            using var dl = new DataLayer_Readable_V1("E:\\git\\FKALA\\FKala.TestConsole\\bin\\Debug\\net8.0\\data");
+            using var dl = new DataLayer_Readable_V1(testdata);
 
             var startTime = new DateTime(2024, 05, 01, 0, 0, 0);
             var endTime = new DateTime(2024, 06, 01, 0, 0, 0);
@@ -67,7 +69,33 @@ namespace FKala.Unittests
             Console.WriteLine(KalaJson.Serialize(result.ResultSets));// JSON serialize
         }
 
-       
+        [TestMethod]
+        public void KalaQl_2_Datasets_Aggregated_1y()
+        {
+            System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+
+            sw.Start();
+            using var dl = new DataLayer_Readable_V1(testdata);
+
+            var startTime = new DateTime(2023, 08, 01, 0, 0, 0);
+            var endTime = new DateTime(2024, 08, 01, 0, 0, 0);
+
+            var q = KalaQuery.Start()
+                .Add(new Op_BaseQuery("PV1", "Sofar/measure/PVInput1/0x586_Leistung_PV1[kW]", startTime, endTime))                
+                .Add(new Op_Aggregate("PV1_Windowed", "PV1", Window.Aligned_1Day, AggregateFunction.First))                
+                .Add(new Op_Publish(new List<string>() { "PV1_Windowed" }, PublishMode.MultipleResultsets));
+
+            var result = q.Execute(dl);
+
+
+            sw.Stop();
+            var ts = sw.Elapsed;
+            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}", ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds);
+            Console.WriteLine("Verstrichene Zeit: " + elapsedTime);
+
+            Assert.AreEqual(1, result?.ResultSets.Count);
+            Console.WriteLine(KalaJson.Serialize(result.ResultSets));// JSON serialize
+        }
 
         [TestMethod]
         public void KalaQl_Text_2_Datasets_Aggregated_Expresso()
@@ -75,7 +103,7 @@ namespace FKala.Unittests
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
             sw.Start();
-            using var dl = new DataLayer_Readable_V1("C:\\git\\FKALA\\FKala.TestConsole\\bin\\Debug\\net8.0\\data");
+            using var dl = new DataLayer_Readable_V1(testdata);
 
             var startTime = new DateTime(2024, 06, 01, 0, 0, 0);
             var endTime = new DateTime(2024, 08, 01, 0, 0, 0);
@@ -105,12 +133,12 @@ namespace FKala.Unittests
         }
 
         [TestMethod]
-        public void KalaQl_2_Datasets_Aggregated_Expresso()
+        public void BUGTEST_KalaQl_2_Datasets_Aggregated_Expresso()
         {
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
             sw.Start();
-            using var dl = new DataLayer_Readable_V1("C:\\git\\FKALA\\FKala.TestConsole\\bin\\Debug\\net8.0\\data");
+            using var dl = new DataLayer_Readable_V1(testdata);
 
             var startTime = new DateTime(2023, 08, 01, 0, 0, 0);
             var endTime = new DateTime(2024, 08, 01, 0, 0, 0);
@@ -135,12 +163,12 @@ namespace FKala.Unittests
         }
 
         [TestMethod]
-        public void KalaQl_Text_2_Datasets_Aggregated_Expresso_Table()
+        public void BUGTEST_KalaQl_Text_2_Datasets_Aggregated_Expresso_Table()
         {
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
             sw.Start();
-            using var dl = new DataLayer_Readable_V1("C:\\git\\FKALA\\FKala.TestConsole\\bin\\Debug\\net8.0\\data");
+            using var dl = new DataLayer_Readable_V1(testdata);
 
             var q = KalaQuery.Start()
                 .FromQuery(@"
