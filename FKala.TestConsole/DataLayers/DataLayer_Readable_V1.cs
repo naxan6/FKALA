@@ -123,6 +123,7 @@ namespace FKala.TestConsole
                 // Parse the raw data
                 ReadOnlySpan<char> span = rawData.AsSpan();
 
+                // TODO: Bug spaces in path?
                 int index = span.IndexOf(' ');
                 var measurement = span.Slice(0, index).ToString();
                 measurement = PathSanitizer.SanitizePath(measurement);

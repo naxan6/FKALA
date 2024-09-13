@@ -1,0 +1,13 @@
+@FKALA_HostAddress = http://localhost:5017
+
+GET {{FKALA_HostAddress}}/weatherforecast/
+Accept: application/json
+Content-Type: text/plain
+
+Load Last: watt/haus/0 2024-06-01T00:00:00 2024-09-01T00:00:00 
+Aggr StromVerbrauch_WH: Last Aligned_1Hour Avg  
+Expr StromVerbrauch_KWH: "(StromVerbrauch_WH.Value) / 1000"
+Aggr StromVerbrauch_Month: StromVerbrauch_KWH Aligned_1Month Sum   
+Publ StromVerbrauch_Month Default   
+
+###
