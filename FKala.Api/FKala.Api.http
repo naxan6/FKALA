@@ -50,7 +50,7 @@ POST {{FKala.Api_HostAddress}}/api/Query
 Accept: application/json
 Content-Type: text/plain
 
-Load rSOC: Sofar/measure/batteryInput1/0x608_SOC_Bat1[%] 2024-04-01T00:00:00Z 2024-09-01T00:00:00Z NoCache
+Load rSOC: Sofar/measure/batteryInput1/0x608_SOC_Bat1[%] 2024-04-01T00:00:00Z 2024-09-01T00:00:00Z Auto(999999999999)_WAvg
 Aggr SOCavgh: rSOC 01:26:00 Avg
 Aggr SOCwavgh: rSOC 01:26:00 WAvg
 
