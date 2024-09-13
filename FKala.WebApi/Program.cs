@@ -26,7 +26,7 @@ if (app.Environment.IsDevelopment())
 ///     Publ StromVerbrauch_Month Default
 /// </summary>
 /// <value></value>
-app.MapPost("/qi", async (HttpContext context) =>
+app.MapPost("/qi", async (IConfiguration config, HttpContext context) =>
 {
     var reader = new StreamReader(context.Request.Body);
     var query = await reader.ReadToEndAsync();
@@ -38,7 +38,8 @@ app.MapPost("/qi", async (HttpContext context) =>
      Aggr StromVerbrauch_Month: StromVerbrauch_KWH Aligned_1Month Sum  
      Publ StromVerbrauch_Month Default
      */
-    using var dl = new DataLayer_Readable_V1("/Users/andreas.kellermann/Documents/private/fkala_data");
+    var dataStorage = config["DataStorage"] ??  Path.Combine(".", "fkala_data");
+    using var dl = new DataLayer_Readable_V1(dataStorage);
 
     var q = KalaQuery.Start().FromQuery(query);            
     var result = q.Execute(dl);
