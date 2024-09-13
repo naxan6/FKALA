@@ -59,7 +59,7 @@ jobs:
           file: ./Dockerfile
           push: true
           #tags: ${{ secrets.DOCKER_HUB_USERNAME }}/fkala:${{ date +%s }} , ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:latest
-          tags: ${{ steps.meta.outputs.tags }} , ${{ secrets.DOCKER_HUB_USERNAME }}/fkala:latest
+          tags: ${{ steps.meta.outputs.tags }},naxan6/fkala:latest
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Generate artifact attestation
