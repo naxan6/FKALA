@@ -48,6 +48,8 @@ jobs:
         uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
         with:
           images: naxan6/fkala
+          tags: |
+            type=raw,value={{date 'YYYYMMDDHHmmss'}}
 
       - name: Build and push Docker image
         id: push
@@ -56,8 +58,8 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/fkala:${{ date +%s }} , ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:latest
-          #tags: ${{ steps.meta.outputs.tags }},$(date +%s),latest
+          #tags: ${{ secrets.DOCKER_HUB_USERNAME }}/fkala:${{ date +%s }} , ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:latest
+          tags: ${{ steps.meta.outputs.tags }} , ${{ secrets.DOCKER_HUB_USERNAME }}/fkala:latest
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Generate artifact attestation
