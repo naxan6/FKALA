@@ -93,7 +93,11 @@ namespace FKala.TestConsole.Logic
             switch (AggregationFunction)
             {
                 case AggregateFunction.WAvg:
-                    AddWeightedMeanValue(this.Window.EndTime, LastAggregatedValue);
+                    // wenn wir mindestens einen Punkt im Fenster haben rechnen wir noch bis zum Ende des Fensters
+                    if (aggregatedValue != null) 
+                    {
+                        AddWeightedMeanValue(this.Window.EndTime, LastAggregatedValue);
+                    }
                     break;
             }
             return aggregatedValue;
