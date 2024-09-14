@@ -51,7 +51,8 @@ namespace FKala.TestConsole.KalaQl
         {
             Window.Init(input.StartTime);
 
-            var dataPointsEnumerator = input.Resultset.OrderBy(dp => dp.Time).GetEnumerator();
+            //var dataPointsEnumerator = input.Resultset.OrderBy(dp => dp.Time).GetEnumerator();
+            var dataPointsEnumerator = input.Resultset.GetEnumerator();
             var currentDataPoint = new DataPoint() { Time = Window.StartTime };
             var currentAggregator = new StreamingAggregator(AggregateFunc, Window, 0);
 
@@ -103,14 +104,17 @@ namespace FKala.TestConsole.KalaQl
             currentDataPoint.Value = currentAggregator.GetAggregatedValue();
             if (EmptyWindows || currentDataPoint.Value != null) yield return currentDataPoint;
 
-            while (Window.EndTime < input.EndTime)
+            if (EmptyWindows)
             {
-                Window.Next();
+                while (Window.EndTime < input.EndTime)
+                {
+                    Window.Next();
 
-                currentDataPoint = new DataPoint() { Time = Window.StartTime };
-                currentAggregator = new StreamingAggregator(AggregateFunc, Window, currentAggregator.LastAggregatedValue);
-                currentDataPoint.Value = currentAggregator.GetAggregatedValue();
-                if (EmptyWindows || currentDataPoint.Value != null) yield return currentDataPoint;
+                    currentDataPoint = new DataPoint() { Time = Window.StartTime };
+                    currentAggregator = new StreamingAggregator(AggregateFunc, Window, currentAggregator.LastAggregatedValue);
+                    currentDataPoint.Value = currentAggregator.GetAggregatedValue();
+                    if (EmptyWindows || currentDataPoint.Value != null) yield return currentDataPoint;
+                }
             }
         }
     }

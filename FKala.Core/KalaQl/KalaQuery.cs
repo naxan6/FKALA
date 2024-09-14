@@ -109,7 +109,7 @@ namespace FKala.TestConsole.KalaQl
                 case "Load":
                     if (fields[3] == "NewestOnly")
                     {
-                        return new Op_BaseQuery(fields[1].Trim(':'), fields[2], DateTime.MinValue, DateTime.MaxValue, PredefinedCacheResolutions.NoCache, true);
+                        return new Op_BaseQuery(fields[1].Trim(':'), fields[2], DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefinedes.NoCache, true);
                     }
                     if (fields.Count < 6) throw new Exception("6 Parameters needed. Example: Load NAME: mesaurename 0001-01-01T00:00:00 9999-12-31T00:00:00 NoCache");
                     return new Op_BaseQuery(fields[1].Trim(':'), fields[2], ParseDateTime(fields[3]), ParseDateTime(fields[4]), ParseCacheResolution(fields[5]));
@@ -150,7 +150,7 @@ namespace FKala.TestConsole.KalaQl
             }
             else
             {
-                return PredefinedCacheResolutions.NoCache;
+                return CacheResolutionPredefinedes.NoCache;
             }
         }
 

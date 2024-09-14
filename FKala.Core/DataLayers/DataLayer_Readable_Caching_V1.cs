@@ -16,6 +16,7 @@ using FKala.TestConsole.Model;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using static System.Net.Mime.MediaTypeNames;
+using static FKala.TestConsole.DataLayers.CachingLayer;
 
 namespace FKala.TestConsole
 {    
@@ -48,13 +49,9 @@ namespace FKala.TestConsole
             {
                 return this.LoadNewestDatapoint(measurement);
             } 
-            else if (cacheResolution?.Resolution == Resolution.Hourly)
+            else if (cacheResolution?.Resolution != Resolution.Full)
             {
-                return CachingLayer.LoadHourlyResolution(measurement, startTime, endTime, cacheResolution);
-            }
-            else if (cacheResolution?.Resolution == Resolution.Minutely)
-            {
-                return CachingLayer.LoadMinutelyResolution(measurement, startTime, endTime, cacheResolution);
+                return CachingLayer.LoadDataFromCache(measurement, startTime, endTime, cacheResolution);
             }
             else
             {
@@ -132,6 +129,13 @@ namespace FKala.TestConsole
                             int fileyear = int.Parse(dateSpan.Slice(0, 4));
                             int filemonth = int.Parse(dateSpan.Slice(5, 2));
                             int fileday = int.Parse(dateSpan.Slice(8, 2));
+
+                            //Datei hat keine Überlappung mit Anfrage.
+                            if (!(startTime < new DateTime(fileyear, filemonth, fileday, 0, 0, 0).AddDays(1) &&
+                                endTime > new DateTime(fileyear, filemonth, fileday, 0, 0, 0)))
+                            {
+                                continue;
+                            }
 
                             using var _fs = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                             using var sr = new StreamReader(_fs, Encoding.UTF8, false, 16384);

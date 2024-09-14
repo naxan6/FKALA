@@ -1,4 +1,5 @@
-﻿using FKala.TestConsole.KalaQl.Windowing;
+﻿using FKala.TestConsole.DataLayers;
+using FKala.TestConsole.KalaQl.Windowing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +16,7 @@ namespace FKala.TestConsole.Model
         public bool ForceRebuild;
     }
 
-    public static class PredefinedCacheResolutions
+    public static class CacheResolutionPredefinedes
     {
         public static CacheResolution NoCache { get { return new CacheResolution() { Resolution = Resolution.Full, AggregateFunction = AggregateFunction.None, ForceRebuild = false }; } }
         public static CacheResolution UseHourlyAvgCache { get { return new CacheResolution() { Resolution = Resolution.Hourly, AggregateFunction = AggregateFunction.Avg, ForceRebuild = false }; } }
