@@ -1,4 +1,5 @@
-﻿using FKala.TestConsole.Interfaces;
+﻿using FKala.Core.Model;
+using FKala.TestConsole.Interfaces;
 using FKala.TestConsole.KalaQl.Windowing;
 using FKala.TestConsole.Model;
 using System;
@@ -118,9 +119,20 @@ namespace FKala.TestConsole.KalaQl
                     return new Op_Expresso(fields[1].Trim(':'), fields[2]);
                 case "Publ":
                     return new Op_Publish(fields[1].Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(), ParsePublishMode(fields[2]));
+                case "Mgmt":
+                    return new Op_Mgmt(ParseMgmtAction(fields[1]));
                 default:
                     throw new Exception($"Unkown Verb <{verb}>");
             }
+        }
+
+        private MgmtAction ParseMgmtAction(string v)
+        {
+            if (v.ToUpper() == "LOADMEASURES")
+            {
+                return MgmtAction.LoadMeasures;
+            }
+            throw new Exception($"MgmtAction {v} ist ungültig");
         }
 
         private CacheResolution ParseCacheResolution(string v)

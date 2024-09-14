@@ -297,7 +297,7 @@ namespace FKala.TestConsole
             }
         }
 
-        public List<string> LoadMeasurementList(string measurement)
+        public List<string> LoadMeasurementList()
         {
             var measurements = Directory.GetDirectories(DataDirectory);
             return measurements.Select(d => Path.GetFileName(d)).ToList();

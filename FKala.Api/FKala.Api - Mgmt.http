@@ -1,0 +1,10 @@
+@FKala.Api_HostAddress = http://localhost:5258
+
+
+
+### Beispiel: Lade alle verfügbaren Measures
+POST {{FKala.Api_HostAddress}}/api/Mgmt
+Accept: application/json
+Content-Type: text/plain
+
+Mgmt LoadMeasures

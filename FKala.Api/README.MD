@@ -31,6 +31,7 @@ C:\git\FKALA> docker build . --progress=plain --no-cache
 ### Load
 Loads data from storage
 #### Pattern ```Load <Name>: <measurement> <from> <to> <CacheResolution>```
+#### or ```Load <Name>: <measurement> NewestOnly```
  - ```Load``` Verb
  - ```<Name>``` Name for the (temporary!) dataset being created 
  - ```<measurement>``` Name of the measurement to load
@@ -40,9 +41,9 @@ Loads data from storage
    - ```<resolution>_<AggregateFunction>[_Rebuild]```
    - ```<Resolution>``` can Be ```Hourly``` and ```Minutely```
    - ```<AggregateFunction>``` can  be any available streamable aggregate:
-       - ```Avg```, ```First```, ```Last```, ```Min```, ```Max```,```Count```, ```Sum```
+       - ```Avg```, ```WAvg```, ```First```, ```Last```, ```Min```, ```Max```,```Count```, ```Sum```
    - ```_Rebuild``` can be appended to force the rebuilding of the cache
-
+   - Alternative ```NewestOnly``` - only the newest one Datapoint is loaded.
 #### Examples
   - **No-Cache-Query / Raw Data**
     ```Load rSOC: Sofar/measure/batteryInput1/SOC_Bat1 0001-01-01T00:00:00 9999-12-31T00:00:00 NoCache```
@@ -86,7 +87,7 @@ Aggregates Data.
   - Timespan in ```<milliseconds>```, pure numeric - eg```12000``` means 12 Seconds. First window starts at the starttime of the Source. Windows areas wide as given.
 - ```<Aggregate>``` how data is aggregated into each time window. 
   Can  be any available streamable aggregate:
-  ```Avg```, ```First```, ```Last```, ```Min```, ```Max```,```Count```, ```Sum```
+  ```Avg```, ```WAvg```, ```First```, ```Last```, ```Min```, ```Max```,```Count```, ```Sum```
 - [EmptyWindows] - optional, if set/added, it generates empty windows (if no datapoint is available for a window in the Source). "empty window" means: the windows value is null.
 
 #### Aggregate-Function

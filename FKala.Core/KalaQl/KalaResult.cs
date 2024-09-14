@@ -12,5 +12,6 @@ namespace FKala.TestConsole.KalaQl
     {
         public List<Result> ResultSets { get; set; }
         public List<ExpandoObject> ResultTable { get; set; }
+        public List<string> MeasureList { get; internal set; }
     }
 }

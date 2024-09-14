@@ -13,7 +13,7 @@ namespace FKala.TestConsole.Interfaces
         IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool NewestOnly);
         void Insert(string kalaLinedata, bool locking = true);
         List<int> LoadAvailableYears(string measurement);
-        List<string> LoadMeasurementList(string measurement);
+        List<string> LoadMeasurementList();
         IEnumerable<DataPoint> LoadNewestDatapoint(string measurement);
     }
 }
