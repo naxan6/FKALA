@@ -57,7 +57,7 @@ namespace FKala.Core.DataLayers
         public override DateTime ShouldUpdateFromWhere(DataPoint? newestInCache, DataPoint newestInRaw)
         {
             // 5 Minute Alterung erlauben
-            if (newestInCache.Time.Add(new TimeSpan(0, 1, 0)) > newestInRaw.Time)
+            if (newestInCache.Time.Add(new TimeSpan(0, 5, 0)) > newestInRaw.Time)
             {
                 return DateTime.MaxValue;
             }

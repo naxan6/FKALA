@@ -47,7 +47,7 @@ namespace FKala.TestConsole.DataLayers
             foreach (int year in years)
             {
                 var cacheFilePath = Path.Combine(measurementCachePath, $"{measurementPath}_{year}_{cacheResolution.AggregateFunction}.dat");                
-                if (!File.Exists(cacheFilePath))
+                if (!File.Exists(cacheFilePath) || cacheResolution.ForceRebuild)
                 {
                     cache.GenerateWholeYearCache(measurement, year, cacheFilePath, cacheResolution.AggregateFunction, cacheResolution.ForceRebuild);
                 } 

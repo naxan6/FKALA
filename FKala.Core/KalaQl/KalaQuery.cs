@@ -142,7 +142,7 @@ namespace FKala.TestConsole.KalaQl
             var parts = v.Split('_');
             
             Resolution? resolution = ParseResolution(parts[0]);
-            if (resolution != null)
+            if (resolution != null || resolution != Resolution.Full)
             {
                 var aggregate = ParseAggregate(parts[1]);
                 var forceRebuild = parts.Length > 2 && parts[2].ToUpper().Contains("REBUILD");
@@ -167,7 +167,11 @@ namespace FKala.TestConsole.KalaQl
             else if (v.ToUpper().StartsWith("AUTO("))
             {
                 var parts = v.Split(['(', ')']);
-                if (long.Parse(parts[1]) <= 3600 * 1000)
+                if (long.Parse(parts[1]) <= 60 * 1000)
+                {
+                    return Resolution.Full;
+                }
+                else if (long.Parse(parts[1]) <= 3600 * 1000)
                 {
                     return Resolution.Minutely;
                 }

@@ -51,8 +51,8 @@ namespace FKala.TestConsole.KalaQl
         {
             Window.Init(input.StartTime);
 
-            //var dataPointsEnumerator = input.Resultset.OrderBy(dp => dp.Time).GetEnumerator();
-            var dataPointsEnumerator = input.Resultset.GetEnumerator();
+            var dataPointsEnumerator = input.Resultset.OrderBy(dp => dp.Time).GetEnumerator();
+            //var dataPointsEnumerator = input.Resultset.GetEnumerator();
             var currentDataPoint = new DataPoint() { Time = Window.StartTime };
             var currentAggregator = new StreamingAggregator(AggregateFunc, Window, 0);
 

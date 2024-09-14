@@ -59,13 +59,14 @@ namespace FKala.Core.DataLayers
 
         public override DateTime ShouldUpdateFromWhere(DataPoint? newestInCache, DataPoint newestInRaw)
         {
-            // 10 Minuten Alterung erlauben
-            if (newestInCache.Time.Add(new TimeSpan(0,10,0)) > newestInRaw.Time)
+            // 30 Minuten Alterung erlauben
+            if (newestInCache.Time.Add(new TimeSpan(1,30,0)) > newestInRaw.Time)
             {
                 return DateTime.MaxValue;
             }
 
-            return newestInCache.Time;
+            // die letzten 2 Stunden refreshen
+            return newestInCache.Time.Subtract(new TimeSpan(2, 0, 0));
         }
     }
 }

@@ -19,7 +19,7 @@ using static System.Net.Mime.MediaTypeNames;
 using static FKala.TestConsole.DataLayers.CachingLayer;
 
 namespace FKala.TestConsole
-{    
+{
     public class DataLayer_Readable_Caching_V1 : IDataLayer, IDisposable
     {
         private string DataDirectory;
@@ -37,9 +37,9 @@ namespace FKala.TestConsole
         {
             this.DataDirectory = Path.Combine(storagePath, "data");
             Directory.CreateDirectory(this.DataDirectory);
-            
+
             CachingLayer = new CachingLayer(this, storagePath);
-            
+
             Task.Run(() => FlushBuffersPeriodically());
         }
 
@@ -48,7 +48,7 @@ namespace FKala.TestConsole
             if (newestOnly)
             {
                 return this.LoadNewestDatapoint(measurement);
-            } 
+            }
             else if (cacheResolution?.Resolution != Resolution.Full)
             {
                 return CachingLayer.LoadDataFromCache(measurement, startTime, endTime, cacheResolution);
@@ -120,35 +120,34 @@ namespace FKala.TestConsole
 
                     foreach (var file in Directory.GetFiles(monthDir, $"{measurementPath}*.dat"))
                     {
-                        if (File.Exists(file))
+
+                        var fn = Path.GetFileNameWithoutExtension(file);
+                        var datePart = fn.Substring(fn.Length - 10, 10);
+                        ReadOnlySpan<char> dateSpan = datePart.AsSpan();
+                        // DateOnly dt = new DateOnly(int.Parse(dateSpan.Slice(0, 4)), int.Parse(dateSpan.Slice(5, 2)), int.Parse(dateSpan.Slice(8, 2)));
+                        int fileyear = int.Parse(dateSpan.Slice(0, 4));
+                        int filemonth = int.Parse(dateSpan.Slice(5, 2));
+                        int fileday = int.Parse(dateSpan.Slice(8, 2));
+
+                        // Datei hat keine Überlappung mit Anfrage.
+                        if (!(startTime < new DateTime(fileyear, filemonth, fileday, 0, 0, 0).AddDays(1) &&
+                            endTime > new DateTime(fileyear, filemonth, fileday, 0, 0, 0)))
                         {
-                            var fn = Path.GetFileNameWithoutExtension(file);
-                            var datePart = fn.Substring(fn.Length - 10, 10);
-                            ReadOnlySpan<char> dateSpan = datePart.AsSpan();
-                            // DateOnly dt = new DateOnly(int.Parse(dateSpan.Slice(0, 4)), int.Parse(dateSpan.Slice(5, 2)), int.Parse(dateSpan.Slice(8, 2)));
-                            int fileyear = int.Parse(dateSpan.Slice(0, 4));
-                            int filemonth = int.Parse(dateSpan.Slice(5, 2));
-                            int fileday = int.Parse(dateSpan.Slice(8, 2));
+                            continue;
+                        }
 
-                            //Datei hat keine Überlappung mit Anfrage.
-                            if (!(startTime < new DateTime(fileyear, filemonth, fileday, 0, 0, 0).AddDays(1) &&
-                                endTime > new DateTime(fileyear, filemonth, fileday, 0, 0, 0)))
+                        using var _fs = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                        using var sr = new StreamReader(_fs, Encoding.UTF8, false, 16384);
+                        string? line;
+                        while ((line = sr.ReadLine()) != null)
+                        {
+                            var ret = ParseLine(startTime, endTime, fileyear, filemonth, fileday, line);
+                            if (ret != null)
                             {
-                                continue;
-                            }
-
-                            using var _fs = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                            using var sr = new StreamReader(_fs, Encoding.UTF8, false, 16384);
-                            string? line;
-                            while ((line = sr.ReadLine()) != null)
-                            {
-                                var ret = ParseLine(startTime, endTime, fileyear, filemonth, fileday, line);
-                                if (ret != null)
-                                {
-                                    yield return ret;
-                                }
+                                yield return ret;
                             }
                         }
+
                     }
                 }
             }
@@ -173,12 +172,13 @@ namespace FKala.TestConsole
             string? valuetext = null;
             try
             {
-                 value = decimal.Parse(valueRaw, CultureInfo.InvariantCulture);
-            } catch (Exception ex)
+                value = decimal.Parse(valueRaw, CultureInfo.InvariantCulture);
+            }
+            catch (Exception ex)
             {
                 valuetext = valueRaw.ToString();
             }
-            
+
             if (dateTime >= startTime && dateTime < endTime)
             {
                 return new DataPoint
@@ -215,12 +215,12 @@ namespace FKala.TestConsole
                 index = 27; //Länge von yyyy-MM-ddTHH:mm:ss.fffffff hartkodiert statt Ende suchen
                 var datetime = span.Slice(0, index);
 
-                span = span.Slice(index + 1);                
+                span = span.Slice(index + 1);
                 decimal value;
                 ReadOnlySpan<char> valueRaw = null;
-                ReadOnlySpan<char> text = null;                
-                valueRaw = span.Slice(0);                                        
-                
+                ReadOnlySpan<char> text = null;
+                valueRaw = span.Slice(0);
+
                 // Create the directory path
                 var directoryPath = Path.Combine(DataDirectory, measurement, datetime.Slice(0, 4).ToString(), datetime.Slice(5, 2).ToString());
                 if (!CreatedDirectories.Contains(directoryPath))
