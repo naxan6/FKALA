@@ -19,7 +19,7 @@ namespace FKala.TestConsole.DataLayers
 
         public CachingLayer(IDataLayer dataLayer, string storagePath) {
             DataLayer = dataLayer;
-            this.CacheDirectory = Path.Combine(storagePath, "data");
+            this.CacheDirectory = Path.Combine(storagePath, "cache");
             Directory.CreateDirectory(CacheDirectory);
         }
 

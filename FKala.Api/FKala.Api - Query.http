@@ -69,3 +69,22 @@ Content-Type: text/plain
 
 Load SOC: Sofar/measure/batteryInput1/0x608_SOC_Bat1[%] NewestOnly
 Publ "SOC" Table
+
+
+### Multiple NewestOnly
+POST {{FKala.Api_HostAddress}}/api/Query
+Accept: application/json
+Content-Type: text/plain
+
+Load Holzofen: Heizung$Holzofen NewestOnly
+Load Boiler: Heizung$Boiler NewestOnly
+Load Nachlauf_Holzofen_1: Heizung$Nachlauf_Holzofen_1 NewestOnly
+Load Nachlauf_Holzofen_2: Heizung$Nachlauf_Holzofen_2 NewestOnly
+Load Vorlauf_Boiler: Heizung$Vorlauf_Boiler NewestOnly
+Load Rücklauf_Boiler: Heizung$Rücklauf_Boiler NewestOnly
+Load Vorlauf_Haus_1: Heizung$Vorlauf_Haus_1 NewestOnly
+Load Vorlauf_Haus_2: Heizung$Vorlauf_Haus_2 NewestOnly
+Load Rücklauf_Haus: Heizung$Rücklauf_Haus NewestOnly
+
+Load Heizraum: Heizung$Heizraum NewestOnly
+Publ "Holzofen,Nachlauf_Holzofen_1,Nachlauf_Holzofen_2,Boiler,Vorlauf_Boiler,Rücklauf_Boiler,Vorlauf_Haus_1,Vorlauf_Haus_2,Rücklauf_Haus,Heizraum" Table

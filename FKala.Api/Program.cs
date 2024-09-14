@@ -18,7 +18,7 @@ builder.Services.AddControllers(
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var storagePath = builder.Configuration["DataStorage"] ?? "C:\\FKALA\\DataStore";
+var storagePath = builder.Configuration["DataStorage"] ?? "\\\\naxds2\\docker\\fkala";
 builder.Services.AddSingleton<IDataLayer>(new DataLayer_Readable_Caching_V1(storagePath));
 
 var app = builder.Build();
