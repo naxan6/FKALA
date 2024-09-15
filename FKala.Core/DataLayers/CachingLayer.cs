@@ -55,7 +55,7 @@ namespace FKala.TestConsole.DataLayers
                 {
                     if (year == years.Max())
                     {
-                        IncrementalUpdateCache(measurement, cacheResolution);
+                        //IncrementalUpdateCache(measurement, cacheResolution);
                     }
                 }
 

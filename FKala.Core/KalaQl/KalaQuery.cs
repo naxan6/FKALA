@@ -142,7 +142,7 @@ namespace FKala.TestConsole.KalaQl
             var parts = v.Split('_');
             
             Resolution? resolution = ParseResolution(parts[0]);
-            if (resolution != null || resolution != Resolution.Full)
+            if (resolution != null && resolution != Resolution.Full)
             {
                 var aggregate = ParseAggregate(parts[1]);
                 var forceRebuild = parts.Length > 2 && parts[2].ToUpper().Contains("REBUILD");

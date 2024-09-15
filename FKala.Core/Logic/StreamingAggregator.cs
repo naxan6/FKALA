@@ -77,9 +77,9 @@ namespace FKala.TestConsole.Logic
             }
             decimal durationTicks = time.Ticks - previousTicks;
             decimal totalticks = durationTickSum + durationTicks;
+            aggregatedValue = aggregatedValue ?? 0;
             if (totalticks != 0)
-            {
-                aggregatedValue = aggregatedValue ?? 0;
+            {                
                 aggregatedValue = ((durationTicks * LastAggregatedValue) + (durationTickSum * aggregatedValue)) / (durationTickSum + durationTicks);
             }
 

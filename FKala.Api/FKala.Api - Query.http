@@ -88,3 +88,64 @@ Load Rücklauf_Haus: Heizung$Rücklauf_Haus NewestOnly
 
 Load Heizraum: Heizung$Heizraum NewestOnly
 Publ "Holzofen,Nachlauf_Holzofen_1,Nachlauf_Holzofen_2,Boiler,Vorlauf_Boiler,Rücklauf_Boiler,Vorlauf_Haus_1,Vorlauf_Haus_2,Rücklauf_Haus,Heizraum" Table
+
+
+
+### PV Query
+POST {{FKala.Api_HostAddress}}/api/Query
+Accept: application/json
+Content-Type: text/plain
+
+Load rPV1: Sofar/measure/PVInput1/0x586_Leistung_PV1[kW] 2024-04-01T00:00:00Z 2024-09-01T00:00:00Z Hourly_WAvg
+Load rPV2: Sofar/measure/PVInput1/0x589_Leistung_PV2[kW] 2024-04-01T00:00:00Z 2024-09-01T00:00:00Z Hourly_WAvg
+Load rNetz: Sofar/measure/OnGridOutput/0x488_ActivePower_PCC_Total[kW] 2024-04-01T00:00:00Z 2024-09-01T00:00:00Z Hourly_WAvg
+Load rAkku: Sofar/measure/batteryInput1/0x606_Power_Bat1[kW] 2024-04-01T00:00:00Z 2024-09-01T00:00:00Z Hourly_WAvg
+Load rVerbrauch: Sofar/measure/OnGridOutput/0x4AF_ActivePower_Load_Sys[kW] 2024-04-01T00:00:00Z 2024-09-01T00:00:00Z Hourly_WAvg
+
+Aggr aPV1: rPV1 Aligned_1Hour Avg
+Aggr aPV2: rPV2 Aligned_1Hour Avg
+Aggr aNetz: rNetz Aligned_1Hour Avg 
+Aggr aAkku: rAkku Aligned_1Hour Avg
+Aggr aVerbrauch: rVerbrauch Aligned_1Hour Avg
+Aggr aAkkuladung: rAkku Aligned_1Hour Avg
+
+
+Expr PV: "aPV1.Value + aPV2.Value"
+Expr Netzbezug: "aNetz.Value > 0 ? 0 : -aNetz.Value"
+Expr Netzeinspeisung: "aNetz.Value < 0 ? 0 : -aNetz.Value"
+Expr Akkuentladung: "aAkku.Value > 0 ? 0 : -aAkku.Value"
+Expr Akkuladung: "aAkku.Value < 0 ? 0 : -aAkku.Value"
+Expr Verbrauch: "-aVerbrauch.Value"
+
+
+#Publ "aPV1" Table
+Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch" Table
+
+### PV Query 2 
+POST {{FKala.Api_HostAddress}}/api/Query
+Accept: application/json
+Content-Type: text/plain
+
+
+Load rPV1: Sofar/measure/PVInput1/0x586_Leistung_PV1[kW] 2024-04-01T00:00:00Z 2024-09-01T00:00:00Z Hourly_WAvg
+Load rPV2: Sofar/measure/PVInput1/0x589_Leistung_PV2[kW] 2024-04-01T00:00:00Z 2024-09-01T00:00:00Z Hourly_WAvg
+Load rNetz: Sofar/measure/OnGridOutput/0x488_ActivePower_PCC_Total[kW] 2024-04-01T00:00:00Z 2024-09-01T00:00:00Z Hourly_WAvg
+Load rAkku: Sofar/measure/batteryInput1/0x606_Power_Bat1[kW] 2024-04-01T00:00:00Z 2024-09-01T00:00:00Z Hourly_WAvg
+Load rVerbrauch: Sofar/measure/OnGridOutput/0x4AF_ActivePower_Load_Sys[kW] 2024-04-01T00:00:00Z 2024-09-01T00:00:00Z Hourly_WAvg
+
+Aggr aPV1: rPV1 Aligned_1Hour WAvg EmptyWindows
+Aggr aPV2: rPV2 Aligned_1Hour WAvg EmptyWindows
+Aggr aNetz: rNetz Aligned_1Hour WAvg EmptyWindows
+Aggr aAkku: rAkku Aligned_1Hour WAvg EmptyWindows
+Aggr aVerbrauch: rVerbrauch Aligned_1Hour WAvg EmptyWindows
+Aggr aAkkuladung: rAkku Aligned_1Hour WAvg EmptyWindows
+
+
+Expr PV: "aPV1.Value + aPV2.Value"
+Expr Netzbezug: "aNetz.Value > 0 ? 0 : -aNetz.Value"
+Expr Netzeinspeisung: "aNetz.Value < 0 ? 0 : aNetz.Value"
+Expr Akkuentladung: "aAkku.Value > 0 ? 0 : -aAkku.Value"
+Expr Akkuladung: "aAkku.Value < 0 ? 0 : aAkku.Value"
+Expr Verbrauch: "aVerbrauch.Value"
+
+Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch" Table

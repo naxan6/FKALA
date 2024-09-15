@@ -11,7 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FKala.Api", "FKala.Api\FKal
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FKala.Core", "FKala.Core\FKala.Core.csproj", "{BB89E13A-652C-49C6-91C5-7B447560B60A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FKala.Background", "FKala.Background\FKala.Background.csproj", "{B8539DB8-6A38-4A3C-869F-9BDA06F50410}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FKala.Background", "FKala.Background\FKala.Background.csproj", "{B8539DB8-6A38-4A3C-869F-9BDA06F50410}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fkala.Console", "Fkala.Console\Fkala.Console.csproj", "{FE817B6E-77D3-4648-9A2D-D3149C89DBA0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{B8539DB8-6A38-4A3C-869F-9BDA06F50410}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B8539DB8-6A38-4A3C-869F-9BDA06F50410}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B8539DB8-6A38-4A3C-869F-9BDA06F50410}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FE817B6E-77D3-4648-9A2D-D3149C89DBA0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE817B6E-77D3-4648-9A2D-D3149C89DBA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE817B6E-77D3-4648-9A2D-D3149C89DBA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE817B6E-77D3-4648-9A2D-D3149C89DBA0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

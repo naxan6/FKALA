@@ -11,9 +11,11 @@ namespace FKala.TestConsole.KalaQl
     public class Op_Expresso : Op_Base, IKalaQlOperation
     {
         Interpreter Interpreter;
+        Lambda Lambda;
         public string Name { get; }
         public string Fieldname { get; }
         public string Expresso { get; }
+
 
         public Op_Expresso(string name, string expresso)
         {
@@ -22,6 +24,13 @@ namespace FKala.TestConsole.KalaQl
 
             Interpreter = new Interpreter();
             Interpreter.SetDefaultNumberType(DefaultNumberType.Decimal);
+
+            var unknownIdInfo = Interpreter.DetectIdentifiers(Expresso);
+            var parameters = unknownIdInfo.UnknownIdentifiers
+                .Order()
+                .Select(identifier => new Parameter(identifier, typeof(DataPoint)));
+            
+            Lambda = Interpreter.Parse(Expresso, parameters.ToArray());
         }
 
         public override bool CanExecute(KalaQlContext context)
@@ -44,35 +53,26 @@ namespace FKala.TestConsole.KalaQl
 
         public IEnumerable<DataPoint> ExecuteInternal(KalaQlContext context, IEnumerable<Result> datenquellen)
         {
-            var combined = new List<(DateTime Timestamp, int ListIndex, Result Item)>();
+            var combined = new List<(DateTime Timestamp, int ListIndex, Result Item)>();            
 
             foreach (var synchronizedItems in DatasetsCombiner.CombineSynchronizedResults(datenquellen.ToList()))
             {
-                foreach (var item in synchronizedItems)
-                {
-                    Interpreter.SetVariable(item.ResultName, item.DataPoint);
-                }
-                decimal? expressoResultValue = (decimal?)Interpreter.Eval(Expresso);
+                //var paramValues = synchronizedItems.OrderBy(si => si.ResultName).Select(dp => dp.DataPoint).ToArray();
+                var paramValues = synchronizedItems.Select(si => new Parameter(si.ResultName, si.DataPoint));
+
+                decimal? expressoResultValue = (decimal?)Lambda.Invoke(paramValues);
                 var currentDataPoint = new DataPoint()
                 {
                     Time = synchronizedItems.First().DataPoint.Time,
                     Value = expressoResultValue
-                };
-                foreach (var item in synchronizedItems)
-                {
-                    Interpreter.UnsetVariable(item.ResultName);
-                }
+                };              
                 yield return currentDataPoint;
             }
 
 
 
 
-            var unknownIdInfo = Interpreter.DetectIdentifiers(Expresso);
-            foreach (var id in unknownIdInfo.UnknownIdentifiers)
-            {
-                Interpreter.SetVariable(id, context.IntermediateResults.First(ir => ir.Name == id));
-            }
+            
         }
     }
 }
