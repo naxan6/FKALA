@@ -30,9 +30,9 @@ namespace FKala.Core.DataLayers
         {
             KalaResult aggResult = KalaQuery
                .Start()
-               .Add(new Op_BaseQuery("fullRes", measurement, start, end, CacheResolutionPredefinedes.NoCache))
-               .Add(new Op_Aggregate("minutely", "fullRes", Window.Aligned_1Minute, aggrFunc, false, false))
-               .Add(new Op_Publish(new List<string>() { "minutely" }, PublishMode.MultipleResultsets))
+               .Add(new Op_BaseQuery(null, "fullRes", measurement, start, end, CacheResolutionPredefinedes.NoCache))
+               .Add(new Op_Aggregate(null, "minutely", "fullRes", Window.Aligned_1Minute, aggrFunc, false, false))
+               .Add(new Op_Publish(null, new List<string>() { "minutely" }, PublishMode.MultipleResultsets))
                .Execute(DataLayer);
             var rs = aggResult.ResultSets.First().Resultset;
             //return EnumerableHelpers.SkipLast(rs);

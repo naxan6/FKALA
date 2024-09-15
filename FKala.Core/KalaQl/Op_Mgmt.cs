@@ -17,7 +17,7 @@ namespace FKala.TestConsole.KalaQl
     {
         public MgmtAction MgmtAction { get; }
 
-        public Op_Mgmt(MgmtAction mgmtAction)
+        public Op_Mgmt(string line, MgmtAction mgmtAction) : base(line)
         {
             
             this.MgmtAction = mgmtAction;

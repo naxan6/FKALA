@@ -10,7 +10,12 @@ namespace FKala.TestConsole.KalaQl
 {
     public abstract class Op_Base : IKalaQlOperation
     {
+        public Op_Base(string line)
+        {
+            this.Line = line;
+        }
         public bool hasExecuted { get; protected set; }
+        public string Line { get; }
 
         public abstract bool CanExecute(KalaQlContext context);
 

@@ -17,7 +17,7 @@ namespace FKala.TestConsole.KalaQl
         public string Expresso { get; }
 
 
-        public Op_Expresso(string name, string expresso)
+        public Op_Expresso(string line, string name, string expresso) : base(line)
         {
             Name = name;
             Expresso = expresso;

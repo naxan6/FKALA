@@ -18,7 +18,7 @@ namespace FKala.TestConsole.KalaQl
         public string VarName { get; }
         public string VarValue { get; }
 
-        public Op_Var(string VarName, string VarValue)
+        public Op_Var(string line, string VarName, string VarValue) : base(line)
         {
 
             this.VarName = VarName;

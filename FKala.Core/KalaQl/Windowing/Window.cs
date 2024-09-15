@@ -124,12 +124,8 @@ namespace FKala.TestConsole.KalaQl.Windowing
         }
 
 
-        public void Next(bool EmptyWindows, DateTime nextDataPointTime)
+        public void Next()
         {
-            if (!EmptyWindows)
-            {
-                Init(nextDataPointTime);
-            }
             this.StartTime = EndTime;
             CalcTimes();
         }

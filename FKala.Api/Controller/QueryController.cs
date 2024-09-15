@@ -60,7 +60,11 @@ namespace FKala.Api.Controller
 
             var result = q.Execute(this.DataLayer);
 
-            if (result?.ResultSets != null)
+            if (result?.Errors.Count() != 0)
+            {
+                return BadRequest(result.Errors);
+            }
+            else if (result?.ResultSets != null)
             {
                 return Ok(result.ResultSets);
             }

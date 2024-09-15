@@ -16,7 +16,7 @@ namespace FKala.TestConsole.KalaQl
         public List<string> NamesToPublish { get; private set; }
         public PublishMode PublishMode { get; }
 
-        public Op_Publish(List<string> namesToPublish, PublishMode mode)
+        public Op_Publish(string line, List<string> namesToPublish, PublishMode mode) : base(line)
         {
             this.NamesToPublish = namesToPublish;
             this.PublishMode = mode;

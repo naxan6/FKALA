@@ -17,8 +17,8 @@ namespace FKala.TestConsole.KalaQl
 {
     public class KalaQuery
     {
-        
-        List<IKalaQlOperation> ops = new List<IKalaQlOperation>();
+
+        List<Op_Base> ops = new List<Op_Base>();
 
         List<Op_Var> opvars = new List<Op_Var>();
 
@@ -26,7 +26,7 @@ namespace FKala.TestConsole.KalaQl
         {
             return new KalaQuery();
         }
-        public KalaQuery Add(IKalaQlOperation operation)
+        public KalaQuery Add(Op_Base operation)
         {
             this.ops.Add(operation);
             return this;
@@ -40,14 +40,26 @@ namespace FKala.TestConsole.KalaQl
                 var nextop = ops.FirstOrDefault(op => op.CanExecute(context) && !op.HasExecuted(context));
                 if (nextop != null)
                 {
-                    nextop.Execute(context);
+                    try
+                    {
+                        nextop.Execute(context);
+                    }
+                    catch (Exception ex)
+                    {
+                        context.Result = new KalaResult();
+                        context.Result.Errors.Add($"Error while processing {nextop.Line}");
+                        context.Result.Errors.Add(ex.ToString());
+                        return GetUnlinkedResult(context);
+                    }
                 }
                 else
                 {
                     var notExecuted = ops.Where(op => !op.HasExecuted(context) && !op.CanExecute(context));
                     if (notExecuted.Any())
                     {
-                        throw new Exception("KalaQuery could not execute : " + string.Join(", ", notExecuted.Select(x => x.ToString())));
+                        context.Result = new KalaResult();
+                        context.Result.Errors.Add("KalaQuery could not execute : " + string.Join(", ", notExecuted.Select(x => x.ToString())));
+                        return GetUnlinkedResult(context);
                     }
                     else
                     {
@@ -55,6 +67,11 @@ namespace FKala.TestConsole.KalaQl
                     }
                 }
             }
+            return GetUnlinkedResult(context);
+        }
+
+        private KalaResult GetUnlinkedResult(KalaQlContext context)
+        {
             var result = context.Result;
             context.Result = null;
             return result;
@@ -114,7 +131,7 @@ namespace FKala.TestConsole.KalaQl
             switch (verb)
             {
                 case "Var":
-                    var opvar = new Op_Var(fields[1].Trim(':'), fields[2]);
+                    var opvar = new Op_Var(line, fields[1].Trim(':'), fields[2]);
                     opvars.RemoveAll(e => e.VarName == opvar.VarName);
                     opvars.Add(opvar);
                     return opvar;
@@ -122,18 +139,18 @@ namespace FKala.TestConsole.KalaQl
                 case "Load":
                     if (fields[3] == "NewestOnly")
                     {
-                        return new Op_BaseQuery(fields[1].Trim(':'), fields[2], DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefinedes.NoCache, true);
+                        return new Op_BaseQuery(line, fields[1].Trim(':'), fields[2], DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefinedes.NoCache, true);
                     }
                     if (fields.Count < 6) throw new Exception("6 Parameters needed. Example: Load NAME: mesaurename 0001-01-01T00:00:00 9999-12-31T00:00:00 NoCache");
-                    return new Op_BaseQuery(fields[1].Trim(':'), fields[2], ParseDateTime(fields[3]), ParseDateTime(fields[4]), ParseCacheResolution(fields[5]));
+                    return new Op_BaseQuery(line, fields[1].Trim(':'), fields[2], ParseDateTime(fields[3]), ParseDateTime(fields[4]), ParseCacheResolution(fields[5]));
                 case "Aggr":
-                    return new Op_Aggregate(fields[1].Trim(':'), fields[2], ParseWindow(fields[3]), ParseAggregate(fields[4]), ParseEmptyWindows(fields.Count > 5 ? fields[5] : ""));
+                    return new Op_Aggregate(line, fields[1].Trim(':'), fields[2], ParseWindow(fields[3]), ParseAggregate(fields[4]), ParseEmptyWindows(fields.Count > 5 ? fields[5] : ""));
                 case "Expr":
-                    return new Op_Expresso(fields[1].Trim(':'), fields[2]);
+                    return new Op_Expresso(line, fields[1].Trim(':'), fields[2]);
                 case "Publ":
-                    return new Op_Publish(fields[1].Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(), ParsePublishMode(fields[2]));
+                    return new Op_Publish(line, fields[1].Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(), ParsePublishMode(fields[2]));
                 case "Mgmt":
-                    return new Op_Mgmt(ParseMgmtAction(fields[1]));
+                    return new Op_Mgmt(line, ParseMgmtAction(fields[1]));
                 default:
                     throw new Exception($"Unkown Verb <{verb}>");
             }
@@ -153,7 +170,7 @@ namespace FKala.TestConsole.KalaQl
             v = v.Trim();
 
             var parts = v.Split('_');
-            
+
             Resolution? resolution = ParseResolution(parts[0]);
             if (resolution != null && resolution != Resolution.Full)
             {
@@ -234,7 +251,7 @@ namespace FKala.TestConsole.KalaQl
             foreach (var format in dateFormats)
             {
                 if (DateTime.TryParseExact(v, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedDate))
-                {                    
+                {
                     return parsedDate.ToUniversalTime();
                 }
             }
