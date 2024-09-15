@@ -12,17 +12,34 @@ var startTime = new DateTime(2024, 06, 01, 0, 0, 0);
 var endTime = new DateTime(2024, 08, 01, 0, 0, 0);
 
 var q = KalaQuery.Start()
-    .FromQuery(@"
-                    Var $FROM 2024-06-01T00:00:00
-                    Var $TO 2024-09-01T00:00:00
-                    Var $INTERVAL Aligned_1Day
+    .FromQuery(@"                    
+                    Var $CACHE NewestOnly
+                    Var $INTERVAL Infinite                   
 
-                    Load PV1: Sofar/measure/PVInput1/0x586_Leistung_PV1[kW] $FROM $TO NoCache
-                    Load PV2: Sofar/measure/PVInput1/0x589_Leistung_PV2[kW] $FROM $TO NoCache
-                    Aggr PV1_Windowed: PV1 $INTERVAL Avg
-                    Aggr PV2_Windowed: PV2 $INTERVAL Avg
-                    Expr PVSumInWatt: ""(PV1_Windowed.Value + PV2_Windowed.Value) * 1000""
-                    Publ ""PVSumInWatt, PV1_Windowed"" Default
+                    Load rPV1: Sofar/measure/PVInput1/0x586_Leistung_PV1[kW] $CACHE
+                    Load rPV2: Sofar/measure/PVInput1/0x589_Leistung_PV2[kW] $CACHE
+                    Load rNetz: Sofar/measure/OnGridOutput/0x488_ActivePower_PCC_Total[kW] $CACHE
+                    Load rAkku: Sofar/measure/batteryInput1/0x606_Power_Bat1[kW] $CACHE
+                    Load rVerbrauch: Sofar/measure/OnGridOutput/0x4AF_ActivePower_Load_Sys[kW] $CACHE
+
+                    Aggr aPV1: rPV1 $INTERVAL WAvg
+                    Aggr aPV2: rPV2 $INTERVAL WAvg
+                    Aggr aNetz: rNetz $INTERVAL WAvg
+                    Aggr aAkku: rAkku $INTERVAL WAvg
+                    Aggr aVerbrauch: rVerbrauch $INTERVAL WAvg
+                    Aggr aAkkuladung: rAkku $INTERVAL WAvg
+
+
+                    Expr PV: ""aPV1.Value + aPV2.Value""
+                    Expr Netzbezug: ""aNetz.Value > 0 ? 0 : -aNetz.Value""
+                    Expr Netzeinspeisung: ""aNetz.Value < 0 ? 0 : -aNetz.Value""
+                    Expr Akkuentladung: ""aAkku.Value > 0 ? 0 : -aAkku.Value""
+                    Expr Akkuladung: ""aAkku.Value < 0 ? 0 : -aAkku.Value""
+                    Expr Verbrauch: ""-aVerbrauch.Value""
+
+                    Publ ""Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch"" Table
+
+
                 ");
 
 var result = q.Execute(dl);
