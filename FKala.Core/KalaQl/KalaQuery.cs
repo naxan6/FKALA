@@ -17,7 +17,10 @@ namespace FKala.TestConsole.KalaQl
 {
     public class KalaQuery
     {
+        
         List<IKalaQlOperation> ops = new List<IKalaQlOperation>();
+
+        List<Op_Var> opvars = new List<Op_Var>();
 
         public static KalaQuery Start()
         {
@@ -75,13 +78,17 @@ namespace FKala.TestConsole.KalaQl
 
         private Op_Base? ParseQueryText(string line)
         {
+            foreach (var opVar in opvars)
+            {
+                line = opVar.Replace(line);
+            }
+
             line = line.Trim();
             if (line.Length == 0) return null;
             if (line.StartsWith("//") || line.StartsWith("#")) return null;
 
             string pattern = @"(?<element>[^\s""]+)|\""(?<quotedElement>[^""]*)\""";
             var matches = Regex.Matches(line, pattern);
-
 
             List<string> fields = new List<string>();
             int pos = 0;
@@ -106,6 +113,12 @@ namespace FKala.TestConsole.KalaQl
             var verb = fields[0];
             switch (verb)
             {
+                case "Var":
+                    var opvar = new Op_Var(fields[1].Trim(':'), fields[2]);
+                    opvars.RemoveAll(e => e.VarName == opvar.VarName);
+                    opvars.Add(opvar);
+                    return opvar;
+                    break;
                 case "Load":
                     if (fields[3] == "NewestOnly")
                     {
