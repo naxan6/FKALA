@@ -172,7 +172,7 @@ Can be used to calculate with and combine datasets.
 - ```Expr StromVerbrauch_KWH: "(StromVerbrauch_WH.Value) / 1000"``` - divide the value of StromVerbrauch_WH by 1000 an create a new dataset named StromVerbrauch_KWH by the result.
 - ```Expr PVSumInWatt: "(PV1_Windowed.Value + PV2_Windowed.Value) * 1000"``` - add PV1 and PV2 together and multiply to get W instead of kW, name the result PVSumInWatt.
 
-#### Publ
+### Publ
 Can be used to "publish" generated temporary datasets to the result.  This is what you get.
 
 #### Pattern ```Publ "<DatasetName1,DataSetName2,...>" <OutputMode>```
@@ -223,3 +223,30 @@ Can be used to "publish" generated temporary datasets to the result.  This is wh
              },
        ...
        ```
+
+## /api/Mgmt
+
+- POST
+- Body ```text/plain```
+- Example 
+  ```sh
+      Mgmt LoadMeasures
+
+### Mgmt LoadMesaures
+Gets you a list of all available Mesaures in the F KALA database
+
+#### Example-Output
+```json
+[
+  "Sofar$measure$batteryInput1$0x604_Spannung_Bat1[V]",
+  "Sofar$measure$batteryInput1$0x605_Current_Bat1[A]",
+  "Sofar$measure$batteryInput1$0x606_Power_Bat1[kW]",
+  "Sofar$measure$batteryInput1$0x609_SOH_Bat1[%]",
+  "Sofar$measure$batteryInput1$0x60A_ChargeCycle_Bat1[Zyklus]",
+  "Sofar$measure$batteryInput1$0x607_Temperature_Env_Bat1[Celsius]",
+  "Sofar$measure$batteryInput1$0x608_SOC_Bat1[%]",
+  "evcc$updated",
+  "evcc$loadpoints$1$sessionEnergy",
+   ...
+]
+```
