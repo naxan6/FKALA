@@ -14,6 +14,7 @@ namespace FKala.TestConsole.Model
         public AggregateFunction AggregateFunction { get; set; }
 
         public bool ForceRebuild;
+        public bool IncrementalRefresh;
     }
 
     public static class CacheResolutionPredefinedes

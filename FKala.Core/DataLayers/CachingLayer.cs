@@ -49,13 +49,15 @@ namespace FKala.TestConsole.DataLayers
                 var cacheFilePath = Path.Combine(measurementCachePath, $"{measurementPath}_{year}_{cacheResolution.AggregateFunction}.dat");                
                 if (!File.Exists(cacheFilePath) || cacheResolution.ForceRebuild)
                 {
+                    Console.WriteLine($"Building Cache: {Path.GetFileName(cacheFilePath)}");
                     cache.GenerateWholeYearCache(measurement, year, cacheFilePath, cacheResolution.AggregateFunction, cacheResolution.ForceRebuild);
                 } 
                 else
                 {
-                    if (year == years.Max())
+                    if (cacheResolution.IncrementalRefresh && year == years.Max())
                     {
-                        //IncrementalUpdateCache(measurement, cacheResolution);
+                        Console.WriteLine($"Incremental Update requested: {Path.GetFileName(cacheFilePath)}");
+                        IncrementalUpdateCache(measurement, cacheResolution, cacheFilePath);
                     }
                 }
 
@@ -83,18 +85,22 @@ namespace FKala.TestConsole.DataLayers
         }
 
 
-        public void IncrementalUpdateCache(string measurement, CacheResolution cacheResolution)
+        public void IncrementalUpdateCache(string measurement, CacheResolution cacheResolution, string cacheFilePath)
         {
             ICache cache = GetCacheImplementation(cacheResolution);
             var sanitizedMeasurement = PathSanitizer.SanitizePath(measurement);
             var rebuildFromDateTime = ShouldUpdateFromWhere(sanitizedMeasurement, cacheResolution.Resolution, cacheResolution.AggregateFunction, cache);
             if (rebuildFromDateTime != DateTime.MaxValue)
-            {
+            {                
                 string newestCacheFile = GetNewestCacheFilepath(sanitizedMeasurement, cache, cacheResolution.AggregateFunction);
+                Console.WriteLine($"Doing Incremental Update: {Path.GetFileName(newestCacheFile)}");
                 var parts = newestCacheFile.Split('_');
                 var fileYear = int.Parse(parts[parts.Length - 2]);
                 //var validCacheEntries = cache.LoadCache(DateTime.MinValue, rebuildFromDateTime, fileYear, newestCacheFile);
                 cache.UpdateData(measurement, rebuildFromDateTime, cacheResolution.AggregateFunction, newestCacheFile);
+            } else
+            {
+                Console.WriteLine($"Incremental Update Not Necessary: {Path.GetFileName(cacheFilePath)}");
             }
         }
 

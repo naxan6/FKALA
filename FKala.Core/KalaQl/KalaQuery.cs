@@ -146,7 +146,8 @@ namespace FKala.TestConsole.KalaQl
             {
                 var aggregate = ParseAggregate(parts[1]);
                 var forceRebuild = parts.Length > 2 && parts[2].ToUpper().Contains("REBUILD");
-                return new CacheResolution() { Resolution = resolution.Value, AggregateFunction = aggregate, ForceRebuild = forceRebuild };
+                var refreshIncremental = parts.Length > 2 && parts[2].ToUpper().Contains("REFRESHINCREMENTAL");
+                return new CacheResolution() { Resolution = resolution.Value, AggregateFunction = aggregate, ForceRebuild = forceRebuild, IncrementalRefresh = refreshIncremental };
             }
             else
             {

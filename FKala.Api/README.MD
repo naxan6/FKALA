@@ -43,6 +43,7 @@ Loads data from storage
    - ```<AggregateFunction>``` can  be any available streamable aggregate:
        - ```Avg```, ```WAvg```, ```First```, ```Last```, ```Min```, ```Max```,```Count```, ```Sum```
    - ```_Rebuild``` can be appended to force the rebuilding of the cache
+   - ```RefreshIncremental``` can be appended to trigger incremental update of the cache
    - Alternative ```NewestOnly``` - only the newest one Datapoint is loaded.
 #### Examples
   - **No-Cache-Query / Raw Data**

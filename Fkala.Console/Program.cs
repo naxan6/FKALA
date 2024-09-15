@@ -8,37 +8,28 @@ System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 sw.Start();
 using var dl = new DataLayer_Readable_Caching_V1(StoragePath);
 
+var startTime = new DateTime(2024, 06, 01, 0, 0, 0);
+var endTime = new DateTime(2024, 08, 01, 0, 0, 0);
+
 var q = KalaQuery.Start()
     .FromQuery(@"
-                    Load rPV1: Sofar/measure/PVInput1/0x586_Leistung_PV1[kW] 2024-04-01T00:00:00Z 2024-09-01T00:00:00Z Hourly_WAvg
-                    Load rPV2: Sofar/measure/PVInput1/0x589_Leistung_PV2[kW] 2024-04-01T00:00:00Z 2024-09-01T00:00:00Z Hourly_WAvg
-                    Load rNetz: Sofar/measure/OnGridOutput/0x488_ActivePower_PCC_Total[kW] 2024-04-01T00:00:00Z 2024-09-01T00:00:00Z Hourly_WAvg
-                    Load rAkku: Sofar/measure/batteryInput1/0x606_Power_Bat1[kW] 2024-04-01T00:00:00Z 2024-09-01T00:00:00Z Hourly_WAvg
-                    Load rVerbrauch: Sofar/measure/OnGridOutput/0x4AF_ActivePower_Load_Sys[kW] 2024-04-01T00:00:00Z 2024-09-01T00:00:00Z Hourly_WAvg
-
-                    Aggr aPV1: rPV1 Aligned_1Hour WAvg EmptyWindows
-                    Aggr aPV2: rPV2 Aligned_1Hour WAvg EmptyWindows
-                    Aggr aNetz: rNetz Aligned_1Hour WAvg EmptyWindows
-                    Aggr aAkku: rAkku Aligned_1Hour WAvg EmptyWindows
-                    Aggr aVerbrauch: rVerbrauch Aligned_1Hour WAvg EmptyWindows
-                    Aggr aAkkuladung: rAkku Aligned_1Hour WAvg EmptyWindows
-
-
-                    Expr PV: ""aPV1.Value + aPV2.Value""
-                    Expr Netzbezug: ""aNetz.Value > 0 ? 0 : -aNetz.Value""
-                    Expr Netzeinspeisung: ""aNetz.Value < 0 ? 0 : aNetz.Value""
-                    Expr Akkuentladung: ""aAkku.Value > 0 ? 0 : -aAkku.Value""
-                    Expr Akkuladung: ""aAkku.Value < 0 ? 0 : aAkku.Value""
-                    Expr Verbrauch: ""aVerbrauch.Value""
-
-                    Publ ""Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch"" Table
+                    Load PV1: Sofar/measure/PVInput1/0x586_Leistung_PV1[kW] 2024-06-01T00:00:00 2024-08-01T00:00:00 NoCache
+                    Load PV2: Sofar/measure/PVInput1/0x589_Leistung_PV2[kW] 2024-06-01T00:00:00 2024-08-01T00:00:00 NoCache
+                    Aggr PV1_Windowed: PV1 Unaligned_1Month Avg
+                    Aggr PV2_Windowed: PV2 Unaligned_1Month Avg
+                    Expr PVSumInWatt: ""(PV1_Windowed.Value + PV2_Windowed.Value) * 1000""
+                    Publ ""PVSumInWatt, PV1_Windowed"" Default
                 ");
 
 var result = q.Execute(dl);
 
+foreach (var rs in result.ResultSets)
+{
+    rs.Resultset.ToList();
+}
 sw.Stop();
 var ts = sw.Elapsed;
 string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}", ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds);
 Console.WriteLine("Verstrichene Zeit: " + elapsedTime);
 
-Console.WriteLine(KalaJson.Serialize(result.ResultTable));// JSON serializeON serialize
+Console.WriteLine(KalaJson.Serialize(result.ResultSets));// JSON serialize
