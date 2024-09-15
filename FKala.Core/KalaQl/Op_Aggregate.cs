@@ -52,7 +52,7 @@ namespace FKala.TestConsole.KalaQl
             var dataPointsEnumerator = input.Resultset.OrderBy(dp => dp.Time).GetEnumerator();
             //var dataPointsEnumerator = input.Resultset.GetEnumerator();
 
-            Window.Init(input.StartTime);
+            Window.Init(input.StartTime, context.AlignTzTimeZoneId);
             var currentDataPoint = new DataPoint() { Time = Window.StartTime };
             var currentAggregator = new StreamingAggregator(AggregateFunc, Window, 0);
             var results = new List<DataPoint>();

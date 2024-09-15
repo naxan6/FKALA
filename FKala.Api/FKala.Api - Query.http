@@ -187,3 +187,23 @@ Expr Verbrauch: "-aVerbrauch.Value"
 Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch" Table
 
 
+
+### Timezone for AlignedAggregates
+//POST http://naxds2:20080/api/Query
+POST {{FKala.Api_HostAddress}}/api/Query
+Accept: application/json
+Content-Type: text/plain
+
+AlTz "Europe/Berlin"
+
+Var $FROM 2023-12-31T23:00:00Z
+Var $TO 2024-01-02T23:00:00Z
+Var $CACHE NoCache
+
+Load rKaufHeute: Sofar/measure/power/0x68C_Energie_Kauf_Heute[kWh] $FROM $TO $CACHE
+#Load rVerbrauchHeute: Sofar/measure/power/0x688_Load_Consumption_Today[kWh] $FROM $TO $CACHE
+
+Aggr aKaufHeute: rKaufHeute Aligned_1Day Last
+#Aggr aVerbrauchHeute: rVerbrauchHeute Aligned_1Day Last
+
+Publ "aKaufHeute" Table

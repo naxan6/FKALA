@@ -1,10 +1,12 @@
-﻿using System;
+﻿using NodaTime;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace FKala.TestConsole.KalaQl.Windowing
 {
@@ -41,9 +43,8 @@ namespace FKala.TestConsole.KalaQl.Windowing
             this.Mode = Mode;
             this.Interval = Interval;
         }
-        public void Init(DateTime starttime)
+        public void Init(DateTime starttime, string tzTimezoneId)
         {
-
             switch (Mode)
             {
                 case WindowMode.FixedIntervall:
@@ -64,16 +65,29 @@ namespace FKala.TestConsole.KalaQl.Windowing
                     this.StartTime = RoundToPreviousFullHour(starttime);
                     break;
                 case WindowMode.AlignedDay:
-                    this.StartTime = starttime.Date;
+                    starttime = ModifyAlignedToTimezone(starttime, tzTimezoneId ?? "UTC", (LocalDateTime alignedDate) => { 
+                        return alignedDate.Date.AtMidnight(); 
+                    });
+                    this.StartTime = starttime;
+
                     break;
                 case WindowMode.AlignedWeek:
-                    this.StartTime = GetPreviousMonday(starttime);
+                    starttime = ModifyAlignedToTimezone(starttime, tzTimezoneId ?? "UTC", (LocalDateTime alignedDate) => {
+                        if (alignedDate.DayOfWeek == IsoDayOfWeek.Monday) { return alignedDate.Date.AtMidnight(); }
+                        return alignedDate.Previous(IsoDayOfWeek.Monday).Date.AtMidnight();
+                    });
+                    this.StartTime = starttime;
                     break;
                 case WindowMode.AlignedMonth:
-                    this.StartTime = GetFirstDayOfMonth(starttime);
+                    starttime = ModifyAlignedToTimezone(starttime, tzTimezoneId ?? "UTC", (LocalDateTime alignedDate) => {
+                        return alignedDate.With(DateAdjusters.StartOfMonth).Date.AtMidnight();
+                    });
+                    this.StartTime = starttime;                    
                     break;
                 case WindowMode.AlignedYear:
-                    this.StartTime = GetFirstDayOfYear(starttime);
+                    starttime = ModifyAlignedToTimezone(starttime, tzTimezoneId ?? "UTC", (LocalDateTime alignedDate) => {
+                        return alignedDate.With(DateAdjusters.Month(1)).With(DateAdjusters.StartOfMonth).Date.AtMidnight();
+                    });                    
                     break;
 
                 default:
@@ -83,6 +97,34 @@ namespace FKala.TestConsole.KalaQl.Windowing
             CalcTimes();
         }
 
+        private static DateTime ModifyAlignedToTimezone(DateTime starttime, string tzTimezoneId, Func<LocalDateTime, LocalDateTime> alignFunc)
+        {
+            if (tzTimezoneId != null)
+            {
+                var localDatetime = ConvertDateTimeToDifferentTimeZone(starttime, "UTC", tzTimezoneId);
+                var localDatetimeAligned = alignFunc(localDatetime);
+                var utcStarttime = ConvertDateTimeToDifferentTimeZone(localDatetimeAligned.ToDateTimeUnspecified(), tzTimezoneId, "UTC");
+                starttime = utcStarttime.ToDateTimeUnspecified();
+            }
+
+            return starttime;
+        }
+
+        public static LocalDateTime ConvertDateTimeToDifferentTimeZone(
+                                    DateTime utcDateTime,
+                                    string fromZoneId,
+                                    string toZoneId)
+        {
+            LocalDateTime fromLocal = LocalDateTime.FromDateTime(utcDateTime);
+            DateTimeZone fromZone = DateTimeZoneProviders.Tzdb[fromZoneId];
+            ZonedDateTime fromZoned = fromLocal.InZoneLeniently(fromZone);
+
+            DateTimeZone toZone = DateTimeZoneProviders.Tzdb[toZoneId];
+            ZonedDateTime toZoned = fromZoned.WithZone(toZone);
+            LocalDateTime toLocal = toZoned.LocalDateTime;
+
+            return toLocal;
+        }
         private void CalcTimes()
         {
             try
@@ -142,32 +184,6 @@ namespace FKala.TestConsole.KalaQl.Windowing
         public bool DateTimeIsAfterWindow(DateTime time)
         {
             return time >= EndTime;
-        }
-
-
-        private static DateTime GetPreviousMonday(DateTime date)
-        {
-            int daysToSubtract = (int)date.DayOfWeek - (int)DayOfWeek.Monday;
-            if (daysToSubtract < 0)
-            {
-                daysToSubtract += 7; // Wenn Tag vor Montag, gehe zur vorhergehenden Woche
-            }
-            return date.AddDays(-daysToSubtract).Date; // .Date, um die Uhrzeit zu ignorieren
-        }
-
-        private static DateTime GetFirstDayOfYear(DateTime date)
-        {
-            return new DateTime(date.Year, 1, 1);
-        }
-        private static DateTime GetFirstDayOfMonth(DateTime date)
-        {
-            return new DateTime(date.Year, date.Month, 1);
-        }
-
-        private static DateTime GetLastDayOfMonth(DateTime date)
-        {
-            int daysInMonth = DateTime.DaysInMonth(date.Year, date.Month);
-            return new DateTime(date.Year, date.Month, daysInMonth);
         }
 
         private static DateTime RoundToPreviousFullHour(DateTime dateTime)

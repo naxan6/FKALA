@@ -28,6 +28,37 @@ C:\git\FKALA> docker build . --progress=plain --no-cache
       Publ "SOC, SOH" Table
   ```
 
+### Var
+Sets a variable you can use in later commands. Does a simple string-raplece to save you from havin to change multiple lines on recurring changes.
+
+#### Pattern ```Var <$VARIABLE> <Value>```
+- ```Var``` - Verb
+- ```<$VARIABLE>``` - the name of the variable, uppercase and $-prefixed is recommended
+- ```<Value>``` - the value that should be placed everywhere instead of the $VARIABLE
+
+#### Example:
+- reuse variables:
+```
+Var $FROM "2024-09-15T17:55:45"
+Var $TO 2024-09-15T18:08:45
+Var $CACHE Auto(20000)_Avg
+Var $AGG Avg
+Var $INTERVAL 20000
+
+Load rPV1: Sofar/measure/PVInput1/0x586_Leistung_PV1[kW] $FROM $TO $CACHE
+Load rPV2: Sofar/measure/PVInput1/0x589_Leistung_PV2[kW] $FROM $TO $CACHE
+Load rNetz: Sofar/measure/OnGridOutput/0x488_ActivePower_PCC_Total[kW] $FROM $TO $CACHE
+Load rAkku: Sofar/measure/batteryInput1/0x606_Power_Bat1[kW] $FROM $TO $CACHE
+Load rVerbrauch: Sofar/measure/OnGridOutput/0x4AF_ActivePower_Load_Sys[kW] $FROM $TO $CACHE
+
+Aggr aPV1: rPV1 $INTERVAL $AGG
+Aggr aPV2: rPV2 $INTERVAL $AGG
+Aggr aNetz: rNetz $INTERVAL $AGG
+Aggr aAkku: rAkku $INTERVAL $AGG
+Aggr aVerbrauch: rVerbrauch $INTERVAL $AGG
+Aggr aAkkuladung: rAkku $INTERVAL $AGG
+```
+
 ### Load
 Loads data from storage
 #### Pattern ```Load <Name>: <measurement> <from> <to> <CacheResolution>```
@@ -114,6 +145,17 @@ Aggregates Data.
 - ```Aggr SOC: rSOC Aligned_1Day Max``` - the first windows starts at 00:00 of the first datapoint in the source. Windowsize is 1 Day, so each window/day gets assigned the maximum value found within the day.
 - ```Aggr SOC: rSOC 6000 Last``` - windowsize is 6000ms (or 6 seconds), each window gets assigned the last value found within the window.
 - ```Aggr SOC: rSOC 10:05:20:02 Min``` - windowsize is 10 days, 05 hours, 20 minutes and 02 seconds, each window gets assigned the minimal value found.
+
+### AlTz
+Alignes your aggregations to e.g. your local start of day (relevant only for ```Aligned_1Day```, ```Aligned_1Week```, ```Aligned_1Month```, ```Aligned_1Year```)
+Add it in *before* your Aggr-Commands.
+
+#### Pattern ```AlTz "<TimezoneId>"```
+- ```AlTz``` - the verb (for "Aligning Timezone")
+- ```<TimezoneId>``` - TZID / Zone ID; see https://nodatime.org/TimeZones
+
+#### Examples
+- ```AlTz "Europe/Berlin"``` - aligns to CET
 
 ### Expr
 Can be used to calculate with and combine datasets. 

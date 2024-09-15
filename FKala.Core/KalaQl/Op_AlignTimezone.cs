@@ -2,6 +2,7 @@ using FKala.Core.Model;
 using FKala.TestConsole.Interfaces;
 using FKala.TestConsole.Logic;
 using FKala.TestConsole.Model;
+using NodaTime;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -13,21 +14,21 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace FKala.TestConsole.KalaQl
 {
-    public class Op_Var : Op_Base, IKalaQlOperation
-    {        
-        public string VarName { get; }
-        public string VarValue { get; }
+    public class Op_AlignTimezone : Op_Base, IKalaQlOperation
+    {
+        // see https://nodatime.org/TimeZones
+        public string TzId { get; }        
 
-        public Op_Var(string line, string VarName, string VarValue) : base(line)
+        public Op_AlignTimezone(string line, string timezone) : base(line)
         {
 
-            this.VarName = VarName;
-            this.VarValue = VarValue;
-            this.hasExecuted = true;
+            this.TzId = timezone;            
         }
+        
 
         public override bool CanExecute(KalaQlContext context)
         {
+            context.AlignTzTimeZoneId= TzId;
             return true;
         }
 
@@ -38,12 +39,7 @@ namespace FKala.TestConsole.KalaQl
 
         public override string ToString()
         {
-            return $"Op_Var: {VarName} -> {VarValue}";
-        }
-
-        internal string Replace(string line)
-        {
-            return line.Replace(this.VarName, this.VarValue);
+            return $"Op_AlignTimezone: {this.TzId}";
         }
     }
 }

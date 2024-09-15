@@ -130,6 +130,9 @@ namespace FKala.TestConsole.KalaQl
             var verb = fields[0];
             switch (verb)
             {
+                case "AlTz":
+                    return new Op_AlignTimezone(line, fields[1]);
+                    break;
                 case "Var":
                     var opvar = new Op_Var(line, fields[1].Trim(':'), fields[2]);
                     opvars.RemoveAll(e => e.VarName == opvar.VarName);
