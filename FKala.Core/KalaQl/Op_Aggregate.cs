@@ -51,12 +51,11 @@ namespace FKala.TestConsole.KalaQl
         {
             var dataPointsEnumerator = input.Resultset.OrderBy(dp => dp.Time).GetEnumerator();
             //var dataPointsEnumerator = input.Resultset.GetEnumerator();
-            var currentDataPoint = new DataPoint() { Time = Window.StartTime };
-            var currentAggregator = new StreamingAggregator(AggregateFunc, Window, 0);
-
-            var results = new List<DataPoint>();
 
             Window.Init(input.StartTime);
+            var currentDataPoint = new DataPoint() { Time = Window.StartTime };
+            var currentAggregator = new StreamingAggregator(AggregateFunc, Window, 0);
+            var results = new List<DataPoint>();
 
             if (!EmptyWindows)
             {
