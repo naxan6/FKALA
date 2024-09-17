@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace FKala.Unittests
 {
     [TestClass]
-    public class InTempTests
+    public class TempFolderTests_OutOfOrder
     {
         DataFaker DataFaker;
 
@@ -18,7 +18,7 @@ namespace FKala.Unittests
         public void Initialize()
         {
             DataFaker = new DataFaker();
-            DataFaker.FakeMeasure("m1", new DateTime(2024, 01, 01), new DateTime(2024, 05, 01), new TimeSpan(0, 0, 1), new TimeSpan(0, 0, 15));
+            DataFaker.FakeMeasure_OutOfOrder("m1", new DateTime(2024, 01, 01), new DateTime(2024, 05, 01), new TimeSpan(0, 0, 1), new TimeSpan(0, 0, 15));
         }
         [TestCleanup]
         public void Cleanup()
@@ -34,17 +34,17 @@ namespace FKala.Unittests
             
             // Assert 1
             Console.WriteLine(KalaJson.Serialize(resultset));            
-            Assert.AreEqual(new DateTime(2024, 03, 01, 0, 0, 2), resultset.First().Time);
+            Assert.AreEqual(new DateTime(2024, 03, 01, 0, 0, 10), resultset.First().Time);
             Assert.AreEqual(0.564860636165766m, resultset.First().Value);
-            Assert.AreEqual(new DateTime(2024, 03, 14, 23, 59, 58), resultset.Last().Time);
-            Assert.AreEqual(0.457086396616458m, resultset.Last().Value);
+            Assert.AreEqual(new DateTime(2024, 03, 14, 23, 59, 54), resultset.Last().Time);
+            Assert.AreEqual(0.228472747946378m, resultset.Last().Value);
 
             // Assert 2
             var resultsetAll = DataFaker.TestDataLayer.LoadData("m1", new DateTime(0001, 01, 01), new DateTime(9999, 12, 31), CacheResolutionPredefined.NoCache, false);
-            Assert.AreEqual(new DateTime(2024, 01, 01, 0, 0, 13), resultsetAll.First().Time);
+            Assert.AreEqual(new DateTime(2024, 01, 01, 0, 0, 21), resultsetAll.First().Time);
             Assert.AreEqual(0.248668584157093m, resultsetAll.First().Value);
-            Assert.AreEqual(new DateTime(2024, 04, 30, 23, 59, 59), resultsetAll.Last().Time);
-            Assert.AreEqual(0.646428865681602m, resultsetAll.Last().Value);
+            Assert.AreEqual(new DateTime(2024, 04, 30, 23, 59, 58), resultsetAll.Last().Time);
+            Assert.AreEqual(0.562627387960734m, resultsetAll.Last().Value);
         }
 
         [TestMethod]
@@ -65,8 +65,8 @@ namespace FKala.Unittests
             var resultset = result.ResultTable;
             Assert.AreEqual(1, resultset.Count());
             var firstEntry = ((dynamic)resultset.First());
-            Assert.AreEqual(new DateTime(2024, 04, 30, 23, 59, 59), firstEntry.time);
-            Assert.AreEqual(0.646428865681602m, firstEntry.m1);
+            Assert.AreEqual(new DateTime(2024, 04, 30, 23, 59, 58), firstEntry.time);
+            Assert.AreEqual(0.562627387960734m, firstEntry.m1);
         }
 
         [TestMethod]
