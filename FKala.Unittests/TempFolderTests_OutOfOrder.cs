@@ -5,7 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using FluentAssertions;
 using System.Threading.Tasks;
+using FluentAssertions.Execution;
 
 namespace FKala.Unittests
 {
@@ -19,7 +21,7 @@ namespace FKala.Unittests
         { 
 
             DataFaker = new DataFaker();
-            DataFaker.FakeMeasure_OutOfOrder("m1", new DateTime(2024, 01, 01), new DateTime(2024, 05, 01), new TimeSpan(0, 0, 1), new TimeSpan(0, 0, 15));
+            DataFaker.FakeMeasure_OutOfOrder("m1", new DateTime(2024, 01, 01), new DateTime(2024, 05, 01), new TimeSpan(0, 0, 5), new TimeSpan(0, 0, 15));
 
         }
         [ClassCleanup]
@@ -35,19 +37,27 @@ namespace FKala.Unittests
             // Act
             var resultset = DataFaker.TestDataLayer.LoadData("m1", new DateTime(2024, 03, 01), new DateTime(2024, 03, 15), CacheResolutionPredefined.NoCache, false);
 
+
+
             // Assert 1
             Console.WriteLine(KalaJson.Serialize(resultset));
-            Assert.AreEqual(new DateTime(2024, 03, 01, 0, 0, 01), resultset.First().Time);
-            Assert.AreEqual(0.294182207572359m, resultset.First().Value);
-            Assert.AreEqual(new DateTime(2024, 03, 14, 23, 59, 47), resultset.Last().Time);
-            Assert.AreEqual(0.925090707337992m, resultset.Last().Value);
+            using (new AssertionScope())
+            {
+                resultset.First().Time.Should().Be(new DateTime(2024, 03, 01, 0, 0, 03));
+                resultset.First().Value.Should().Be(0.429102592370055M);
+                resultset.Last().Time.Should().Be(new DateTime(2024, 03, 14, 23, 59, 58));
+                resultset.Last().Value.Should().Be(0.136571015760568M);
+            }
 
             // Assert 2
             var resultsetAll = DataFaker.TestDataLayer.LoadData("m1", new DateTime(0001, 01, 01), new DateTime(9999, 12, 31), CacheResolutionPredefined.NoCache, false);
-            Assert.AreEqual(new DateTime(2023, 12, 31, 23, 59, 53), resultsetAll.First().Time);
-            Assert.AreEqual(0.248668584157093m, resultsetAll.First().Value);
-            Assert.AreEqual(new DateTime(2024, 04, 30, 23, 59, 58), resultsetAll.Last().Time);
-            Assert.AreEqual(0.736256621655196m, resultsetAll.Last().Value);
+            using (new AssertionScope())
+            {
+                resultsetAll.First().Time.Should().Be(new DateTime(2024, 01, 01, 0, 0, 10));
+                resultsetAll.First().Value.Should().Be(0.248668584157093M);
+                resultsetAll.Last().Time.Should().Be(new DateTime(2024, 04, 30, 23, 59, 58));
+                resultsetAll.Last().Value.Should().Be(0.669364353022242M);
+            }            
         }
 
         [TestMethod]
@@ -64,12 +74,17 @@ namespace FKala.Unittests
 
             // Assert
             Console.WriteLine(KalaJson.Serialize(result));
-            Assert.AreEqual(0, result.Errors.Count());
+            result.Errors.Should().BeEmpty();
+            //Assert.AreEqual(0, result.Errors.Count());
             var resultset = result.ResultTable;
-            Assert.AreEqual(1, resultset.Count());
+            resultset.Count.Should().Be(1);
+            
             var firstEntry = ((dynamic)resultset.First());
-            Assert.AreEqual(new DateTime(2024, 04, 30, 23, 59, 58), firstEntry.time);
-            Assert.AreEqual(0.736256621655196m, firstEntry.m1);
+            using (new AssertionScope())
+            {
+                ((DateTime)firstEntry.time).Should().Be(new DateTime(2024, 04, 30, 23, 59, 58));
+                ((decimal)firstEntry.m1).Should().Be(0.669364353022242M);
+            }
         }
 
         [TestMethod]
@@ -86,15 +101,20 @@ namespace FKala.Unittests
 
             // Assert
             Console.WriteLine(KalaJson.Serialize(result));
-            Assert.AreEqual(0, result.Errors.Count());
-            var resultset = result.ResultTable;
-            Assert.AreEqual(336, resultset.Count());
-            var firstEntry = ((dynamic)resultset.First());
-            Assert.AreEqual(new DateTime(2024, 03, 01, 00, 00, 00), firstEntry.time);
-            Assert.AreEqual(0.294182207572359m, firstEntry.m1);
-            var lastEntry = ((dynamic)resultset.Last());
-            Assert.AreEqual(new DateTime(2024, 03, 14, 23, 00, 00), lastEntry.time);
-            Assert.AreEqual(0.462088806304191m, lastEntry.m1);
+                        
+            var resultset = result.ResultTable;            
+
+            using (new AssertionScope())
+            {
+                result.Errors.Should().BeEmpty();
+                resultset.Count().Should().Be(336);
+                var firstEntry = ((dynamic)resultset.First());
+                ((DateTime)firstEntry.time).Should().Be(new DateTime(2024, 03, 01, 00, 00, 00));
+                ((decimal)firstEntry.m1).Should().Be(0.429102592370055M);
+                var lastEntry = ((dynamic)resultset.Last());
+                ((DateTime)lastEntry.time).Should().Be(new DateTime(2024, 03, 14, 23, 00, 00));
+                ((decimal)lastEntry.m1).Should().Be(0.486422908718895M);
+            }
         }
     }
 }
