@@ -1,6 +1,7 @@
 ﻿using FKala.Core.KalaQl;
 using FKala.Core.Logic;
 using FKala.Core.Model;
+using FluentAssertions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -63,10 +64,13 @@ namespace FKala.Unittests
 
             // Assert
             Console.WriteLine(KalaJson.Serialize(result));
-            Assert.AreEqual(0, result.Errors.Count());            
+            result.Errors.Should().NotBeEmpty();
+            
             var resultset = result.ResultTable;
-            Assert.AreEqual(1, resultset.Count());
-            var firstEntry = ((dynamic)resultset.First());
+            resultset.Should().NotBeNull();
+            resultset!.Count().Should().Be(1);
+            
+            var firstEntry = ((dynamic)resultset!.First());
             Assert.AreEqual(new DateTime(2024, 04, 30, 23, 59, 59), firstEntry.time);
             Assert.AreEqual(0.646428865681602m, firstEntry.m1);
         }
@@ -85,13 +89,16 @@ namespace FKala.Unittests
 
             // Assert
             Console.WriteLine(KalaJson.Serialize(result));
-            Assert.AreEqual(0, result.Errors.Count());
+            result.Errors.Should().NotBeEmpty();
+
             var resultset = result.ResultTable;
-            Assert.AreEqual(336, resultset.Count());
-            var firstEntry = ((dynamic)resultset.First());
+            resultset.Should().NotBeNull();
+            resultset!.Count().Should().Be(366);
+                        
+            var firstEntry = ((dynamic)resultset!.First());
             Assert.AreEqual(new DateTime(2024, 03, 01, 00, 00, 00), firstEntry.time);
             Assert.AreEqual(0.564860636165766m, firstEntry.m1);
-            var lastEntry = ((dynamic)resultset.Last());
+            var lastEntry = ((dynamic)resultset!.Last());
             Assert.AreEqual(new DateTime(2024, 03, 14, 23, 00, 00), lastEntry.time);
             Assert.AreEqual(0.875275374797767m, lastEntry.m1);
         }

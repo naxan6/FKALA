@@ -37,7 +37,7 @@ namespace FKala.Unittests
             string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}", ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds);
             Console.WriteLine("Verstrichene Zeit: " + elapsedTime);
 
-            Assert.AreEqual(2, result?.ResultSets.Count);
+            Assert.AreEqual(2, result?.ResultSets?.Count);
             Console.WriteLine(KalaJson.Serialize(result));// JSON serialize
         }
         [TestMethod]
@@ -66,7 +66,8 @@ namespace FKala.Unittests
             string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}", ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds);
             Console.WriteLine("Verstrichene Zeit: " + elapsedTime);
             result.Should().NotBeNull();
-            Assert.AreEqual(2, result!.ResultSets.Count);
+            result!.ResultSets.Should().NotBeNull();
+            Assert.AreEqual(2, result!.ResultSets!.Count);
             Console.WriteLine(KalaJson.Serialize(result!.ResultSets));// JSON serialize
         }
 
@@ -95,7 +96,8 @@ namespace FKala.Unittests
             Console.WriteLine("Verstrichene Zeit: " + elapsedTime);
 
             result.Should().NotBeNull();
-            Assert.AreEqual(1, result!.ResultSets.Count);
+            result!.ResultSets.Should().NotBeNull();
+            Assert.AreEqual(1, result!.ResultSets!.Count);
             Console.WriteLine(KalaJson.Serialize(result!.ResultSets));// JSON serialize
         }
 
@@ -119,10 +121,11 @@ namespace FKala.Unittests
 
             var result = q.Execute(dl);
 
-            result.Errors.ForEach(e => Console.WriteLine(e));
+            result?.ResultSets.Should().NotBeNull();
+            result!.Errors.ForEach(e => Console.WriteLine(e));
             Assert.IsTrue(!result.Errors.Any());
 
-            foreach (var rs in result.ResultSets)
+            foreach (var rs in result!.ResultSets!)
             {
                 rs.Resultset.ToList();
             }

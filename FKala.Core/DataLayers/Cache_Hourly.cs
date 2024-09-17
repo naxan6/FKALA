@@ -29,8 +29,11 @@ namespace FKala.Core.DataLayers
                             .Add(new Op_Aggregate(null, "hourly", "fullRes", Window.Aligned_1Hour, aggrFunc, false, false))
                             .Add(new Op_Publish(null, new List<string>() { "hourly" }, PublishMode.MultipleResultsets))
                             .Execute(DataLayer);
-
-            var rs = aggResult.ResultSets.First().Resultset;
+            if (aggResult?.ResultSets == null)
+            {
+                throw new Exception("could not aquire aggregate for caching");
+            }
+            var rs = aggResult!.ResultSets.First().Resultset;
             return rs;
         }
 

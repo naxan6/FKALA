@@ -27,6 +27,11 @@ namespace FKala.Core.DataLayers
                .Add(new Op_Aggregate(null, "minutely", "fullRes", Window.Aligned_1Minute, aggrFunc, false, false))
                .Add(new Op_Publish(null, new List<string>() { "minutely" }, PublishMode.MultipleResultsets))
                .Execute(DataLayer);
+            
+            if (aggResult?.ResultSets == null)
+            {
+                throw new Exception("could not aquire aggregate for caching");
+            }
             var rs = aggResult.ResultSets.First().Resultset;
             //return EnumerableHelpers.SkipLast(rs);
             return rs;

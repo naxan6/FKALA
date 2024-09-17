@@ -72,9 +72,9 @@ namespace FKala.Unittests
             // Assert
             Console.WriteLine(KalaJson.Serialize(result));
             result.Errors.Should().BeEmpty();
-            //Assert.AreEqual(0, result.Errors.Count());
-            var resultset = result.ResultTable;
-            resultset.Count.Should().Be(1);
+            result?.ResultTable?.Should().NotBeNull();
+            var resultset = result!.ResultTable;
+            resultset!.Count.Should().Be(1);
             
             var firstEntry = ((dynamic)resultset.First());
             using (new AssertionScope())
@@ -99,16 +99,18 @@ namespace FKala.Unittests
             // Assert
             Console.WriteLine(KalaJson.Serialize(result));
                         
-            var resultset = result.ResultTable;            
+            
 
             using (new AssertionScope())
             {
-                result.Errors.Should().BeEmpty();
-                resultset.Count().Should().Be(336);
-                var firstEntry = ((dynamic)resultset.First());
+                result.Errors.Should().BeEmpty();                
+                result?.ResultTable?.Should().NotBeNull();
+                var resultset = result!.ResultTable!;
+                resultset!.Count().Should().Be(336);
+                var firstEntry = ((dynamic)resultset!.First());
                 ((DateTime)firstEntry.time).Should().Be(new DateTime(2024, 03, 01, 00, 00, 00));
                 ((decimal)firstEntry.m1).Should().Be(0.429102592370055M);
-                var lastEntry = ((dynamic)resultset.Last());
+                var lastEntry = ((dynamic)resultset!.Last());
                 ((DateTime)lastEntry.time).Should().Be(new DateTime(2024, 03, 14, 23, 00, 00));
                 ((decimal)lastEntry.m1).Should().Be(0.486422908718895M);
             }
