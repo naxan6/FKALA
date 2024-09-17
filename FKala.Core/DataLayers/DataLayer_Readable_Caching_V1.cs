@@ -247,10 +247,12 @@ namespace FKala.TestConsole
                         if (locking)
                         {
                             writer = new BufferedWriter_Locking(filePath);
+                            writer.Flush();
                         }
                         else
                         {
                             writer = new BufferedWriter_NonLocking(filePath);
+                            writer.Flush();
                         }
 
                         _bufferedWriters[filePath] = writer;
@@ -281,16 +283,21 @@ namespace FKala.TestConsole
             while (true)
             {
                 await Task.Delay(TimeSpan.FromSeconds(10));
-                foreach (var writer in _bufferedWriters)
-                {
-                    lock (writer.Key)
-                    {
-                        writer.Value.Dispose();
-                        _bufferedWriters.Remove(writer.Key, out var removed);
-                    }
-                }
-                CreatedDirectories = new HashSet<string>();
+                ForceFlushWriters();
             }
+        }
+
+        public void ForceFlushWriters()
+        {
+            foreach (var writer in _bufferedWriters)
+            {
+                lock (writer.Key)
+                {
+                    writer.Value.Dispose();
+                    _bufferedWriters.Remove(writer.Key, out var removed);
+                }
+            }
+            CreatedDirectories = new HashSet<string>();
         }
 
         public void Dispose()

@@ -17,7 +17,7 @@ namespace FKala.TestConsole.Model
         public bool IncrementalRefresh;
     }
 
-    public static class CacheResolutionPredefinedes
+    public static class CacheResolutionPredefined
     {
         public static CacheResolution NoCache { get { return new CacheResolution() { Resolution = Resolution.Full, AggregateFunction = AggregateFunction.None, ForceRebuild = false }; } }
         public static CacheResolution UseHourlyAvgCache { get { return new CacheResolution() { Resolution = Resolution.Hourly, AggregateFunction = AggregateFunction.Avg, ForceRebuild = false }; } }

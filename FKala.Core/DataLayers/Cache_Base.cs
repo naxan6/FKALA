@@ -10,6 +10,7 @@ using FKala.Core.Interfaces;
 using FKala.TestConsole.Logic;
 using System.Diagnostics.Metrics;
 using FKala.Core.Logic;
+using System.Globalization;
 
 namespace FKala.Core.DataLayers
 {
@@ -42,6 +43,8 @@ namespace FKala.Core.DataLayers
 
         private void WriteCacheFile(string cacheFilePath, IEnumerable<DataPoint> rs)
         {
+            NumberFormatInfo nfi = new NumberFormatInfo();
+            nfi.NumberDecimalSeparator = ".";
             if (rs.Any())
             {
                 var timeFormat = GetTimeFormat();
@@ -50,7 +53,7 @@ namespace FKala.Core.DataLayers
                 {
                     bw.Append(dp.Time.ToString(timeFormat));
                     bw.Append(" ");
-                    bw.Append(dp.Value.ToString());
+                    bw.Append(dp.Value.Value.ToString(nfi));
                     bw.AppendNewline();
                 }
                 bw.Dispose();

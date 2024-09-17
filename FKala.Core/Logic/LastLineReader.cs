@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -44,9 +45,20 @@ namespace FKala.TestConsole.Logic
                     position--;
                 }
 
-                return builder.ToString().Trim(); // Trim any leading/trailing whitespace
+                return RemoveByteOrderMark(builder.ToString().Trim());                
             }
         }
+        private static string RemoveByteOrderMark(string input)
+        {
+            // UTF-8 BOM als Zeichenkette: 'ï»¿'
+            if (input.StartsWith("ï»¿"))
+            {
+                var ret = input.Substring(3);
+                return ret;
+            }
+            return input;
+        }
+
 
     }
 }
