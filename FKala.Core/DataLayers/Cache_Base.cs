@@ -42,8 +42,6 @@ namespace FKala.Core.DataLayers
 
         private void WriteCacheFile(string cacheFilePath, IEnumerable<DataPoint> rs)
         {
-            NumberFormatInfo nfi = new NumberFormatInfo();
-            nfi.NumberDecimalSeparator = ".";
             if (rs.Any())
             {
                 var timeFormat = GetTimeFormat();
@@ -54,7 +52,7 @@ namespace FKala.Core.DataLayers
                     {
                         bw.Append(dp.Time.ToString(timeFormat));
                         bw.Append(" ");
-                        bw.Append(dp.Value.Value.ToString(nfi));
+                        bw.Append(dp.Value.Value.ToString(CultureInfo.InvariantCulture));
                         bw.AppendNewline();
                     }
                 }

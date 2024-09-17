@@ -16,9 +16,8 @@ namespace FKala.Core
 
         public CachingLayer CachingLayer { get; }
         private readonly ConcurrentDictionary<string, IBufferedWriter> _bufferedWriters = new ConcurrentDictionary<string, IBufferedWriter>();
-        HashSet<string> CreatedDirectories = new HashSet<string>();
-        StringBuilder sb = new StringBuilder();
-
+        ConcurrentBag<string> CreatedDirectories = new ConcurrentBag<string>();
+        
 
         public DataLayer_Readable_Caching_V1(string storagePath)
         {
@@ -219,6 +218,7 @@ namespace FKala.Core
 
             // Create the directory path
             var directoryPath = Path.Combine(DataDirectory, measurement, datetime.Slice(0, 4).ToString(), datetime.Slice(5, 2).ToString());
+            
             if (!CreatedDirectories.Contains(directoryPath))
             {
                 Directory.CreateDirectory(directoryPath);
@@ -227,6 +227,7 @@ namespace FKala.Core
 
 
             // Create the file path
+            StringBuilder sb = new StringBuilder();
             sb.Clear();
             sb.Append(measurement);
             sb.Append('_');
@@ -283,7 +284,7 @@ namespace FKala.Core
                     _bufferedWriters.Remove(writer.Key, out var removed);
                 }
             }
-            CreatedDirectories = new HashSet<string>();
+            CreatedDirectories = new ConcurrentBag<string>();
         }
 
         public void Dispose()

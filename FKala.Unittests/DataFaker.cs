@@ -26,15 +26,13 @@ namespace FKala.Unittests
             Random randomTime = new Random(0);
             Random randomValue = new Random(1);
             var range = distMax.Ticks - distMin.Ticks;
-            NumberFormatInfo nfi = new NumberFormatInfo();
-            nfi.NumberDecimalSeparator = ".";
             long variation = randomTime.NextInt64(range);
             decimal currentFakeValue;
             currentFakeTime = currentFakeTime.Add(distMin).AddTicks(variation);
             while (currentFakeTime < end)
             {
                 currentFakeValue = new decimal(randomValue.NextDouble());
-                TestDataLayer.Insert($"{measure} {currentFakeTime:yyyy-MM-ddTHH:mm:ss.fffffff} {currentFakeValue.ToString(nfi)}");
+                TestDataLayer.Insert($"{measure} {currentFakeTime:yyyy-MM-ddTHH:mm:ss.fffffff} {currentFakeValue.ToString(CultureInfo.InvariantCulture)}");
 
                 variation = randomTime.NextInt64(range);
                 currentFakeTime = currentFakeTime.Add(distMin).AddTicks(variation);
