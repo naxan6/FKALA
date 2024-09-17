@@ -241,8 +241,14 @@ namespace FKala.Core
             {
                 if (!_bufferedWriters.TryGetValue(filePath, out var writer))
                 {
-
-                    writer = new BufferedWriter(filePath);
+                    try
+                    {
+                        writer = new BufferedWriter(filePath);
+                    } catch (Exception ex)
+                    {
+                        Console.WriteLine("error at BufferedWriter with path <{filePath}>");
+                        throw;
+                    }
                     _bufferedWriters[filePath] = writer;
                 }
 
