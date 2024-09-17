@@ -15,7 +15,6 @@ namespace FKala.Core
         private string DataDirectory;
 
         public CachingLayer CachingLayer { get; }
-        private static readonly ReaderWriterLockSlim Locker = new ReaderWriterLockSlim();
         private readonly ConcurrentDictionary<string, IBufferedWriter> _bufferedWriters = new ConcurrentDictionary<string, IBufferedWriter>();
         HashSet<string> CreatedDirectories = new HashSet<string>();
         StringBuilder sb = new StringBuilder();
@@ -200,64 +199,54 @@ namespace FKala.Core
         /// <param name="locking"></param>
         public void Insert(string rawData, bool locking = true)
         {
-            try
+
+            // Parse the raw data
+            ReadOnlySpan<char> span = rawData.AsSpan();
+
+            // TODO: Bug spaces in path?
+            int index = span.IndexOf(' ');
+            var measurement = span.Slice(0, index).ToString();
+            measurement = PathSanitizer.SanitizePath(measurement);
+
+            span = span.Slice(index + 1);
+            index = 27; //Länge von yyyy-MM-ddTHH:mm:ss.fffffff hartkodiert statt Ende suchen
+            var datetime = span.Slice(0, index);
+
+            span = span.Slice(index + 1);
+            ReadOnlySpan<char> valueRaw = null;
+            ReadOnlySpan<char> text = null;
+            valueRaw = span.Slice(0);
+
+            // Create the directory path
+            var directoryPath = Path.Combine(DataDirectory, measurement, datetime.Slice(0, 4).ToString(), datetime.Slice(5, 2).ToString());
+            if (!CreatedDirectories.Contains(directoryPath))
             {
-                if (locking) Locker.EnterWriteLock();
+                Directory.CreateDirectory(directoryPath);
+                CreatedDirectories.Add(directoryPath);
+            }
 
-                // Parse the raw data
-                ReadOnlySpan<char> span = rawData.AsSpan();
 
-                // TODO: Bug spaces in path?
-                int index = span.IndexOf(' ');
-                var measurement = span.Slice(0, index).ToString();
-                measurement = PathSanitizer.SanitizePath(measurement);
+            // Create the file path
+            sb.Clear();
+            sb.Append(measurement);
+            sb.Append('_');
+            sb.Append(datetime.Slice(0, 10));
+            sb.Append(".dat");
 
-                span = span.Slice(index + 1);
-                index = 27; //Länge von yyyy-MM-ddTHH:mm:ss.fffffff hartkodiert statt Ende suchen
-                var datetime = span.Slice(0, index);
+            var filePath = Path.Combine(directoryPath, sb.ToString());
 
-                span = span.Slice(index + 1);
-                ReadOnlySpan<char> valueRaw = null;
-                ReadOnlySpan<char> text = null;
-                valueRaw = span.Slice(0);
-
-                // Create the directory path
-                var directoryPath = Path.Combine(DataDirectory, measurement, datetime.Slice(0, 4).ToString(), datetime.Slice(5, 2).ToString());
-                if (!CreatedDirectories.Contains(directoryPath))
+            // Buffer the line
+            lock (filePath)
+            {
+                if (!_bufferedWriters.TryGetValue(filePath, out var writer))
                 {
-                    Directory.CreateDirectory(directoryPath);
-                    CreatedDirectories.Add(directoryPath);
+
+                    writer = new BufferedWriter(filePath);
+                    _bufferedWriters[filePath] = writer;
                 }
 
-
-                // Create the file path
-                sb.Clear();
-                sb.Append(measurement);
-                sb.Append('_');
-                sb.Append(datetime.Slice(0, 10));
-                sb.Append(".dat");
-
-                var filePath = Path.Combine(directoryPath, sb.ToString());
-
-                // Buffer the line
-                lock (filePath)
+                lock (writer.LOCK)
                 {
-                    if (!_bufferedWriters.TryGetValue(filePath, out var writer))
-                    {
-                        if (locking)
-                        {
-                            writer = new BufferedWriter_Locking(filePath);
-                            writer.Flush();
-                        }
-                        else
-                        {
-                            writer = new BufferedWriter_NonLocking(filePath);
-                            writer.Flush();
-                        }
-
-                        _bufferedWriters[filePath] = writer;
-                    }
-
                     // Format the line to write
                     writer.Append(datetime.Slice(11));
                     writer.Append(" ");
@@ -272,10 +261,7 @@ namespace FKala.Core
                     writer.AppendNewline();
                 }
             }
-            finally
-            {
-                if (locking) Locker.ExitWriteLock();
-            }
+
         }
 
         private async Task FlushBuffersPeriodically()

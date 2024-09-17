@@ -3,7 +3,7 @@ using System.Text;
 
 namespace FKala.Core
 {
-    public class BufferedWriter_NonLocking : IDisposable, IBufferedWriter
+    public class BufferedWriter : IDisposable, IBufferedWriter
     {
         private readonly string _filePath;
         private readonly StringBuilder _buffer = new StringBuilder();
@@ -11,7 +11,11 @@ namespace FKala.Core
         private FileStream _fileStream;
         private StreamWriter _streamWriter;
 
-        public BufferedWriter_NonLocking(string filePath)
+        private object LOCKI = new object();
+
+        public object LOCK { get { return LOCKI; } }
+
+        public BufferedWriter(string filePath)
         {
             _filePath = filePath;
             _fileStream = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.Read);
@@ -34,11 +38,14 @@ namespace FKala.Core
 
         public void Flush()
         {
-            if (_buffer.Length == 0) return;
+            lock (LOCK)
+            {
+                if (_buffer.Length == 0) return;
 
-            _streamWriter.Write(_buffer.ToString());
-            _buffer.Clear();
-            _streamWriter.Flush();
+                _streamWriter.Write(_buffer.ToString());
+                _buffer.Clear();
+                _streamWriter.Flush();
+            }
         }
 
         public void Dispose()

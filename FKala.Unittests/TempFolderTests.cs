@@ -64,7 +64,7 @@ namespace FKala.Unittests
 
             // Assert
             Console.WriteLine(KalaJson.Serialize(result));
-            result.Errors.Should().NotBeEmpty();
+            result.Errors.Should().BeEmpty();
             
             var resultset = result.ResultTable;
             resultset.Should().NotBeNull();
@@ -89,11 +89,11 @@ namespace FKala.Unittests
 
             // Assert
             Console.WriteLine(KalaJson.Serialize(result));
-            result.Errors.Should().NotBeEmpty();
+            result.Errors.Should().BeEmpty();
 
             var resultset = result.ResultTable;
             resultset.Should().NotBeNull();
-            resultset!.Count().Should().Be(366);
+            resultset!.Count().Should().Be(336);
                         
             var firstEntry = ((dynamic)resultset!.First());
             Assert.AreEqual(new DateTime(2024, 03, 01, 00, 00, 00), firstEntry.time);

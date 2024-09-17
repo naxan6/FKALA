@@ -47,7 +47,7 @@ namespace FKala.Core.DataLayers
             if (rs.Any())
             {
                 var timeFormat = GetTimeFormat();
-                using var bw = new BufferedWriter_NonLocking(cacheFilePath);
+                using var bw = new BufferedWriter(cacheFilePath);
                 foreach (var dp in rs)
                 {
                     if (dp.Value != null)
