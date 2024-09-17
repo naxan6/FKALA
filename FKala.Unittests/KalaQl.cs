@@ -188,6 +188,8 @@ namespace FKala.Unittests
             Console.WriteLine("Verstrichene Zeit: " + elapsedTime);
 
             Console.WriteLine(KalaJson.Serialize(result.ResultTable));// JSON serialize
+            Console.WriteLine(KalaJson.Serialize(result.Errors));// JSON serialize
+            Assert.AreEqual(0, result.Errors.Count());
         }
 
         [TestMethod]

@@ -1,22 +1,11 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics.Metrics;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using FKala.TestConsole.DataLayers;
+﻿using FKala.TestConsole.DataLayers;
 using FKala.TestConsole.Interfaces;
-using FKala.TestConsole.KalaQl;
-using FKala.TestConsole.KalaQl.Windowing;
 using FKala.TestConsole.Logic;
 using FKala.TestConsole.Model;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using static System.Net.Mime.MediaTypeNames;
-using static FKala.TestConsole.DataLayers.CachingLayer;
+using System.Collections.Concurrent;
+using System.Globalization;
+using System.Runtime.Intrinsics.Arm;
+using System.Text;
 
 namespace FKala.TestConsole
 {
@@ -100,6 +89,7 @@ namespace FKala.TestConsole
                 }
             }
         }
+
         private IEnumerable<DataPoint> LoadFullResolution(string measurement, DateTime startTime, DateTime endTime)
         {
 
@@ -107,11 +97,17 @@ namespace FKala.TestConsole
             var startYear = startTime.Year;
             var endYear = endTime.Year;
 
-            for (int year = startYear; year <= endYear; year++)
-            {
-                var yearPath = Path.Combine(DataDirectory, measurementPath, year.ToString());
-                if (!Directory.Exists(yearPath)) continue;
+            List<string> lines;
+            string? line;
 
+            var yearsPath = Path.Combine(DataDirectory, measurementPath);
+            var years = GetYearFolders(yearsPath).Where(f => f >= startYear && f <= endYear);
+
+            List<DataPoint> dataPoints = new List<DataPoint>();
+            foreach (int year in years)
+            {
+
+                var yearPath = Path.Combine(yearsPath, year.ToString());
                 foreach (var monthDir in Directory.GetDirectories(yearPath))
                 {
                     var month = int.Parse(Path.GetFileName(monthDir));
@@ -136,21 +132,38 @@ namespace FKala.TestConsole
                             continue;
                         }
 
-                        using var _fs = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                        using var sr = new StreamReader(_fs, Encoding.UTF8, false, 16384);
-                        string? line;
-                        while ((line = sr.ReadLine()) != null)
+                        using (var sr = new StreamReader(file, Encoding.UTF8, false, new FileStreamOptions() { Access = FileAccess.Read, BufferSize = 65536, Mode = FileMode.Open, Share = FileShare.ReadWrite | FileShare.Delete }))
                         {
-                            var ret = ParseLine(startTime, endTime, fileyear, filemonth, fileday, line);
-                            if (ret != null)
-                            {
-                                yield return ret;
-                            }
-                        }
 
+
+                            while ((line = sr.ReadLine()) != null)
+                            {
+                                var ret = ParseLine(startTime, endTime, fileyear, filemonth, fileday, line);
+                                if (ret != null)
+                                {
+                                    dataPoints.Add(ret);
+                                }
+                            }
+                            sr.Close();
+                            sr.Dispose();
+                        }
+                        dataPoints.Sort((a, b) => a.Time.CompareTo(b.Time));
+                        foreach (var dp in dataPoints)
+                        {
+                            yield return dp;
+                        }
+                        dataPoints.Clear();
                     }
+
                 }
             }
+            yield break;
+        }
+
+        private List<int> GetYearFolders(string baseDir)
+        {
+            var entries = Directory.GetFileSystemEntries(baseDir, "*", SearchOption.TopDirectoryOnly);
+            return entries.Select(y => int.Parse(Path.GetFileName(y))).ToList();
 
         }
 
@@ -184,8 +197,8 @@ namespace FKala.TestConsole
                 return new DataPoint
                 {
                     Time = dateTime,
-                    Value = value,
-                    ValueText = valuetext
+                    Value = value
+                    //                    ValueText = valuetext
                 };
             }
             return null;

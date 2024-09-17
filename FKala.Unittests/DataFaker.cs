@@ -50,7 +50,7 @@ namespace FKala.Unittests
             var range = distMax.Ticks - distMin.Ticks;
             NumberFormatInfo nfi = new NumberFormatInfo();
             nfi.NumberDecimalSeparator = ".";
-            long variation = range + randomTime.NextInt64(range/2); // half of the times are in the past
+            long variation = -range + randomTime.NextInt64(range/2); // half of the times are in the past
             decimal currentFakeValue;
             currentFakeTime = currentFakeTime.Add(distMin).AddTicks(variation);
             while (currentFakeTime < end)

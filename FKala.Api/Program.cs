@@ -3,6 +3,7 @@ using FKala.Api.InputFormatter;
 using FKala.TestConsole;
 using FKala.TestConsole.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System.Runtime;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,11 +11,12 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddControllers(
     options => options.InputFormatters.Add(new PlainTextFormatter())
-    ).AddNewtonsoftJson(options =>
-            {
-                options.SerializerSettings.DateFormatString = "yyyy'-'MM'-'dd'T'HH':'mm':'ssZ";
-            }
-    ); ;
+    );
+    //.AddNewtonsoftJson(options =>
+    //        {
+    //            options.SerializerSettings.DateFormatString = "yyyy'-'MM'-'dd'T'HH':'mm':'ssZ";
+    //        }
+    //); ;
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -43,4 +45,16 @@ app.UseEndpoints(endpoints =>
 app.UseHttpsRedirection();
 
 
+Task.Run(async () => {
+    while (true)
+    {
+        await Task.Delay(TimeSpan.FromSeconds(10));
+        GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+        GC.Collect();
+    }
+});
+
 app.Run();
+
+
+

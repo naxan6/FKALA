@@ -2,16 +2,8 @@
 using FKala.TestConsole.Interfaces;
 using FKala.TestConsole.KalaQl.Windowing;
 using FKala.TestConsole.Model;
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Runtime.Intrinsics.X86;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace FKala.TestConsole.KalaQl
 {
@@ -72,6 +64,7 @@ namespace FKala.TestConsole.KalaQl
 
         private KalaResult GetUnlinkedResult(KalaQlContext context)
         {
+            context.IntermediateResults = null;
             var result = context.Result;
             context.Result = null;
             return result;

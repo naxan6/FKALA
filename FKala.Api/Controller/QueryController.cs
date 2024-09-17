@@ -3,6 +3,7 @@ using FKala.TestConsole.Interfaces;
 using FKala.TestConsole.KalaQl;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Runtime;
 
 namespace FKala.Api.Controller
 {
@@ -60,6 +61,7 @@ namespace FKala.Api.Controller
 
             var result = q.Execute(this.DataLayer);
 
+            
             if (result?.Errors.Count() != 0)
             {
                 return BadRequest(result.Errors);

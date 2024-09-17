@@ -1,16 +1,4 @@
-using FKala.Core.Model;
 using FKala.TestConsole.Interfaces;
-using FKala.TestConsole.Logic;
-using FKala.TestConsole.Model;
-using NodaTime;
-using System;
-using System.Collections.Generic;
-using System.Dynamic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.XPath;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace FKala.TestConsole.KalaQl
 {

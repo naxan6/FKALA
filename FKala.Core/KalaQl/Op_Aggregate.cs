@@ -49,8 +49,7 @@ namespace FKala.TestConsole.KalaQl
 
         private IEnumerable<DataPoint> InternalExecute(KalaQlContext context, Result input)
         {
-            var dataPointsEnumerator = input.Resultset.OrderBy(dp => dp.Time).GetEnumerator();
-            //var dataPointsEnumerator = input.Resultset.GetEnumerator();
+            var dataPointsEnumerator = input.Resultset.GetEnumerator();
 
             Window.Init(input.StartTime, context.AlignTzTimeZoneId);
             var currentDataPoint = new DataPoint() { Time = Window.StartTime };

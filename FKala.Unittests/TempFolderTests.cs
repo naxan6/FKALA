@@ -12,16 +12,16 @@ namespace FKala.Unittests
     [TestClass]
     public class TempFolderTests
     {
-        DataFaker DataFaker;
+        static DataFaker DataFaker;
 
-        [TestInitialize]
-        public void Initialize()
+        [ClassInitialize]
+        public static void Initialize(TestContext context)
         {
             DataFaker = new DataFaker();
             DataFaker.FakeMeasure("m1", new DateTime(2024, 01, 01), new DateTime(2024, 05, 01), new TimeSpan(0, 0, 1), new TimeSpan(0, 0, 15));
         }
-        [TestCleanup]
-        public void Cleanup()
+        [ClassCleanup]
+        public static void Cleanup()
         {
             DataFaker.Dispose();
         }

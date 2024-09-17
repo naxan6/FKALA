@@ -11,7 +11,7 @@ Load rSOC: Sofar/measure/batteryInput1/0x608_SOC_Bat1[%] 0001-01-01T00:00:00 999
 Load rSOH: Sofar/measure/batteryInput1/0x609_SOH_Bat1[%] 0001-01-01T00:00:00 9999-12-31T00:00:00 NoCache
 Aggr SOC: rSOC Aligned_1Month Avg
 Aggr SOH: rSOH Aligned_1Month Avg
-Publ "SOC, SOH" Table
+Publ "SOC,SOH" Default
 
 ### Beispiel: persistenter Cache auf Stundenbasis mit Avg
 POST {{FKala.Api_HostAddress}}/api/Query
