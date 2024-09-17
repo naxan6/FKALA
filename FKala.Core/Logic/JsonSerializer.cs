@@ -1,4 +1,4 @@
-﻿using FKala.TestConsole.Model;
+﻿using FKala.Core.Model;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FKala.TestConsole.Logic
+namespace FKala.Core.Logic
 {
     public class KalaJson
     {

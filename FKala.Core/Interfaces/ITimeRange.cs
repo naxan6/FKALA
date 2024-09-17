@@ -1,4 +1,4 @@
-﻿namespace FKala.TestConsole.Interfaces
+﻿namespace FKala.Core.Interfaces
 {
     public interface ITimeRange
     {

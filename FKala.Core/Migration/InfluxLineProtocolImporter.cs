@@ -2,9 +2,9 @@
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
-using FKala.TestConsole.Interfaces;
+using FKala.Core.Interfaces;
 
-namespace FKala.TestConsole.Migration
+namespace FKala.Core.Migration
 {
     public class InfluxLineProtocolImporter
     {
@@ -37,7 +37,7 @@ namespace FKala.TestConsole.Migration
             parsedTimestamp = parsedTimestamp.AddTicks(long.Parse(timestamp) / 100);
 
             // Check for the 'topic' tag
-            string topic = null;
+            string? topic = null;
             if (!string.IsNullOrEmpty(tags))
             {
                 var tagParts = tags.Split(',');

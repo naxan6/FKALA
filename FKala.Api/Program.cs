@@ -1,7 +1,7 @@
 using FKala.Api.Controller;
 using FKala.Api.InputFormatter;
-using FKala.TestConsole;
-using FKala.TestConsole.Interfaces;
+using FKala.Core;
+using FKala.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Runtime;
 
@@ -45,7 +45,7 @@ app.UseEndpoints(endpoints =>
 app.UseHttpsRedirection();
 
 // Run GC regularly
-Task.Run(async () => {
+Task task = Task.Run(async () => {
     while (true)
     {
         await Task.Delay(TimeSpan.FromSeconds(10));

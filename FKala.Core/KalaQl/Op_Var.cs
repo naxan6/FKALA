@@ -1,6 +1,6 @@
-using FKala.TestConsole.Interfaces;
+using FKala.Core.Interfaces;
 
-namespace FKala.TestConsole.KalaQl
+namespace FKala.Core.KalaQl
 {
     public class Op_Var : Op_Base, IKalaQlOperation
     {        

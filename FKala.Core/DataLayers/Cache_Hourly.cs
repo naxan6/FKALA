@@ -1,14 +1,8 @@
-﻿using FKala.TestConsole.Interfaces;
-using FKala.TestConsole.KalaQl.Windowing;
-using FKala.TestConsole.KalaQl;
-using FKala.TestConsole.Model;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using FKala.Core.Interfaces;
+using FKala.Core.KalaQl;
+using FKala.Core.KalaQl.Windowing;
+using FKala.Core.Model;
 using System.Globalization;
-using FKala.Core.Interfaces;
 
 namespace FKala.Core.DataLayers
 {
@@ -57,15 +51,21 @@ namespace FKala.Core.DataLayers
             };
         }
 
-        public override DateTime ShouldUpdateFromWhere(DataPoint? newestInCache, DataPoint newestInRaw)
+        public override DateTime ShouldUpdateFromWhere(DataPoint? newestInCache, DataPoint? newestInRaw)
         {
-            // 30 Minuten Alterung erlauben
+            // no refresh for non-existent cache
+            if (newestInCache == null || newestInRaw == null)
+            {
+                return DateTime.MaxValue;
+            }
+
+            // allow 30 minutes aging against raw data
             if (newestInCache.Time.Add(new TimeSpan(1,30,0)) > newestInRaw.Time)
             {
                 return DateTime.MaxValue;
             }
 
-            // die letzten 2 Stunden refreshen
+            // ..dann so viel refreshen: die letzten 2 Stunden
             return newestInCache.Time.Subtract(new TimeSpan(2, 0, 0));
         }
     }

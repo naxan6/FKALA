@@ -1,11 +1,10 @@
-﻿using FKala.Core.Model;
-using FKala.TestConsole.Interfaces;
-using FKala.TestConsole.KalaQl.Windowing;
-using FKala.TestConsole.Model;
+﻿using FKala.Core.Interfaces;
+using FKala.Core.KalaQl.Windowing;
+using FKala.Core.Model;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace FKala.TestConsole.KalaQl
+namespace FKala.Core.KalaQl
 {
     public class KalaQuery
     {
@@ -41,7 +40,7 @@ namespace FKala.TestConsole.KalaQl
                         context.Result = new KalaResult();
                         context.Result.Errors.Add($"Error while processing {nextop.Line}");
                         context.Result.Errors.Add(ex.ToString());
-                        return GetUnlinkedResult(context);
+                        return context.Result;
                     }
                 }
                 else
@@ -51,7 +50,7 @@ namespace FKala.TestConsole.KalaQl
                     {
                         context.Result = new KalaResult();
                         context.Result.Errors.Add("KalaQuery could not execute : " + string.Join(", ", notExecuted.Select(x => x.ToString())));
-                        return GetUnlinkedResult(context);
+                        return context.Result;
                     }
                     else
                     {
@@ -59,15 +58,7 @@ namespace FKala.TestConsole.KalaQl
                     }
                 }
             }
-            return GetUnlinkedResult(context);
-        }
-
-        private KalaResult GetUnlinkedResult(KalaQlContext context)
-        {
-            context.IntermediateResults = null;
-            var result = context.Result;
-            context.Result = null;
-            return result;
+            return context.Result;
         }
 
         public KalaQuery FromQuery(string queryText)
@@ -101,10 +92,9 @@ namespace FKala.TestConsole.KalaQl
             var matches = Regex.Matches(line, pattern);
 
             List<string> fields = new List<string>();
-            int pos = 0;
             foreach (Match match in matches)
             {
-                string field = null;
+                string field;
                 if (match.Groups["quotedElement"].Success)
                 {
                     field = match.Groups["quotedElement"].Value;
@@ -125,13 +115,11 @@ namespace FKala.TestConsole.KalaQl
             {
                 case "AlTz":
                     return new Op_AlignTimezone(line, fields[1]);
-                    break;
                 case "Var":
                     var opvar = new Op_Var(line, fields[1].Trim(':'), fields[2]);
                     opvars.RemoveAll(e => e.VarName == opvar.VarName);
                     opvars.Add(opvar);
                     return opvar;
-                    break;
                 case "Load":
                     if (fields[3] == "NewestOnly")
                     {

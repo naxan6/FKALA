@@ -1,7 +1,7 @@
-﻿using FKala.TestConsole.Interfaces;
+﻿using FKala.Core.Interfaces;
 using System.Text;
 
-namespace FKala.TestConsole
+namespace FKala.Core
 {
     public class BufferedWriter_NonLocking : IDisposable, IBufferedWriter
     {

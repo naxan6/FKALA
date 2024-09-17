@@ -1,4 +1,4 @@
-﻿using FKala.TestConsole.Model;
+﻿using FKala.Core.Model;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -6,13 +6,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FKala.TestConsole.KalaQl
+namespace FKala.Core.KalaQl
 {
     public class KalaResult
     {
-        public List<Result> ResultSets { get; set; }
-        public List<ExpandoObject> ResultTable { get; set; }
-        public List<string> MeasureList { get; internal set; }
+        public List<Result>? ResultSets { get; set; }
+        public List<ExpandoObject>? ResultTable { get; set; }
+        public List<string>? MeasureList { get; internal set; }
         public List<string> Errors { get; internal set; } = new List<string>();
     }
 }

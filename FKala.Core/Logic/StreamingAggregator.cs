@@ -1,4 +1,4 @@
-﻿using FKala.TestConsole.KalaQl.Windowing;
+﻿using FKala.Core.KalaQl.Windowing;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FKala.TestConsole.Logic
+namespace FKala.Core.Logic
 {
 
     public class StreamingAggregator

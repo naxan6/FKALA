@@ -1,15 +1,14 @@
-﻿using FKala.TestConsole.KalaQl.Windowing;
-using FKala.TestConsole.Model;
-using FKala.TestConsole;
+﻿using FKala.Core.KalaQl.Windowing;
+using FKala.Core.Model;
+using FKala.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FKala.Core.Interfaces;
-using FKala.TestConsole.Logic;
-using System.Diagnostics.Metrics;
 using FKala.Core.Logic;
+using System.Diagnostics.Metrics;
 using System.Globalization;
 
 namespace FKala.Core.DataLayers
@@ -18,9 +17,9 @@ namespace FKala.Core.DataLayers
     {
         public abstract IEnumerable<DataPoint> GetAggregateForCaching(string measurement, DateTime start, DateTime end, AggregateFunction aggrFunc);
         public abstract string GetTimeFormat();
-        public abstract DataPoint? ReadLine(int fileyear, string? line);
+        public abstract DataPoint ReadLine(int fileyear, string? line);
         public abstract string CacheSubdir {  get; }
-        public abstract DateTime ShouldUpdateFromWhere(DataPoint? newestInCache, DataPoint newestInRaw);
+        public abstract DateTime ShouldUpdateFromWhere(DataPoint? newestInCache, DataPoint? newestInRaw);
         
         public IEnumerable<DataPoint?> LoadNewestDatapoint(string newestFile)
         {
@@ -51,10 +50,13 @@ namespace FKala.Core.DataLayers
                 using var bw = new BufferedWriter_NonLocking(cacheFilePath);
                 foreach (var dp in rs)
                 {
-                    bw.Append(dp.Time.ToString(timeFormat));
-                    bw.Append(" ");
-                    bw.Append(dp.Value.Value.ToString(nfi));
-                    bw.AppendNewline();
+                    if (dp.Value != null)
+                    {
+                        bw.Append(dp.Time.ToString(timeFormat));
+                        bw.Append(" ");
+                        bw.Append(dp.Value.Value.ToString(nfi));
+                        bw.AppendNewline();
+                    }
                 }
                 bw.Dispose();
             }

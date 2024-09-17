@@ -1,15 +1,8 @@
-﻿using FKala.TestConsole.Interfaces;
-using FKala.TestConsole.KalaQl.Windowing;
-using FKala.TestConsole.KalaQl;
-using FKala.TestConsole.Model;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using FKala.TestConsole.Logic;
+﻿using FKala.Core.Interfaces;
+using FKala.Core.KalaQl;
+using FKala.Core.KalaQl.Windowing;
+using FKala.Core.Model;
 using System.Globalization;
-using FKala.Core.Interfaces;
 
 namespace FKala.Core.DataLayers
 {
@@ -39,7 +32,7 @@ namespace FKala.Core.DataLayers
             return rs;
         }
 
-        public override DataPoint? ReadLine(int fileyear, string? line)
+        public override DataPoint ReadLine(int fileyear, string? line)
         {
             ReadOnlySpan<char> span = line.AsSpan();
             //06-15T23:26 55.654105
@@ -54,15 +47,21 @@ namespace FKala.Core.DataLayers
                 Value = value
             };
         }
-        public override DateTime ShouldUpdateFromWhere(DataPoint? newestInCache, DataPoint newestInRaw)
+        public override DateTime ShouldUpdateFromWhere(DataPoint? newestInCache, DataPoint? newestInRaw)
         {
-            // 5 Minute Alterung erlauben
+            // no refresh for non-existent cache
+            if (newestInCache == null || newestInRaw == null)
+            {
+                return DateTime.MaxValue;
+            }
+
+            // allow 5 minutes aging against raw-data
             if (newestInCache.Time.Add(new TimeSpan(0, 5, 0)) > newestInRaw.Time)
             {
                 return DateTime.MaxValue;
             }
-            
-            // die letzten 5 Minuten refreshen
+
+            // then refresh the last 5 existent minutes in the cache
             return newestInCache.Time.Subtract(new TimeSpan(0, 5, 0));
         }
     }

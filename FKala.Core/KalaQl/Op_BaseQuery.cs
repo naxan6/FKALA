@@ -1,13 +1,13 @@
-﻿using FKala.TestConsole.Interfaces;
-using FKala.TestConsole.KalaQl.Windowing;
-using FKala.TestConsole.Model;
+﻿using FKala.Core.Interfaces;
+using FKala.Core.KalaQl.Windowing;
+using FKala.Core.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FKala.TestConsole.KalaQl
+namespace FKala.Core.KalaQl
 {
     public class Op_BaseQuery : Op_Base, IKalaQlOperation
     {
@@ -18,7 +18,7 @@ namespace FKala.TestConsole.KalaQl
         public CacheResolution CacheResolution { get; }
         public bool NewestOnly { get; }
 
-        public Op_BaseQuery(string line, string name, string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly = false) : base(line)
+        public Op_BaseQuery(string? line, string name, string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly = false) : base(line)
         {
             this.Name = name;
             this.Measurement = measurement;

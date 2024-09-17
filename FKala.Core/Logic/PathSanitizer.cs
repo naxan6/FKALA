@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FKala.TestConsole.Logic
+namespace FKala.Core.Logic
 {
     public class PathSanitizer
     {

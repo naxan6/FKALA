@@ -1,6 +1,6 @@
-﻿using FKala.TestConsole;
-using FKala.TestConsole.Interfaces;
-using FKala.TestConsole.KalaQl;
+﻿using FKala.Core;
+using FKala.Core.Interfaces;
+using FKala.Core.KalaQl;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Runtime;
@@ -64,7 +64,7 @@ namespace FKala.Api.Controller
             
             if (result?.Errors.Count() != 0)
             {
-                return BadRequest(result.Errors);
+                return BadRequest(result!.Errors);
             }
             else if (result?.ResultSets != null)
             {

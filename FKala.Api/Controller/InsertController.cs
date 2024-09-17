@@ -1,6 +1,4 @@
-﻿using FKala.TestConsole;
-using FKala.TestConsole.Interfaces;
-using FKala.TestConsole.KalaQl;
+﻿using FKala.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FKala.Api.Controller

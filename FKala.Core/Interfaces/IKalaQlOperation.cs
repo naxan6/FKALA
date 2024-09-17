@@ -1,12 +1,12 @@
-﻿using FKala.TestConsole.KalaQl;
-using FKala.TestConsole.Model;
+﻿using FKala.Core.KalaQl;
+using FKala.Core.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FKala.TestConsole.Interfaces
+namespace FKala.Core.Interfaces
 {
     public interface IKalaQlOperation
     {

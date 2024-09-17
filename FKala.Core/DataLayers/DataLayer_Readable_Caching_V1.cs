@@ -1,21 +1,20 @@
-﻿using FKala.TestConsole.DataLayers;
-using FKala.TestConsole.Interfaces;
-using FKala.TestConsole.Logic;
-using FKala.TestConsole.Model;
+﻿using FKala.Core.DataLayers;
+using FKala.Core.Interfaces;
+using FKala.Core.Logic;
+using FKala.Core.Model;
+using System;
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Runtime.Intrinsics.Arm;
 using System.Text;
 
-namespace FKala.TestConsole
+namespace FKala.Core
 {
     public class DataLayer_Readable_Caching_V1 : IDataLayer, IDisposable
     {
         private string DataDirectory;
 
         public CachingLayer CachingLayer { get; }
-
-        private string CacheDirectory = "cache";
         private static readonly ReaderWriterLockSlim Locker = new ReaderWriterLockSlim();
         private readonly ConcurrentDictionary<string, IBufferedWriter> _bufferedWriters = new ConcurrentDictionary<string, IBufferedWriter>();
         HashSet<string> CreatedDirectories = new HashSet<string>();
@@ -38,7 +37,7 @@ namespace FKala.TestConsole
             {
                 return this.LoadNewestDatapoint(measurement);
             }
-            else if (cacheResolution?.Resolution != Resolution.Full)
+            else if (cacheResolution.Resolution != Resolution.Full)
             {
                 return CachingLayer.LoadDataFromCache(measurement, startTime, endTime, cacheResolution);
             }
@@ -73,7 +72,6 @@ namespace FKala.TestConsole
                         var lastLine = LastLineReader.ReadLastLine(file);
                         if (string.IsNullOrEmpty(lastLine))
                         {
-                            yield return null;
                             yield break;
                         }
                         var fn = Path.GetFileNameWithoutExtension(file);
@@ -82,7 +80,7 @@ namespace FKala.TestConsole
                         int fileyear = int.Parse(dateSpan.Slice(0, 4));
                         int filemonth = int.Parse(dateSpan.Slice(5, 2));
                         int fileday = int.Parse(dateSpan.Slice(8, 2));
-                        var dp = ParseLine(DateTime.MinValue, DateTime.MaxValue, fileyear, filemonth, fileday, lastLine);
+                        var dp = ParseLine(fileyear, filemonth, fileday, lastLine);
                         yield return dp;
                         yield break;
                     }
@@ -97,7 +95,6 @@ namespace FKala.TestConsole
             var startYear = startTime.Year;
             var endYear = endTime.Year;
 
-            List<string> lines;
             string? line;
 
             var yearsPath = Path.Combine(DataDirectory, measurementPath);
@@ -138,8 +135,8 @@ namespace FKala.TestConsole
 
                             while ((line = sr.ReadLine()) != null)
                             {
-                                var ret = ParseLine(startTime, endTime, fileyear, filemonth, fileday, line);
-                                if (ret != null)
+                                var ret = ParseLine(fileyear, filemonth, fileday, line);
+                                if (ret.Time >= startTime && ret.Time < endTime)
                                 {
                                     dataPoints.Add(ret);
                                 }
@@ -167,14 +164,9 @@ namespace FKala.TestConsole
 
         }
 
-        private static DataPoint ParseLine(DateTime startTime, DateTime endTime, int fileyear, int filemonth, int fileday, string? line)
+        private static DataPoint ParseLine(int fileyear, int filemonth, int fileday, string? line)
         {
             ReadOnlySpan<char> span = line.AsSpan();
-
-            //var time = span.Slice(0, 16).ToString();
-            //var tt = new TimeOnly(int.Parse(span.Slice(0, 2)), int.Parse(span.Slice(3, 2)), int.Parse(span.Slice(6, 2)));
-
-            //var dateTime = new DateTime(dt, tt);
             var dateTime = new DateTime(fileyear, filemonth, fileday, int.Parse(span.Slice(0, 2)), int.Parse(span.Slice(3, 2)), int.Parse(span.Slice(6, 2)), DateTimeKind.Utc);
 
             dateTime.AddTicks(int.Parse(span.Slice(9, 7)));
@@ -187,21 +179,17 @@ namespace FKala.TestConsole
             {
                 value = decimal.Parse(valueRaw, CultureInfo.InvariantCulture);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 valuetext = valueRaw.ToString();
             }
 
-            if (dateTime >= startTime && dateTime < endTime)
+            return new DataPoint
             {
-                return new DataPoint
-                {
-                    Time = dateTime,
-                    Value = value
-                    //                    ValueText = valuetext
-                };
-            }
-            return null;
+                Time = dateTime,
+                Value = value
+                // ValueText = valuetext
+            };
         }
 
         /// <summary>
@@ -229,7 +217,6 @@ namespace FKala.TestConsole
                 var datetime = span.Slice(0, index);
 
                 span = span.Slice(index + 1);
-                decimal value;
                 ReadOnlySpan<char> valueRaw = null;
                 ReadOnlySpan<char> text = null;
                 valueRaw = span.Slice(0);

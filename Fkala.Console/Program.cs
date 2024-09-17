@@ -1,6 +1,6 @@
-﻿using FKala.TestConsole;
-using FKala.TestConsole.KalaQl;
-using FKala.TestConsole.Logic;
+﻿using FKala.Core;
+using FKala.Core.KalaQl;
+using FKala.Core.Logic;
 
 string StoragePath = "\\\\naxds2\\docker\\fkala";
 System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();

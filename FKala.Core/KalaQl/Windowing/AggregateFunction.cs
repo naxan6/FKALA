@@ -1,4 +1,4 @@
-﻿namespace FKala.TestConsole.KalaQl.Windowing
+﻿namespace FKala.Core.KalaQl.Windowing
 {
     public enum AggregateFunction
     {

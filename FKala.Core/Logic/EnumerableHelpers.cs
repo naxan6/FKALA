@@ -4,16 +4,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FKala.TestConsole.Logic
+namespace FKala.Core.Logic
 {
     public class EnumerableHelpers
     {
-        public static IEnumerable<T> SkipLast<T>(IEnumerable<T> source)
+        public static IEnumerable<T?> SkipLast<T>(IEnumerable<T> source)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
 
-            T prevItem = default;
+            T? prevItem = default;
             bool isFirst = true;
 
             foreach (T item in source)

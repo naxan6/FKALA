@@ -1,21 +1,22 @@
-﻿using FKala.TestConsole.Interfaces;
-using FKala.TestConsole.Model;
+﻿using FKala.Core.Interfaces;
+using FKala.Core.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FKala.TestConsole.KalaQl
+namespace FKala.Core.KalaQl
 {
     public abstract class Op_Base : IKalaQlOperation
     {
-        public Op_Base(string line)
+        public bool hasExecuted { get; protected set; }
+        public string? Line { get; }
+
+        public Op_Base(string? line)
         {
             this.Line = line;
         }
-        public bool hasExecuted { get; protected set; }
-        public string Line { get; }
 
         public abstract bool CanExecute(KalaQlContext context);
 

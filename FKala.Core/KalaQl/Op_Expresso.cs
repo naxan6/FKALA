@@ -1,23 +1,22 @@
 ﻿using DynamicExpresso;
-using FKala.TestConsole.Interfaces;
-using FKala.TestConsole.KalaQl;
-using FKala.TestConsole.KalaQl.Windowing;
-using FKala.TestConsole.Logic;
-using FKala.TestConsole.Model;
+using FKala.Core.Interfaces;
+using FKala.Core.KalaQl;
+using FKala.Core.KalaQl.Windowing;
+using FKala.Core.Logic;
+using FKala.Core.Model;
 using Newtonsoft.Json.Linq;
 
-namespace FKala.TestConsole.KalaQl
+namespace FKala.Core.KalaQl
 {
     public class Op_Expresso : Op_Base, IKalaQlOperation
     {
         Interpreter Interpreter;
         Lambda Lambda;
         public string Name { get; }
-        public string Fieldname { get; }
         public string Expresso { get; }
 
 
-        public Op_Expresso(string line, string name, string expresso) : base(line)
+        public Op_Expresso(string? line, string name, string expresso) : base(line)
         {
             Name = name;
             Expresso = expresso;

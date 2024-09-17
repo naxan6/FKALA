@@ -1,5 +1,5 @@
-﻿using FKala.TestConsole.KalaQl.Windowing;
-using FKala.TestConsole.Model;
+﻿using FKala.Core.KalaQl.Windowing;
+using FKala.Core.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +17,7 @@ namespace FKala.Core.Interfaces
         IEnumerable<DataPoint> LoadCache(DateTime startTime, DateTime endTime, int year, string yearFilePath);
         void GenerateWholeYearCache(string measurement, int year, string yearFilePath, AggregateFunction aggrFunc, bool forceRebuild);
         string EnsureDirectory(string cacheDirectory);
-        DateTime ShouldUpdateFromWhere(DataPoint? newestInCache, DataPoint newestInRaw);
+        DateTime ShouldUpdateFromWhere(DataPoint? newestInCache, DataPoint? newestInRaw);
         IEnumerable<DataPoint?> LoadNewestDatapoint(string newestFile);
         void UpdateData(string measurement, DateTime rebuildFromDateTime, AggregateFunction aggrFunc, string newestCacheFile);
     }

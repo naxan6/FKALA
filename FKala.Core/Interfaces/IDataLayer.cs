@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using FKala.TestConsole.KalaQl.Windowing;
-using FKala.TestConsole.Model;
+using FKala.Core.KalaQl.Windowing;
+using FKala.Core.Model;
 
-namespace FKala.TestConsole.Interfaces
+namespace FKala.Core.Interfaces
 {
     public interface IDataLayer
     {
@@ -15,6 +15,6 @@ namespace FKala.TestConsole.Interfaces
         void ForceFlushWriters();
         List<int> LoadAvailableYears(string measurement);
         List<string> LoadMeasurementList();
-        IEnumerable<DataPoint> LoadNewestDatapoint(string measurement);
+        IEnumerable<DataPoint?> LoadNewestDatapoint(string measurement);
     }
 }

@@ -1,6 +1,6 @@
 ﻿using NodaTime;
 
-namespace FKala.TestConsole.KalaQl.Windowing
+namespace FKala.Core.KalaQl.Windowing
 {
     public class Window
     {
@@ -35,7 +35,7 @@ namespace FKala.TestConsole.KalaQl.Windowing
             this.Mode = Mode;
             this.Interval = Interval;
         }
-        public void Init(DateTime starttime, string tzTimezoneId)
+        public void Init(DateTime starttime, string? tzTimezoneId)
         {
             switch (Mode)
             {
@@ -151,7 +151,7 @@ namespace FKala.TestConsole.KalaQl.Windowing
                         throw new Exception("Mode not implemented");
                 }
             }
-            catch (ArgumentOutOfRangeException ex)
+            catch (ArgumentOutOfRangeException)
             {
                 this.EndTime = DateTime.MaxValue;
             }

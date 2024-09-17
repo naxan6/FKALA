@@ -1,12 +1,12 @@
-﻿using FKala.TestConsole.DataLayers;
-using FKala.TestConsole.KalaQl.Windowing;
+﻿using FKala.Core.DataLayers;
+using FKala.Core.KalaQl.Windowing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FKala.TestConsole.Model
+namespace FKala.Core.Model
 {
     public class CacheResolution
     {       

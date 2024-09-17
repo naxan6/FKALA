@@ -1,6 +1,6 @@
-using FKala.TestConsole.Interfaces;
+using FKala.Core.Interfaces;
 
-namespace FKala.TestConsole.KalaQl
+namespace FKala.Core.KalaQl
 {
     public class Op_AlignTimezone : Op_Base, IKalaQlOperation
     {

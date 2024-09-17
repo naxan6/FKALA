@@ -1,5 +1,5 @@
-using FKala.TestConsole;
-using FKala.TestConsole.KalaQl;
+using FKala.Core;
+using FKala.Core.KalaQl;
 
 
 var builder = WebApplication.CreateBuilder(args);

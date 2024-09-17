@@ -1,11 +1,11 @@
-﻿using FKala.TestConsole.Interfaces;
-using FKala.TestConsole.KalaQl.Windowing;
-using FKala.TestConsole.Logic;
-using FKala.TestConsole.Model;
+﻿using FKala.Core.Interfaces;
+using FKala.Core.KalaQl.Windowing;
+using FKala.Core.Logic;
+using FKala.Core.Model;
 using System.Diagnostics.Metrics;
 using System.Security.Principal;
 
-namespace FKala.TestConsole.KalaQl
+namespace FKala.Core.KalaQl
 {
     public class Op_Aggregate : Op_Base, IKalaQlOperation
     {
@@ -16,7 +16,7 @@ namespace FKala.TestConsole.KalaQl
         public bool EmptyWindows { get; }
         public bool UseMaterializing { get; }
 
-        public Op_Aggregate(string line, string name, string inputDataSet, Window window, AggregateFunction aggregate, bool emptyWindows, bool useMaterializing = true) : base(line)
+        public Op_Aggregate(string? line, string name, string inputDataSet, Window window, AggregateFunction aggregate, bool emptyWindows, bool useMaterializing = true) : base(line)
         {
             Name = name;
             InputDataSetName = inputDataSet;

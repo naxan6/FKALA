@@ -1,15 +1,15 @@
-﻿using FKala.TestConsole.Interfaces;
-using FKala.TestConsole.Logic;
+﻿using FKala.Core.Interfaces;
+using FKala.Core.Logic;
 using System.Dynamic;
 
-namespace FKala.TestConsole.KalaQl
+namespace FKala.Core.KalaQl
 {
     public class Op_Publish : Op_Base, IKalaQlOperation
     {
         public List<string> NamesToPublish { get; private set; }
         public PublishMode PublishMode { get; }
 
-        public Op_Publish(string line, List<string> namesToPublish, PublishMode mode) : base(line)
+        public Op_Publish(string? line, List<string> namesToPublish, PublishMode mode) : base(line)
         {
             this.NamesToPublish = namesToPublish;
             this.PublishMode = mode;
@@ -43,7 +43,7 @@ namespace FKala.TestConsole.KalaQl
                 foreach (var syncedResult in synced)
                 {
                     dynamic row = new ExpandoObject();
-                    var expandoDict = (IDictionary<string, object>)row;
+                    var expandoDict = (IDictionary<string, object?>)row;
                     
                     foreach (var item in syncedResult)
                     {

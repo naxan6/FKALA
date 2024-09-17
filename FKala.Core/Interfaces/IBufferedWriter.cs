@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FKala.TestConsole.Interfaces
+namespace FKala.Core.Interfaces
 {
     public interface IBufferedWriter : IDisposable
     {

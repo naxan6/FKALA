@@ -1,4 +1,4 @@
-﻿namespace FKala.TestConsole.KalaQl
+﻿namespace FKala.Core.KalaQl
 {
     public enum PublishMode
     {

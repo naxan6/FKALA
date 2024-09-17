@@ -1,20 +1,9 @@
-﻿using FKala.TestConsole.KalaQl.Windowing;
-using FKala.TestConsole.KalaQl;
-using FKala.TestConsole.Logic;
-using FKala.TestConsole.Model;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using FKala.TestConsole.Interfaces;
-using System.Runtime.ExceptionServices;
-using System.Diagnostics.Metrics;
-using FKala.Core.Interfaces;
-using FKala.Core.DataLayers;
+﻿using FKala.Core.Interfaces;
+using FKala.Core.KalaQl.Windowing;
+using FKala.Core.Logic;
+using FKala.Core.Model;
 
-namespace FKala.TestConsole.DataLayers
+namespace FKala.Core.DataLayers
 {
     public class CachingLayer
     {
@@ -71,7 +60,7 @@ namespace FKala.TestConsole.DataLayers
 
         private ICache GetCacheImplementation(CacheResolution cacheResolution)
         {
-            ICache cache = null;
+            ICache cache;
             if (cacheResolution.Resolution == Resolution.Hourly)
             {
                 cache = new Cache_Hourly(this.DataLayer);
@@ -79,6 +68,9 @@ namespace FKala.TestConsole.DataLayers
             else if (cacheResolution.Resolution == Resolution.Minutely)
             {
                 cache = new Cache_Minutely(this.DataLayer);
+            } else
+            {
+                throw new Exception("Bug: unsupported cacheResolution");
             }
 
             return cache;

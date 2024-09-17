@@ -1,6 +1,6 @@
-﻿using FKala.TestConsole;
-using FKala.TestConsole.Interfaces;
-using FKala.TestConsole.KalaQl;
+﻿using FKala.Core;
+using FKala.Core.Interfaces;
+using FKala.Core.KalaQl;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
