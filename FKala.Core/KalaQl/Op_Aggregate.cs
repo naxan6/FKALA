@@ -73,7 +73,7 @@ namespace FKala.Core.KalaQl
                 }
                 else if (Window.DateTimeIsBeforeWindow(c.Time))
                 {
-                    throw new Exception("Bug 1, Datenpunkt übersehen einzusortieren");
+                    throw new Exception($"Bug 1, Datenpunkt übersehen einzusortieren {c.Time} {this.Name}");
                 }
                 else if (Window.DateTimeIsAfterWindow(c.Time))
                 {
@@ -100,7 +100,7 @@ namespace FKala.Core.KalaQl
                     {
                         if (Window.IsInWindow(dataPointsEnumerator.Current.Time))
                         {
-                            throw new Exception("Bug 2, Datenpunkt übersehen einzusortieren");
+                            throw new Exception($"Bug 2, Datenpunkt übersehen einzusortieren  {c.Time} {this.Name}");
                         }
                     }
                     break;
