@@ -62,9 +62,10 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }},naxan6/fkala:latest
           labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@v1
-        with:
-          subject-name: naxan6/fkala
-          subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true
+#      - name: Generate artifact attestation
+#        uses: actions/attest-build-provenance@v1
+#        with:
+#          subject-name: naxan6/fkala
+#          subject-digest: ${{ steps.push.outputs.digest }}
+#          push-to-registry: true
+#
