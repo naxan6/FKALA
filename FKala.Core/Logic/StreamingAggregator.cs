@@ -129,7 +129,7 @@ namespace FKala.Core.Logic
                     aggregatedValue = aggregatedValue != null ? aggregatedValue.Value + 1 : 1;
                     break;
                 case AggregateFunction.Sum:
-                    aggregatedValue = (toIntegrate == null) ? aggregatedValue : aggregatedValue + toIntegrate;
+                    aggregatedValue = (toIntegrate == null) ? aggregatedValue : (aggregatedValue ?? 0) + toIntegrate;
                     break;
                 default:
                     throw new ArgumentException("Ungültige Aggregationsfunktion");
