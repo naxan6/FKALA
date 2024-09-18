@@ -100,14 +100,14 @@ namespace FKala.Core
             string? line;
 
             var yearsPath = Path.Combine(DataDirectory, measurementPath);
-            var years = GetYearFolders(yearsPath).Where(f => f >= startYear && f <= endYear);
+            var years = GetYearFolders(yearsPath).Where(f => f >= startYear && f <= endYear).OrderBy(y => y);
 
             List<DataPoint> dataPoints = new List<DataPoint>();
             foreach (int year in years)
             {
 
                 var yearPath = Path.Combine(yearsPath, year.ToString());
-                foreach (var monthDir in Directory.GetDirectories(yearPath))
+                foreach (var monthDir in Directory.GetDirectories(yearPath).OrderBy(dir => dir))
                 {
                     var month = int.Parse(Path.GetFileName(monthDir));
                     if (month < startTime.Month && year == startYear) continue;
@@ -137,7 +137,7 @@ namespace FKala.Core
 
                             while ((line = sr.ReadLine()) != null)
                             {
-                                var ret = ParseLine(fileyear, filemonth, fileday, line);
+                                var ret = ParseLine(fileyear, filemonth, fileday, line);                                 
                                 if (ret.Time >= startTime && ret.Time < endTime)
                                 {
                                     dataPoints.Add(ret);
@@ -148,7 +148,7 @@ namespace FKala.Core
                         }
                         dataPoints.Sort((a, b) => a.Time.CompareTo(b.Time));
                         foreach (var dp in dataPoints)
-                        {
+                        {                           
                             yield return dp;
                         }
                         dataPoints.Clear();
@@ -162,7 +162,7 @@ namespace FKala.Core
         private List<int> GetYearFolders(string baseDir)
         {
             var entries = Directory.GetFileSystemEntries(baseDir, "*", SearchOption.TopDirectoryOnly);
-            return entries.Select(y => int.Parse(Path.GetFileName(y))).ToList();
+            return entries.Where(e => Path.GetFileName(e) != ".DS_Store").Select(y => int.Parse(Path.GetFileName(y))).ToList();
 
         }
 
