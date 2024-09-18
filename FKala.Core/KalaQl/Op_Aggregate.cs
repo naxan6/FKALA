@@ -15,7 +15,7 @@ namespace FKala.Core.KalaQl
         public AggregateFunction AggregateFunc { get; }
         public bool EmptyWindows { get; }
         public bool UseMaterializing { get; }
-
+        
         public Op_Aggregate(string? line, string name, string inputDataSet, Window window, AggregateFunction aggregate, bool emptyWindows, bool useMaterializing = true) : base(line)
         {
             Name = name;

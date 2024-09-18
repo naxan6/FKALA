@@ -2,6 +2,7 @@
 using FKala.Core.Interfaces;
 using FKala.Core.Logic;
 using FKala.Core.Model;
+using Microsoft.Extensions.ObjectPool;
 using System;
 using System.Collections.Concurrent;
 using System.Globalization;
@@ -17,7 +18,10 @@ namespace FKala.Core
         public CachingLayer CachingLayer { get; }
         private readonly ConcurrentDictionary<string, IBufferedWriter> _bufferedWriters = new ConcurrentDictionary<string, IBufferedWriter>();
         ConcurrentBag<string> CreatedDirectories = new ConcurrentBag<string>();
+        DefaultObjectPool<StringBuilder> stringBuilderPool = new DefaultObjectPool<StringBuilder>(new StringBuilderPooledObjectPolicy());
+
         Task BufferedWriterFlushTask;
+        
 
         public DataLayer_Readable_Caching_V1(string storagePath)
         {
@@ -109,7 +113,7 @@ namespace FKala.Core
                     if (month < startTime.Month && year == startYear) continue;
                     if (month > endTime.Month && year == endYear) continue;
 
-                    foreach (var file in Directory.GetFiles(monthDir, $"{measurementPath}*.dat"))
+                    foreach (var file in Directory.GetFiles(monthDir, $"{measurementPath}*.dat").OrderBy(datei => Path.GetFileNameWithoutExtension(datei).Substring(Path.GetFileNameWithoutExtension(datei).Length - 10, 10)))
                     {
 
                         var fn = Path.GetFileNameWithoutExtension(file);
@@ -227,7 +231,7 @@ namespace FKala.Core
 
 
             // Create the file path
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = stringBuilderPool.Get();
             sb.Clear();
             sb.Append(measurement);
             sb.Append('_');
@@ -235,6 +239,7 @@ namespace FKala.Core
             sb.Append(".dat");
 
             var filePath = Path.Combine(directoryPath, sb.ToString());
+            stringBuilderPool.Return(sb);
 
             // Buffer the line
             lock (filePath)
