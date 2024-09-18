@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,7 +9,7 @@ namespace FKala.Core.Logic
 {
     public class PathSanitizer
     {
-        static Dictionary<string, string> sanitizedCache = new Dictionary<string, string>();
+        static ConcurrentDictionary<string, string> sanitizedCache = new ConcurrentDictionary<string, string>();
         public static string SanitizePath(string path)
         {
             if (!sanitizedCache.ContainsKey(path))
@@ -31,7 +32,7 @@ namespace FKala.Core.Logic
                     }
                 }
 
-                sanitizedCache.Add(path, sanitizedPath.ToString());
+                sanitizedCache.TryAdd(path, sanitizedPath.ToString());
             }
             return sanitizedCache[path];
         }
