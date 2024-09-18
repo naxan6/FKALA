@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FKala.Core.DataLayers
+namespace FKala.Core.DataLayer.Infrastructure
 {
-    
+
     public class LockManager
     {
         private readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new ConcurrentDictionary<string, SemaphoreSlim>();

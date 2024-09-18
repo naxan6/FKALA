@@ -4,21 +4,18 @@ using FKala.Core.KalaQl.Windowing;
 using FKala.Core.Model;
 using System.Globalization;
 
-namespace FKala.Core.DataLayers
+namespace FKala.Core.DataLayer.Cache
 {
     public class Cache_Hourly : Cache_Base, ICache
     {
-        public IDataLayer DataLayer { get; }
-
-        public override string CacheSubdir { get { return "Hourly"; } }        
+        public override string CacheSubdir { get { return "Hourly"; } }
 
         public override string GetTimeFormat()
         {
             return "MM-ddTHH";
         }
-        public Cache_Hourly(IDataLayer dataLayer)
-        {
-            DataLayer = dataLayer;
+        public Cache_Hourly(IDataLayer dataLayer) : base(dataLayer)
+        {            
         }
 
         public override IEnumerable<DataPoint> GetAggregateForCaching(string measurement, DateTime start, DateTime end, AggregateFunction aggrFunc)
@@ -63,7 +60,7 @@ namespace FKala.Core.DataLayers
             }
 
             // allow 30 minutes aging against raw data
-            if (newestInCache.Time.Add(new TimeSpan(1,30,0)) > newestInRaw.Time)
+            if (newestInCache.Time.Add(new TimeSpan(1, 30, 0)) > newestInRaw.Time)
             {
                 return DateTime.MaxValue;
             }

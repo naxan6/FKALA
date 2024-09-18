@@ -1,6 +1,5 @@
 ﻿using FKala.Core.KalaQl.Windowing;
 using FKala.Core.Model;
-using FKala.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,15 +9,23 @@ using FKala.Core.Interfaces;
 using FKala.Core.Logic;
 using System.Diagnostics.Metrics;
 using System.Globalization;
+using System.Net.WebSockets;
 
-namespace FKala.Core.DataLayers
+namespace FKala.Core.DataLayer.Cache
 {
     public abstract class Cache_Base : ICache
     {
+        protected Cache_Base(IDataLayer dataLayer)
+        {
+            DataLayer = dataLayer;
+        }
+
         public abstract IEnumerable<DataPoint> GetAggregateForCaching(string measurement, DateTime start, DateTime end, AggregateFunction aggrFunc);
         public abstract string GetTimeFormat();
         public abstract DataPoint ReadLine(int fileyear, string? line);
         public abstract string CacheSubdir { get; }
+        public IDataLayer DataLayer { get; }
+
         public abstract DateTime ShouldUpdateFromWhere(DataPoint? newestInCache, DataPoint? newestInRaw);
 
         public IEnumerable<DataPoint?> LoadNewestDatapoint(string newestFile)
@@ -45,18 +52,21 @@ namespace FKala.Core.DataLayers
             if (rs.Any())
             {
                 var timeFormat = GetTimeFormat();
-                using var bw = new BufferedWriter(cacheFilePath);
-                foreach (var dp in rs)
+                var writerSvc = DataLayer.WriterSvc;
+                writerSvc.CreateWriteDispose(cacheFilePath, (writer) =>
                 {
-                    if (dp.Value != null)
+                    foreach (var dp in rs)
                     {
-                        bw.Append(dp.Time.ToString(timeFormat));
-                        bw.Append(" ");
-                        bw.Append(dp.Value.Value.ToString(CultureInfo.InvariantCulture));
-                        bw.AppendNewline();
+                        if (dp.Value != null)
+                        {
+
+                            writer.Append(dp.Time.ToString(timeFormat));
+                            writer.Append(" ");
+                            writer.Append(dp.Value.Value.ToString(CultureInfo.InvariantCulture));
+                            writer.AppendNewline();
+                        };
                     }
-                }
-                bw.Dispose();
+                });
             }
         }
 
@@ -91,7 +101,7 @@ namespace FKala.Core.DataLayers
             var fileYear = int.Parse(parts[parts.Length - 2]);
             IEnumerable<DataPoint> updateData = GetAggregateForCaching(measurement, rebuildFromDateTime, DateTime.MaxValue, aggrFunc);
 
-            FileFromEndProcessor.ProcessFileFromEnd(newestCacheFile, line => line != "" && this.ReadLine(fileYear, line).Time <= rebuildFromDateTime, "");
+            FileFromEndProcessor.ProcessFileFromEnd(newestCacheFile, line => line != "" && ReadLine(fileYear, line).Time <= rebuildFromDateTime, "");
 
             //var newFileContent = validCacheEntries.Concat(updateData);
 

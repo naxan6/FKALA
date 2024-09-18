@@ -34,9 +34,12 @@ namespace FKala.Unittests
         {
             // Act
             var resultset = DataFaker.TestDataLayer.LoadData("m1", new DateTime(2024, 03, 01), new DateTime(2024, 03, 15), CacheResolutionPredefined.NoCache, false);
-            
+
+            resultset = resultset.ToList(); // persist result
+
             // Assert 1
             Console.WriteLine(KalaJson.Serialize(resultset));            
+            
             Assert.AreEqual(new DateTime(2024, 03, 01, 0, 0, 2), resultset.First().Time);
             Assert.AreEqual(0.564860636165766m, resultset.First().Value);
             Assert.AreEqual(new DateTime(2024, 03, 14, 23, 59, 58), resultset.Last().Time);
@@ -44,6 +47,7 @@ namespace FKala.Unittests
 
             // Assert 2
             var resultsetAll = DataFaker.TestDataLayer.LoadData("m1", new DateTime(0001, 01, 01), new DateTime(9999, 12, 31), CacheResolutionPredefined.NoCache, false);
+            resultsetAll = resultsetAll.ToList();
             Assert.AreEqual(new DateTime(2024, 01, 01, 0, 0, 13), resultsetAll.First().Time);
             Assert.AreEqual(0.248668584157093m, resultsetAll.First().Value);
             Assert.AreEqual(new DateTime(2024, 04, 30, 23, 59, 59), resultsetAll.Last().Time);

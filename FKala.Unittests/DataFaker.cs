@@ -37,7 +37,7 @@ namespace FKala.Unittests
                 variation = randomTime.NextInt64(range);
                 currentFakeTime = currentFakeTime.Add(distMin).AddTicks(variation);
             }
-            TestDataLayer.ForceFlushWriters();
+            TestDataLayer.WriterSvc.ForceFlushWriters();
             return this;
         }
         internal void FakeMeasure_OutOfOrder(string measure, DateTime from, DateTime to, TimeSpan fromDistMinus, TimeSpan toDistPlus)

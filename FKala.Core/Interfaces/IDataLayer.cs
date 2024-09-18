@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FKala.Core.DataLayer.Infrastructure;
 using FKala.Core.KalaQl.Windowing;
 using FKala.Core.Model;
 
@@ -12,9 +13,9 @@ namespace FKala.Core.Interfaces
     {
         IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool NewestOnly);
         void Insert(string kalaLinedata, bool locking = true);
-        void ForceFlushWriters();
         List<int> LoadAvailableYears(string measurement);
         List<string> LoadMeasurementList();
         IEnumerable<DataPoint?> LoadNewestDatapoint(string measurement);
+        BufferedWriterService WriterSvc { get; }
     }
 }

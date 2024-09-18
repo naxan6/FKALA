@@ -1,4 +1,6 @@
-﻿using FKala.Core.DataLayers;
+﻿using FKala.Core.DataLayer.Cache;
+using FKala.Core.DataLayer.Infrastructure;
+using FKala.Core.DataLayers;
 using FKala.Core.Interfaces;
 using FKala.Core.Logic;
 using FKala.Core.Model;
@@ -18,12 +20,10 @@ namespace FKala.Core
         private string DataDirectory;
 
         public CachingLayer CachingLayer { get; }
-        private readonly ConcurrentDictionary<string, IBufferedWriter> _bufferedWriters = new ConcurrentDictionary<string, IBufferedWriter>();
+        public BufferedWriterService WriterSvc { get; } = new BufferedWriterService();
+
         ConcurrentBag<string> CreatedDirectories = new ConcurrentBag<string>();
         DefaultObjectPool<StringBuilder> stringBuilderPool = new DefaultObjectPool<StringBuilder>(new StringBuilderPooledObjectPolicy());
-
-        Task BufferedWriterFlushTask;
-
 
         public DataLayer_Readable_Caching_V1(string storagePath)
         {
@@ -32,7 +32,7 @@ namespace FKala.Core
 
             CachingLayer = new CachingLayer(this, storagePath);
 
-            BufferedWriterFlushTask = Task.Run(() => FlushBuffersPeriodically());
+            
         }
 
         public IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly)
@@ -84,7 +84,7 @@ namespace FKala.Core
                         int fileyear = int.Parse(dateSpan.Slice(0, 4));
                         int filemonth = int.Parse(dateSpan.Slice(5, 2));
                         int fileday = int.Parse(dateSpan.Slice(8, 2));
-                        var dp = ParseLine(fileyear, filemonth, fileday, lastLine);
+                        var dp = DatFileParser.ParseLine(fileyear, filemonth, fileday, lastLine);
                         yield return dp;
                         yield break;
                     }
@@ -94,87 +94,17 @@ namespace FKala.Core
 
         private IEnumerable<DataPoint> LoadFullResolution(string measurement, DateTime startTime, DateTime endTime)
         {
-            var startYear = startTime.Year;
-            var endYear = endTime.Year;
-
             var measurementPathPart = PathSanitizer.SanitizePath(measurement);
             var measurementPath = Path.Combine(DataDirectory, measurementPathPart);
 
-            SortedDictionary<DateTime, ReaderTuple> streamReaders = null;
-            try
+            using (var sa = StorageAccess.Init(measurementPath, measurementPathPart, startTime, endTime))
             {
-                streamReaders = StorageHelper.Init(measurementPath, measurementPathPart, startTime, endTime)
-                .OpenStreamReaders()
-                .GetOpenStreamReaders();
-
-                string? line;
-                List<DataPoint> dataPoints = new List<DataPoint>();
-                foreach (var streamreaderTuple in streamReaders)
-                {
-                    StreamReader sr = streamreaderTuple.Value.StreamReader;
-                    int fileyear = streamreaderTuple.Key.Year;
-                    int filemonth = streamreaderTuple.Key.Month;
-                    int fileday = streamreaderTuple.Key.Day;
-                    while ((line = sr.ReadLine()) != null)
-                    {
-                        var ret = ParseLine(fileyear, filemonth, fileday, line);
-                        if (ret.Time >= startTime && ret.Time < endTime)
-                        {
-                            dataPoints.Add(ret);
-                        }
-                    }
-                    sr.Close();
-
-                    dataPoints.Sort((a, b) => a.Time.CompareTo(b.Time));
-                    foreach (var dp in dataPoints)
-                    {
-                        yield return dp;
-                    }
-                    dataPoints.Clear();
+                foreach (var dp in sa.OpenStreamReaders().StreamDataPoints()) {
+                    yield return dp;
                 }
             }
-            finally
-            {
-                streamReaders!.AsParallel().ForAll(sr => sr.Value?.StreamReader?.Dispose());
-            }
-            yield break;
         }
-
-
-        private List<int> GetMonthFolders(string yearDir)
-        {
-            var entries = Directory.GetDirectories(yearDir, "*", new EnumerationOptions() { ReturnSpecialDirectories = false, BufferSize = 16384, });
-            return entries.Where(e => Path.GetFileName(e) != ".DS_Store").Select(y => int.Parse(Path.GetFileName(y))).ToList();
-        }
-
-        private static DataPoint ParseLine(int fileyear, int filemonth, int fileday, string? line)
-        {
-            ReadOnlySpan<char> span = line.AsSpan();
-            var dateTime = new DateTime(fileyear, filemonth, fileday, int.Parse(span.Slice(0, 2)), int.Parse(span.Slice(3, 2)), int.Parse(span.Slice(6, 2)), DateTimeKind.Utc);
-
-            dateTime.AddTicks(int.Parse(span.Slice(9, 7)));
-            span = span.Slice(17);
-
-            var valueRaw = span.Slice(0);
-            decimal? value = null;
-            string? valuetext = null;
-            try
-            {
-                value = decimal.Parse(valueRaw, CultureInfo.InvariantCulture);
-            }
-            catch (Exception)
-            {
-                valuetext = valueRaw.ToString();
-            }
-
-            return new DataPoint
-            {
-                Time = dateTime,
-                Value = value
-                // ValueText = valuetext
-            };
-        }
-
+       
         /// <summary>
         /// Expects Data in the Form
         /// "<measurement> <timestamp:YYYY-MM-DDTHH:mm:ss.zzzzzzz <value>"
@@ -187,7 +117,6 @@ namespace FKala.Core
             // Parse the raw data
             ReadOnlySpan<char> span = rawData.AsSpan();
 
-            // TODO: Bug spaces in path?
             int index = span.IndexOf(' ');
             var measurement = span.Slice(0, index).ToString();
             measurement = PathSanitizer.SanitizePath(measurement);
@@ -195,11 +124,12 @@ namespace FKala.Core
             span = span.Slice(index + 1);
             index = 27; //Länge von yyyy-MM-ddTHH:mm:ss.fffffff hartkodiert statt Ende suchen
             var datetime = span.Slice(0, index);
+            string datetimeHHmmss = datetime.Slice(11).ToString();
 
             span = span.Slice(index + 1);
-            ReadOnlySpan<char> valueRaw = null;
-            ReadOnlySpan<char> text = null;
+            ReadOnlySpan<char> valueRaw = null;            
             valueRaw = span.Slice(0);
+            var valueString = valueRaw.ToString();
 
             // Create the directory path
             var directoryPath = Path.Combine(DataDirectory, measurement, datetime.Slice(0, 4).ToString(), datetime.Slice(5, 2).ToString());
@@ -210,7 +140,6 @@ namespace FKala.Core
                 CreatedDirectories.Add(directoryPath);
             }
 
-
             // Create the file path
             StringBuilder sb = stringBuilderPool.Get();
             sb.Clear();
@@ -220,78 +149,26 @@ namespace FKala.Core
             sb.Append(".dat");
 
             var filePath = Path.Combine(directoryPath, sb.ToString());
-            stringBuilderPool.Return(sb);
-
-            // Buffer the line
-            lock (filePath)
+            stringBuilderPool.Return(sb);            
+            WriterSvc.DoWrite(filePath, (writer) =>
             {
-                if (!_bufferedWriters.TryGetValue(filePath, out var writer))
-                {
-                    try
-                    {
-                        writer = new BufferedWriter(filePath);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine("error at BufferedWriter with path <{filePath}>");
-                        throw;
-                    }
-                    _bufferedWriters[filePath] = writer;
-                }
-
-                lock (writer.LOCK)
-                {
-                    // Format the line to write
-                    writer.Append(datetime.Slice(11));
-                    writer.Append(" ");
-                    writer.Append(valueRaw);
-
-                    if (text != null)
-                    {
-                        writer.Append(" ");
-                        writer.Append(text);
-                    }
-
-                    writer.AppendNewline();
-                }
-            }
-
-        }
-
-        private async Task FlushBuffersPeriodically()
-        {
-            while (true)
-            {
-                await Task.Delay(TimeSpan.FromSeconds(10));
-                ForceFlushWriters();
-            }
-        }
-
-        public void ForceFlushWriters()
-        {
-            foreach (var writer in _bufferedWriters)
-            {
-                lock (writer.Key)
-                {
-                    writer.Value.Dispose();
-                    _bufferedWriters.Remove(writer.Key, out var removed);
-                }
-            }
-            CreatedDirectories = new ConcurrentBag<string>();
-        }
-
-        public void Dispose()
-        {
-            foreach (var writer in _bufferedWriters.Values)
-            {
-                writer.Dispose();
-            }
+                // Format the line to write
+                writer.Append(datetimeHHmmss);
+                writer.Append(" ");
+                writer.Append(valueString);
+                writer.AppendNewline();
+            });
         }
 
         public List<string> LoadMeasurementList()
         {
             var measurements = Directory.GetDirectories(DataDirectory);
             return measurements.Select(d => Path.GetFileName(d)).ToList();
+        }
+
+        public void Dispose()
+        {
+            this.WriterSvc.Dispose();
         }
     }
 }

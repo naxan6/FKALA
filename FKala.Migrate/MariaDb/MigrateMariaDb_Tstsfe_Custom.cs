@@ -108,6 +108,7 @@ order by e.id asc;
 
         private async Task<EventRow> ReadRowAsync(MySqlDataReader reader)
         {
+#pragma warning disable CS8601 // Mögliche Nullverweiszuweisung.
             return new EventRow()
             {
                 id = await reader.GetValueOrDefaultAsync<int>(0),
@@ -124,6 +125,7 @@ order by e.id asc;
                 stringValue2 = await reader.GetValueOrDefaultAsync<string?>(11),
 
             };
+#pragma warning restore CS8601 // Mögliche Nullverweiszuweisung.
         }
     }
 }

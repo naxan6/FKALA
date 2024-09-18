@@ -1,4 +1,5 @@
-﻿using FKala.Core;
+﻿#pragma warning disable CS8321 // Die lokale Funktion ist deklariert, wird aber nie verwendet.
+using FKala.Core;
 using FKala.Core.Interfaces;
 using FKala.Core.KalaQl;
 using FKala.Core.Logic;
@@ -18,7 +19,7 @@ static void ForProfiling ()
 }
 
 
-static void testquery()
+static void TestQuery()
 {
     string StoragePath = "\\\\naxds2\\docker\\fkala";
     using var dl = new DataLayer_Readable_Caching_V1(StoragePath);
@@ -61,7 +62,7 @@ Publ ""Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch"" Table
 
     var result = q.Execute(dl);
 
-    result.ResultTable.ToList();
+    result.ResultTable!.ToList();
 
     sw.Stop();
     var ts = sw.Elapsed;
@@ -72,9 +73,11 @@ Publ ""Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch"" Table
 }
 
 
-static async void migratesql(IDataLayer dl)
+
+static async void MigrateJsts(IDataLayer dl)
 {
     var connString = "Server=XXX;Port=XXX;User ID=XXX;Password=XXX;Database=XXX";
     var maria = new MigrateMariaDb_Tstsfe_Custom(connString, dl);
     await maria.Migrate();
 }
+#pragma warning restore CS8321 // Die lokale Funktion ist deklariert, wird aber nie verwendet.

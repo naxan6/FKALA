@@ -1,9 +1,10 @@
-﻿using FKala.Core.Interfaces;
+﻿using FKala.Core.DataLayer.Infrastructure;
+using FKala.Core.Interfaces;
 using FKala.Core.KalaQl.Windowing;
 using FKala.Core.Logic;
 using FKala.Core.Model;
 
-namespace FKala.Core.DataLayers
+namespace FKala.Core.DataLayer.Cache
 {
     public class CachingLayer
     {
@@ -14,11 +15,11 @@ namespace FKala.Core.DataLayers
         public CachingLayer(IDataLayer dataLayer, string storagePath)
         {
             DataLayer = dataLayer;
-            this.CacheDirectory = Path.Combine(storagePath, "cache");
+            CacheDirectory = Path.Combine(storagePath, "cache");
             Directory.CreateDirectory(CacheDirectory);
         }
 
-        
+
 
         //Resolution.Hourly Window.Aligned_1Hour PrepareHourlyData ReadHourlyLine "MM-ddTHH"
         //Resolution.Minutely Window.Aligned_1Minute PrepareMinutelyData ReadMinutelyLine "MM-ddTHH:mm"
@@ -41,12 +42,12 @@ namespace FKala.Core.DataLayers
                 // synchronize Cache-Updates
                 using (var lockHandle = _lockManager.AcquireLock(cacheFilePath))
                 {
-                 
+
                     if (!File.Exists(cacheFilePath) || cacheResolution.ForceRebuild)
                     {
                         Console.WriteLine($"Building Cache: {Path.GetFileName(cacheFilePath)} {cacheResolution}");
                         cache.GenerateWholeYearCache(measurement, year, cacheFilePath, cacheResolution.AggregateFunction, cacheResolution.ForceRebuild);
-                    } 
+                    }
                     else
                     {
                         if (cacheResolution.IncrementalRefresh && year == years.Max())
@@ -70,12 +71,13 @@ namespace FKala.Core.DataLayers
             ICache cache;
             if (cacheResolution.Resolution == Resolution.Hourly)
             {
-                cache = new Cache_Hourly(this.DataLayer);
+                cache = new Cache_Hourly(DataLayer);
             }
             else if (cacheResolution.Resolution == Resolution.Minutely)
             {
-                cache = new Cache_Minutely(this.DataLayer);
-            } else
+                cache = new Cache_Minutely(DataLayer);
+            }
+            else
             {
                 throw new Exception("Bug: unsupported cacheResolution");
             }
@@ -90,14 +92,15 @@ namespace FKala.Core.DataLayers
             var sanitizedMeasurement = PathSanitizer.SanitizePath(measurement);
             var rebuildFromDateTime = ShouldUpdateFromWhere(sanitizedMeasurement, cacheResolution.Resolution, cacheResolution.AggregateFunction, cache);
             if (rebuildFromDateTime != DateTime.MaxValue)
-            {                
+            {
                 string newestCacheFile = GetNewestCacheFilepath(sanitizedMeasurement, cache, cacheResolution.AggregateFunction);
                 Console.WriteLine($"Doing Incremental Update: {Path.GetFileName(newestCacheFile)}");
                 var parts = newestCacheFile.Split('_');
                 var fileYear = int.Parse(parts[parts.Length - 2]);
                 //var validCacheEntries = cache.LoadCache(DateTime.MinValue, rebuildFromDateTime, fileYear, newestCacheFile);
                 cache.UpdateData(measurement, rebuildFromDateTime, cacheResolution.AggregateFunction, newestCacheFile);
-            } else
+            }
+            else
             {
                 Console.WriteLine($"Incremental Update Not Necessary: {Path.GetFileName(cacheFilePath)}");
             }
@@ -111,7 +114,7 @@ namespace FKala.Core.DataLayers
             return cache.ShouldUpdateFromWhere(newestInCache.First(), newestInRaw.First());
         }
 
-        
+
 
         private string GetNewestCacheFilepath(string sanitizedMeasurement, ICache cache, AggregateFunction aggregateFunction)
         {

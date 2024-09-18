@@ -4,19 +4,17 @@ using FKala.Core.KalaQl.Windowing;
 using FKala.Core.Model;
 using System.Globalization;
 
-namespace FKala.Core.DataLayers
+namespace FKala.Core.DataLayer.Cache
 {
     public class Cache_Minutely : Cache_Base, ICache
     {
-        public IDataLayer DataLayer { get; }
         public override string CacheSubdir { get { return "Minutely"; } }
         public override string GetTimeFormat()
         {
             return "MM-ddTHH:mm";
         }
-        public Cache_Minutely(IDataLayer dataLayer)
+        public Cache_Minutely(IDataLayer dataLayer) : base(dataLayer)
         {
-            DataLayer = dataLayer;
         }
 
         public override IEnumerable<DataPoint> GetAggregateForCaching(string measurement, DateTime start, DateTime end, AggregateFunction aggrFunc)
@@ -27,7 +25,7 @@ namespace FKala.Core.DataLayers
                .Add(new Op_Aggregate(null, "minutely", "fullRes", Window.Aligned_1Minute, aggrFunc, false, false))
                .Add(new Op_Publish(null, new List<string>() { "minutely" }, PublishMode.MultipleResultsets))
                .Execute(DataLayer);
-            
+
             if (aggResult?.ResultSets == null)
             {
                 throw new Exception("could not aquire aggregate for caching");

@@ -1,7 +1,7 @@
 ﻿using FKala.Core.Interfaces;
 using System.Text;
 
-namespace FKala.Core
+namespace FKala.Core.DataLayer.Infrastructure
 {
     public class BufferedWriter : IDisposable, IBufferedWriter
     {
@@ -19,7 +19,7 @@ namespace FKala.Core
         {
             _filePath = filePath;
             _fileStream = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.Read);
-            _streamWriter = new StreamWriter(_fileStream, Encoding.UTF8);
+            _streamWriter = new StreamWriter(_fileStream, Encoding.UTF8, 16384);
         }
 
         public void Append(string text)
