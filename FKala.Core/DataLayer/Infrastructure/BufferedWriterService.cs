@@ -72,10 +72,10 @@ namespace FKala.Core.DataLayer.Infrastructure
                         throw;
                     }
                     _bufferedWriters[filePath] = writer;
-                    lock (writer!.LOCK)
-                    {
-                        writeAction(writer);
-                    }
+                }
+                lock (writer!.LOCK)
+                {
+                    writeAction(writer);
                 }
             }
         }

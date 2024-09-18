@@ -1,12 +1,12 @@
 ﻿using FKala.Core.Interfaces;
 using System.Text;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace FKala.Core.DataLayer.Infrastructure
 {
     public class BufferedWriter : IDisposable, IBufferedWriter
     {
-        private readonly string _filePath;
-        private readonly StringBuilder _buffer = new StringBuilder();
+        private readonly string _filePath;        
         private readonly object _lock = new object();
         private FileStream _fileStream;
         private StreamWriter _streamWriter;
@@ -23,27 +23,23 @@ namespace FKala.Core.DataLayer.Infrastructure
         }
 
         public void Append(string text)
-        {
-            _buffer.Append(text);
+        {            
+            _streamWriter.Write(text);
         }
         public void Append(ReadOnlySpan<char> text)
-        {
-            _buffer.Append(text);
+        {            
+            _streamWriter.Write(text);
         }
 
         public void AppendNewline()
         {
-            _buffer.Append("\n");
+            _streamWriter.Write("\n");
         }
 
         public void Flush()
         {
             lock (LOCK)
             {
-                if (_buffer.Length == 0) return;
-
-                _streamWriter.Write(_buffer.ToString());
-                _buffer.Clear();
                 _streamWriter.Flush();
             }
         }
