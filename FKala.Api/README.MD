@@ -4,6 +4,15 @@ View e.g. in https://dillinger.io/
 # F Kala
 ## _The Last Timeseries DB Ever_
 
+## TODOS
+- find invalid files (invalid filename, invalid dataformat)
+- mark files as sorted
+- merge measures (maybe with a hard cut at some point in time)
+- support textvalues (maybe even long?)
+- function for shifting windows
+- worker for cache-refresh schedule
+
+
 # Kala TQL - Kala Time Query Language
 
 ## Build

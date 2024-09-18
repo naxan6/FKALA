@@ -17,7 +17,7 @@ namespace FKala.Core
         public CachingLayer CachingLayer { get; }
         private readonly ConcurrentDictionary<string, IBufferedWriter> _bufferedWriters = new ConcurrentDictionary<string, IBufferedWriter>();
         ConcurrentBag<string> CreatedDirectories = new ConcurrentBag<string>();
-        
+        Task BufferedWriterFlushTask;
 
         public DataLayer_Readable_Caching_V1(string storagePath)
         {
@@ -26,7 +26,7 @@ namespace FKala.Core
 
             CachingLayer = new CachingLayer(this, storagePath);
 
-            Task.Run(() => FlushBuffersPeriodically());
+            BufferedWriterFlushTask = Task.Run(() => FlushBuffersPeriodically());
         }
 
         public IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly)

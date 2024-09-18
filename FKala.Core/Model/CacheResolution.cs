@@ -9,12 +9,18 @@ using System.Threading.Tasks;
 namespace FKala.Core.Model
 {
     public class CacheResolution
-    {       
+    {
         public Resolution Resolution { get; set; }
         public AggregateFunction AggregateFunction { get; set; }
 
         public bool ForceRebuild;
         public bool IncrementalRefresh;
+
+        public override string ToString()
+        {
+            return $"{Resolution} {AggregateFunction} {(ForceRebuild ? "ForceRebuild" : "")} {(IncrementalRefresh ? "IncrementalRefresh" : "")}";
+        }
+
     }
 
     public static class CacheResolutionPredefined

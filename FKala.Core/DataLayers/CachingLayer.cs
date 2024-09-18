@@ -9,6 +9,7 @@ namespace FKala.Core.DataLayers
     {
         public IDataLayer DataLayer { get; }
         public string CacheDirectory { get; }
+        private readonly LockManager _lockManager = new LockManager();
 
         public CachingLayer(IDataLayer dataLayer, string storagePath)
         {
@@ -35,25 +36,31 @@ namespace FKala.Core.DataLayers
             years = FilterYearsForExistingRawData(measurement, years);
             foreach (int year in years)
             {
-                var cacheFilePath = Path.Combine(measurementCachePath, $"{measurementPath}_{year}_{cacheResolution.AggregateFunction}.dat");                
-                if (!File.Exists(cacheFilePath) || cacheResolution.ForceRebuild)
-                {
-                    Console.WriteLine($"Building Cache: {Path.GetFileName(cacheFilePath)}");
-                    cache.GenerateWholeYearCache(measurement, year, cacheFilePath, cacheResolution.AggregateFunction, cacheResolution.ForceRebuild);
-                } 
-                else
-                {
-                    if (cacheResolution.IncrementalRefresh && year == years.Max())
-                    {
-                        Console.WriteLine($"Incremental Update requested: {Path.GetFileName(cacheFilePath)}");
-                        IncrementalUpdateCache(measurement, cacheResolution, cacheFilePath);
-                    }
-                }
+                var cacheFilePath = Path.Combine(measurementCachePath, $"{measurementPath}_{year}_{cacheResolution.AggregateFunction}.dat");
 
-                var yearEnumerable = cache.LoadCache(startTime, endTime, year, cacheFilePath);
-                foreach (var item in yearEnumerable)
+                // synchronize Cache-Updates
+                using (var lockHandle = _lockManager.AcquireLock(cacheFilePath))
                 {
-                    yield return item;
+                 
+                    if (!File.Exists(cacheFilePath) || cacheResolution.ForceRebuild)
+                    {
+                        Console.WriteLine($"Building Cache: {Path.GetFileName(cacheFilePath)} {cacheResolution}");
+                        cache.GenerateWholeYearCache(measurement, year, cacheFilePath, cacheResolution.AggregateFunction, cacheResolution.ForceRebuild);
+                    } 
+                    else
+                    {
+                        if (cacheResolution.IncrementalRefresh && year == years.Max())
+                        {
+                            Console.WriteLine($"Incremental Update requested: {Path.GetFileName(cacheFilePath)}");
+                            IncrementalUpdateCache(measurement, cacheResolution, cacheFilePath);
+                        }
+                    }
+
+                    var yearEnumerable = cache.LoadCache(startTime, endTime, year, cacheFilePath);
+                    foreach (var item in yearEnumerable)
+                    {
+                        yield return item;
+                    }
                 }
             }
         }
