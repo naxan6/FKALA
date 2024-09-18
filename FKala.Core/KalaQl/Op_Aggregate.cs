@@ -38,7 +38,7 @@ namespace FKala.Core.KalaQl
             // und gleichzeitiger Ausgabe aller dieser Serien im Publish
             // sich die Zugriffe auf den Enumerable überschneiden und das ganze dann buggt
             // (noch nicht final geklärt, z.B. siehe BUGTEST_KalaQl_2_Datasets_Aggregated_Expresso). 
-            var result = InternalExecute(context, input);
+            var result = InternalExecute21(context, input);
             if (UseMaterializing)
             {
                 result = result.ToList();
@@ -124,6 +124,81 @@ namespace FKala.Core.KalaQl
                     if (EmptyWindows || currentDataPoint.Value != null) yield return currentDataPoint;
                 }
             }
+        }
+
+        private IEnumerable<DataPoint> InternalExecute21(KalaQlContext context, Result input)
+        {
+            Window.Init(input.StartTime, context.AlignTzTimeZoneId);
+            var currentDataPoint = new DataPoint() { Time = Window.StartTime };
+            var currentAggregator = new StreamingAggregator(AggregateFunc, Window, 0);
+            bool scrolledForward = false;
+            int seenPoints = 0;
+            foreach (var c in input.Resultset)
+            {
+                seenPoints++;
+                if (!EmptyWindows && !scrolledForward)
+                {
+                    while (Window.EndTime < c.Time)
+                    {
+                        Window.Next();
+                        scrolledForward = true;
+                    }
+                }
+
+                if (Window.IsInWindow(c.Time))
+                {
+                    currentAggregator.AddValue(c.Time, c.Value);
+                }
+                else if (Window.DateTimeIsBeforeWindow(c.Time))
+                {
+                    throw new Exception($"Bug 1, Datenpunkt übersehen einzusortieren (nach {seenPoints}) {this.Name} # {c.Time.ToString("s")} # {c.Value} in window from {Window.StartTime.ToString("s")} to {Window.EndTime.ToString("s")}");
+                }
+                else if (Window.DateTimeIsAfterWindow(c.Time))
+                {
+
+                    currentDataPoint.Value = currentAggregator.GetAggregatedValue();
+                    if (EmptyWindows || currentDataPoint.Value != null) yield return currentDataPoint;
+
+                    while (Window.DateTimeIsAfterWindow(c.Time))
+                    {
+                        Window.Next();
+
+                        currentDataPoint = new DataPoint() { Time = Window.StartTime };
+                        currentAggregator = new StreamingAggregator(AggregateFunc, Window, currentAggregator.LastAggregatedValue);
+                        if (Window.IsInWindow(c.Time))
+                        {
+                            currentAggregator.AddValue(c.Time, c.Value);
+                            break;
+                        }
+                    }
+                }
+
+                // Abbruchbedingung: Interval durchlaufen
+                if (Window.StartTime >= input.EndTime)
+                {
+                    if (Window.IsInWindow(c.Time))
+                    {
+                        throw new Exception($"Bug 2, Datenpunkt übersehen einzusortieren (nach {seenPoints})  {this.Name} # {c.Time.ToString("s")} # {c.Value} in window from {Window.StartTime.ToString("s")} to {Window.EndTime.ToString("s")}");
+                    }
+                    break;
+                }
+            }
+            // finales Interval hinzufügen
+            currentDataPoint.Value = currentAggregator.GetAggregatedValue();
+            if (EmptyWindows || currentDataPoint.Value != null) yield return currentDataPoint;
+
+            if (EmptyWindows)
+            {
+                while (Window.EndTime < input.EndTime)
+                {
+                    Window.Next();
+                    currentDataPoint = new DataPoint() { Time = Window.StartTime };
+                    currentAggregator = new StreamingAggregator(AggregateFunc, Window, currentAggregator.LastAggregatedValue);
+                    currentDataPoint.Value = currentAggregator.GetAggregatedValue();
+                    if (EmptyWindows || currentDataPoint.Value != null) yield return currentDataPoint;
+                }
+            }
+            yield break;
         }
     }
 }

@@ -8,8 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MSTest.TestFramework" Version="3.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\FKala.Core\FKala.Core.csproj" />
     <ProjectReference Include="..\FKala.Migrate\FKala.Migrate.csproj" />
+    <ProjectReference Include="..\FKala.Unittests\FKala.Unittests.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,20 +1,34 @@
 ﻿using FKala.Core;
+using FKala.Core.Interfaces;
 using FKala.Core.KalaQl;
 using FKala.Core.Logic;
 using FKala.Migrate.MariaDb;
+using FKala.Unittests;
 
-string StoragePath = "\\\\naxds2\\docker\\fkala";
-System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
-sw.Start();
-using var dl = new DataLayer_Readable_Caching_V1(StoragePath);
 
-//var connString = "Server=XXX;Port=XXX;User ID=XXX;Password=XXX;Database=XXX";
-//var maria = new MigrateMariaDb_Tstsfe_Custom(connString, dl);
-//await maria.Migrate();
 
-var q = KalaQuery.Start()
-    .FromQuery(@"Var $FROM ""2022-09-19T00:00:00""
+ForProfiling();
+
+static void ForProfiling ()
+{
+    KalaQl t = new KalaQl();
+    //TempFolderTests_OutOfOrder.Initialize(null);
+    t.KalaQl_2_Datasets();
+}
+
+
+static void testquery()
+{
+    string StoragePath = "\\\\naxds2\\docker\\fkala";
+    using var dl = new DataLayer_Readable_Caching_V1(StoragePath);
+
+
+    System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+
+    sw.Start();
+    var q = KalaQuery.Start()
+        .FromQuery(@"Var $FROM ""2022-09-19T00:00:00""
 Var $TO ""2024-09-19T00:00:00""
 Var $CACHE Auto(43200)_WAvg_REBUILD
 Var $AGG ""WAvg EmptyWindows""
@@ -45,13 +59,22 @@ Publ ""Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch"" Table
 
 ");
 
-var result = q.Execute(dl);
+    var result = q.Execute(dl);
 
-result.ResultTable.ToList();
+    result.ResultTable.ToList();
 
-sw.Stop();
-var ts = sw.Elapsed;
-string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}", ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds);
-Console.WriteLine("Verstrichene Zeit: " + elapsedTime);
+    sw.Stop();
+    var ts = sw.Elapsed;
+    string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}", ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds);
+    Console.WriteLine("Verstrichene Zeit: " + elapsedTime);
 
-Console.WriteLine(KalaJson.Serialize(result.ResultTable));// JSON serialize
+    Console.WriteLine(KalaJson.Serialize(result.ResultTable));// JSON serialize
+}
+
+
+static async void migratesql(IDataLayer dl)
+{
+    var connString = "Server=XXX;Port=XXX;User ID=XXX;Password=XXX;Database=XXX";
+    var maria = new MigrateMariaDb_Tstsfe_Custom(connString, dl);
+    await maria.Migrate();
+}

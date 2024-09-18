@@ -21,8 +21,8 @@ namespace FKala.Unittests
             sw.Start();
             using var dl = new DataLayer_Readable_Caching_V1(StoragePath);
 
-            var startTime = new DateTime(2024, 07, 20, 0, 0, 0);
-            var endTime = new DateTime(2024, 08, 01, 0, 0, 0);
+            var startTime = new DateTime(2023, 01, 01, 0, 0, 0);
+            var endTime = new DateTime(2024, 12, 01, 0, 0, 0);
 
             var q = KalaQuery.Start()
                 .Add(new Op_BaseQuery(null, "PV1", "Sofar/measure/PVInput1/0x586_Leistung_PV1[kW]", startTime, endTime, CacheResolutionPredefined.NoCache))
@@ -38,7 +38,7 @@ namespace FKala.Unittests
             Console.WriteLine("Verstrichene Zeit: " + elapsedTime);
 
             Assert.AreEqual(2, result?.ResultSets?.Count);
-            Console.WriteLine(KalaJson.Serialize(result));// JSON serialize
+            //Console.WriteLine(KalaJson.Serialize(result));// JSON serialize
         }
         [TestMethod]
         public void KalaQl_2_Datasets_Aggregated()

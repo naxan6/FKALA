@@ -8,8 +8,8 @@ namespace FKala.Core.Model
 {
     public class DataPoint
     {
-        public DateTime Time { get; set; }
-        public decimal? Value { get; set; }
+        public DateTime Time;
+        public decimal? Value;
         //public string? ValueText { get; set; }
     }
 

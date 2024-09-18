@@ -5,13 +5,15 @@ using FKala.Core.Model;
 using Microsoft.Extensions.ObjectPool;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Runtime.Intrinsics.Arm;
 using System.Text;
 
 namespace FKala.Core
 {
-    public class DataLayer_Readable_Caching_V1 : IDataLayer, IDisposable
+    public partial class DataLayer_Readable_Caching_V1 : IDataLayer, IDisposable
     {
         private string DataDirectory;
 
@@ -21,7 +23,7 @@ namespace FKala.Core
         DefaultObjectPool<StringBuilder> stringBuilderPool = new DefaultObjectPool<StringBuilder>(new StringBuilderPooledObjectPolicy());
 
         Task BufferedWriterFlushTask;
-        
+
 
         public DataLayer_Readable_Caching_V1(string storagePath)
         {
@@ -92,78 +94,57 @@ namespace FKala.Core
 
         private IEnumerable<DataPoint> LoadFullResolution(string measurement, DateTime startTime, DateTime endTime)
         {
-
-            var measurementPath = PathSanitizer.SanitizePath(measurement);
             var startYear = startTime.Year;
             var endYear = endTime.Year;
 
-            string? line;
+            var measurementPathPart = PathSanitizer.SanitizePath(measurement);
+            var measurementPath = Path.Combine(DataDirectory, measurementPathPart);
 
-            var yearsPath = Path.Combine(DataDirectory, measurementPath);
-            var years = GetYearFolders(yearsPath).Where(f => f >= startYear && f <= endYear).OrderBy(y => y);
-
-            List<DataPoint> dataPoints = new List<DataPoint>();
-            foreach (int year in years)
+            SortedDictionary<DateTime, ReaderTuple> streamReaders = null;
+            try
             {
+                streamReaders = StorageHelper.Init(measurementPath, measurementPathPart, startTime, endTime)
+                .OpenStreamReaders()
+                .GetOpenStreamReaders();
 
-                var yearPath = Path.Combine(yearsPath, year.ToString());
-                foreach (var monthDir in Directory.GetDirectories(yearPath).OrderBy(dir => dir))
+                string? line;
+                List<DataPoint> dataPoints = new List<DataPoint>();
+                foreach (var streamreaderTuple in streamReaders)
                 {
-                    var month = int.Parse(Path.GetFileName(monthDir));
-                    if (month < startTime.Month && year == startYear) continue;
-                    if (month > endTime.Month && year == endYear) continue;
-
-                    foreach (var file in Directory.GetFiles(monthDir, $"{measurementPath}*.dat").OrderBy(datei => Path.GetFileNameWithoutExtension(datei).Substring(Path.GetFileNameWithoutExtension(datei).Length - 10, 10)))
+                    StreamReader sr = streamreaderTuple.Value.StreamReader;
+                    int fileyear = streamreaderTuple.Key.Year;
+                    int filemonth = streamreaderTuple.Key.Month;
+                    int fileday = streamreaderTuple.Key.Day;
+                    while ((line = sr.ReadLine()) != null)
                     {
-
-                        var fn = Path.GetFileNameWithoutExtension(file);
-                        var datePart = fn.Substring(fn.Length - 10, 10);
-                        ReadOnlySpan<char> dateSpan = datePart.AsSpan();
-                        // DateOnly dt = new DateOnly(int.Parse(dateSpan.Slice(0, 4)), int.Parse(dateSpan.Slice(5, 2)), int.Parse(dateSpan.Slice(8, 2)));
-                        int fileyear = int.Parse(dateSpan.Slice(0, 4));
-                        int filemonth = int.Parse(dateSpan.Slice(5, 2));
-                        int fileday = int.Parse(dateSpan.Slice(8, 2));
-
-                        // Datei hat keine Überlappung mit Anfrage.
-                        if (!(startTime < new DateTime(fileyear, filemonth, fileday, 0, 0, 0, DateTimeKind.Utc).AddDays(1) &&
-                            endTime > new DateTime(fileyear, filemonth, fileday, 0, 0, 0, DateTimeKind.Utc)))
+                        var ret = ParseLine(fileyear, filemonth, fileday, line);
+                        if (ret.Time >= startTime && ret.Time < endTime)
                         {
-                            continue;
+                            dataPoints.Add(ret);
                         }
-
-                        using (var sr = new StreamReader(file, Encoding.UTF8, false, new FileStreamOptions() { Access = FileAccess.Read, BufferSize = 65536, Mode = FileMode.Open, Share = FileShare.ReadWrite | FileShare.Delete }))
-                        {
-
-
-                            while ((line = sr.ReadLine()) != null)
-                            {
-                                var ret = ParseLine(fileyear, filemonth, fileday, line);                                 
-                                if (ret.Time >= startTime && ret.Time < endTime)
-                                {
-                                    dataPoints.Add(ret);
-                                }
-                            }
-                            sr.Close();
-                            sr.Dispose();
-                        }
-                        dataPoints.Sort((a, b) => a.Time.CompareTo(b.Time));
-                        foreach (var dp in dataPoints)
-                        {                           
-                            yield return dp;
-                        }
-                        dataPoints.Clear();
                     }
+                    sr.Close();
 
+                    dataPoints.Sort((a, b) => a.Time.CompareTo(b.Time));
+                    foreach (var dp in dataPoints)
+                    {
+                        yield return dp;
+                    }
+                    dataPoints.Clear();
                 }
+            }
+            finally
+            {
+                streamReaders!.AsParallel().ForAll(sr => sr.Value?.StreamReader?.Dispose());
             }
             yield break;
         }
 
-        private List<int> GetYearFolders(string baseDir)
-        {
-            var entries = Directory.GetFileSystemEntries(baseDir, "*", SearchOption.TopDirectoryOnly);
-            return entries.Where(e => Path.GetFileName(e) != ".DS_Store").Select(y => int.Parse(Path.GetFileName(y))).ToList();
 
+        private List<int> GetMonthFolders(string yearDir)
+        {
+            var entries = Directory.GetDirectories(yearDir, "*", new EnumerationOptions() { ReturnSpecialDirectories = false, BufferSize = 16384, });
+            return entries.Where(e => Path.GetFileName(e) != ".DS_Store").Select(y => int.Parse(Path.GetFileName(y))).ToList();
         }
 
         private static DataPoint ParseLine(int fileyear, int filemonth, int fileday, string? line)
@@ -222,7 +203,7 @@ namespace FKala.Core
 
             // Create the directory path
             var directoryPath = Path.Combine(DataDirectory, measurement, datetime.Slice(0, 4).ToString(), datetime.Slice(5, 2).ToString());
-            
+
             if (!CreatedDirectories.Contains(directoryPath))
             {
                 Directory.CreateDirectory(directoryPath);
@@ -249,7 +230,8 @@ namespace FKala.Core
                     try
                     {
                         writer = new BufferedWriter(filePath);
-                    } catch (Exception ex)
+                    }
+                    catch (Exception ex)
                     {
                         Console.WriteLine("error at BufferedWriter with path <{filePath}>");
                         throw;
