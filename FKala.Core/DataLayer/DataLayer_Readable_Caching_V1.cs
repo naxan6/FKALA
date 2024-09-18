@@ -35,7 +35,7 @@ namespace FKala.Core
             
         }
 
-        public IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly)
+        public IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly, bool doSortRawFiles)
         {
             if (newestOnly)
             {
@@ -47,7 +47,7 @@ namespace FKala.Core
             }
             else
             {
-                return LoadFullResolution(measurement, startTime, endTime);
+                return LoadFullResolution(measurement, startTime, endTime, doSortRawFiles);
             }
         }
 
@@ -84,7 +84,7 @@ namespace FKala.Core
                         int fileyear = int.Parse(dateSpan.Slice(0, 4));
                         int filemonth = int.Parse(dateSpan.Slice(5, 2));
                         int fileday = int.Parse(dateSpan.Slice(8, 2));
-                        var dp = DatFileParser.ParseLine(fileyear, filemonth, fileday, lastLine);
+                        var dp = DatFileParser.ParseLine(fileyear, filemonth, fileday, lastLine, file);
                         yield return dp;
                         yield break;
                     }
@@ -92,13 +92,14 @@ namespace FKala.Core
             }
         }
 
-        private IEnumerable<DataPoint> LoadFullResolution(string measurement, DateTime startTime, DateTime endTime)
+        private IEnumerable<DataPoint> LoadFullResolution(string measurement, DateTime startTime, DateTime endTime, bool doSortRawFiles)
         {
             var measurementPathPart = PathSanitizer.SanitizePath(measurement);
             var measurementPath = Path.Combine(DataDirectory, measurementPathPart);
 
             using (var sa = StorageAccess.Init(measurementPath, measurementPathPart, startTime, endTime))
             {
+                if (doSortRawFiles) { sa.ActiveAutoSortRawFiles(this); }
                 foreach (var dp in sa.OpenStreamReaders().StreamDataPoints()) {
                     yield return dp;
                 }
@@ -124,7 +125,7 @@ namespace FKala.Core
             span = span.Slice(index + 1);
             index = 27; //Länge von yyyy-MM-ddTHH:mm:ss.fffffff hartkodiert statt Ende suchen
             var datetime = span.Slice(0, index);
-            string datetimeHHmmss = datetime.Slice(11).ToString();
+            string datetimeHHmmssfffffff = datetime.Slice(11).ToString();
 
             span = span.Slice(index + 1);
             ReadOnlySpan<char> valueRaw = null;            
@@ -144,8 +145,8 @@ namespace FKala.Core
             StringBuilder sb = stringBuilderPool.Get();
             sb.Clear();
             sb.Append(measurement);
-            sb.Append('_');
-            sb.Append(datetime.Slice(0, 10));
+            sb.Append('_'); //marks new as unsorted
+            sb.Append(datetime.Slice(0, 10)); //YYYY-MM-dd
             sb.Append(".dat");
 
             var filePath = Path.Combine(directoryPath, sb.ToString());
@@ -153,7 +154,7 @@ namespace FKala.Core
             WriterSvc.DoWrite(filePath, (writer) =>
             {
                 // Format the line to write
-                writer.Append(datetimeHHmmss);
+                writer.Append(datetimeHHmmssfffffff);
                 writer.Append(" ");
                 writer.Append(valueString);
                 writer.AppendNewline();

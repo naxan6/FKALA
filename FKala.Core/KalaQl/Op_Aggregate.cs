@@ -128,6 +128,7 @@ namespace FKala.Core.KalaQl
 
         private IEnumerable<DataPoint> InternalExecute21(KalaQlContext context, Result input)
         {
+            
             Window.Init(input.StartTime, context.AlignTzTimeZoneId);
             var currentDataPoint = new DataPoint() { Time = Window.StartTime };
             var currentAggregator = new StreamingAggregator(AggregateFunc, Window, 0);

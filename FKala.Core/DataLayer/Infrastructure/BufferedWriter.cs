@@ -54,5 +54,10 @@ namespace FKala.Core.DataLayer.Infrastructure
             _streamWriter?.Dispose();
             _fileStream?.Dispose();
         }
+
+        public void Close()
+        {
+            _streamWriter.Close();
+        }
     }
 }

@@ -5,17 +5,178 @@ using FKala.Core.KalaQl;
 using FKala.Core.Logic;
 using FKala.Migrate.MariaDb;
 using FKala.Unittests;
+using System.Diagnostics;
+using System.IO;
+using System.Text;
 
 
 
 
-ForProfiling();
+//ForProfiling();
+BenchmarkWrites();
+BenchmarkReads();
 
-static void ForProfiling ()
+static void ForProfiling()
 {
     KalaQl t = new KalaQl();
     //TempFolderTests_OutOfOrder.Initialize(null);
     t.KalaQl_2_Datasets();
+}
+
+// local 65536
+
+
+static void BenchmarkReads()
+{
+    Stopwatch sw = new Stopwatch();
+    Random rand = new Random();  // seed a random number generator
+    int numberOfBytes = 2 << 22; //8,192KB File
+    byte nextByte;
+    TimeSpan min = TimeSpan.MaxValue;
+    string minString = "";
+
+    FileStreamOptions fileStreamOptions = new FileStreamOptions()
+    {
+        Access = FileAccess.Read,
+        BufferSize = 131072,
+        Mode = FileMode.Open,
+        Share = FileShare.ReadWrite | FileShare.Delete
+    };
+
+    for (int i = 12; i <= 24; i++) //Limited loop to 28 to prevent out of memory
+    {
+
+
+
+        using (FileStream fs = new FileStream(
+            @$"\\naxds2\docker\fkala\TEST{i}.DAT",  // name of file
+            FileMode.Create,    // create or overwrite existing file
+            FileAccess.Write,   // write-only access
+            FileShare.None,     // no sharing
+            2 << 20,             // block transfer of i=18 -> size = 256 KB
+            FileOptions.None))
+        {
+            for (int j = 0; j < numberOfBytes; j++)
+            {
+                nextByte = (byte)(rand.Next() % 256); // generate a random byte
+                fs.WriteByte(nextByte);               // write it
+            }
+        }
+
+        fileStreamOptions.BufferSize = 2 << i;
+        sw.Start();
+        for (int repeat = 0; repeat < 10; repeat++)
+        {
+
+            var sr = new StreamReader(@$"\\naxds2\docker\fkala\TEST{i}.DAT", Encoding.UTF8, false, fileStreamOptions);
+            var readstring = sr.ReadToEnd();            
+        }
+        sw.Stop();
+        var outs = $"READ Buffer is 2 << {i} - {2 << i} Elapsed: {sw.Elapsed}";
+        Console.WriteLine(outs);
+
+        if (min > sw.Elapsed)
+        {
+            min = sw.Elapsed;
+            minString = outs;
+        }
+        sw.Reset();
+
+        Console.WriteLine("FASTEST READ: " + minString);
+    }
+}
+
+
+static void BenchmarkWrites()
+{
+    Stopwatch sw = new Stopwatch();
+    Random rand = new Random();  // seed a random number generator
+    int numberOfBytes = 2 << 22; //8,192KB File
+    byte nextByte;
+    TimeSpan min = TimeSpan.MaxValue;
+    string minString = "";
+    for (int i = 12; i <= 24; i++) //Limited loop to 28 to prevent out of memory
+    {
+        sw.Start();
+        for (int repeat = 0; repeat < 1; repeat++)
+        {
+            using (FileStream fs = new FileStream(
+                String.Format(@"\\naxds2\docker\fkala\TEST{0}.DAT", i),  // name of file
+                FileMode.Create,    // create or overwrite existing file
+                FileAccess.Write,   // write-only access
+                FileShare.None,     // no sharing
+                2 << i,             // block transfer of i=18 -> size = 256 KB
+                FileOptions.None))
+            {
+                for (int j = 0; j < numberOfBytes; j++)
+                {
+                    nextByte = (byte)(rand.Next() % 256); // generate a random byte
+                    fs.WriteByte(nextByte);               // write it
+                }
+            }
+        }
+        sw.Stop();
+        var outs = $"Buffer is 2 << {i} - {2 << i} Elapsed: {sw.Elapsed}";
+        Console.WriteLine(outs);
+
+        if (min > sw.Elapsed)
+        {
+            min = sw.Elapsed;
+            minString = outs;
+        }
+        sw.Reset();
+    }
+
+    Console.WriteLine("FASTEST: " + minString);
+}
+
+
+static void RepairBuggedNames()
+{
+    string StoragePathData = "\\\\naxds2\\docker\\fkala\\data";
+    EnumerationOptions optionFindFilesRecursive = new EnumerationOptions()
+    {
+        BufferSize = 131072,
+        RecurseSubdirectories = true,
+        ReturnSpecialDirectories = false,
+        AttributesToSkip = FileAttributes.Hidden
+    };
+    var fileCandidates = Directory.GetFileSystemEntries(StoragePathData, "*.dat", optionFindFilesRecursive).ToList();
+
+    int i = 0;
+    int ren = 0;
+    int total = fileCandidates.Count;
+    int del = 0;
+    foreach (var candidate in fileCandidates)
+    {
+        i++;
+
+        // Defect
+        var measure = new DirectoryInfo(candidate).Parent.Parent.Parent.Name;
+        if (Path.GetFileName(candidate).IndexOf(measure) == -1)
+        {
+            var size = new FileInfo(candidate).Length;
+            File.Delete(candidate);
+            Console.WriteLine($"Deleted wronly named {candidate} in measure {measure} {size}");
+            del++;
+            continue;
+        }
+
+        // Mark
+        string mark = candidate.Substring(candidate.Length - 15, 1);
+        if (mark != "_" && mark != "#")
+        {
+            var newname = candidate.Insert(candidate.Length - 14, "_");
+            File.Move(candidate, newname);
+            ren++;
+        }
+
+
+        if (i % 1000 == 0)
+        {
+            Console.WriteLine($"{i}/{total} Done. {ren} renamed. {del} deleted");
+        }
+    }
 }
 
 

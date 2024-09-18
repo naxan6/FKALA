@@ -10,7 +10,7 @@ namespace FKala.Core.Model
     {
         public DateTime Time;
         public decimal? Value;
-        //public string? ValueText { get; set; }
+        public string? ValueText { get; set; }
 
         public int CompareTo(DataPoint? other)
         {

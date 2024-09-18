@@ -146,6 +146,10 @@ namespace FKala.Core.KalaQl
             {
                 return MgmtAction.LoadMeasures;
             }
+            else if (v.ToUpper() == "SORTRAWFILES")
+            {
+                return MgmtAction.SortRawFiles;
+            }
             throw new Exception($"MgmtAction {v} ist ungültig");
         }
 

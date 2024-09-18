@@ -50,9 +50,9 @@ namespace FKala.Core.DataLayer.Infrastructure
         public void CreateWriteDispose(string filePath, Action<IBufferedWriter> writeAction)
         {
             lock (filePath)
-            {
+            {                
                 using var writer = new BufferedWriter(filePath);
-                writeAction(writer);
+                writeAction(writer);                
             }
         }
 
@@ -68,12 +68,15 @@ namespace FKala.Core.DataLayer.Infrastructure
                     }
                     catch (Exception)
                     {
-                        Console.WriteLine("error at BufferedWriter with path <{filePath}>");
+                        Console.WriteLine("Error at BufferedWriter with path <{filePath}>");
                         throw;
                     }
                     _bufferedWriters[filePath] = writer;
+                    lock (writer!.LOCK)
+                    {
+                        writeAction(writer);
+                    }
                 }
-                writeAction(writer);
             }
         }
     }

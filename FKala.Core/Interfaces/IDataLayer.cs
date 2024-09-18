@@ -11,7 +11,7 @@ namespace FKala.Core.Interfaces
 {
     public interface IDataLayer
     {
-        IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool NewestOnly);
+        IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool NewestOnly, bool doSortRawFiles);
         void Insert(string kalaLinedata, bool locking = true);
         List<int> LoadAvailableYears(string measurement);
         List<string> LoadMeasurementList();

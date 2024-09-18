@@ -242,8 +242,11 @@ Can be used to "publish" generated temporary datasets to the result.  This is wh
   ```sh
       Mgmt LoadMeasures
 
-### Mgmt LoadMesaures
+### Mgmt LoadMeasures
 Gets you a list of all available Mesaures in the F KALA database
+
+### MgmtSortRawFiles
+Marks or Sorts-and-marks all raw files as sorted (only file newer than 2 days will be left untouched).
 
 #### Example-Output
 ```json

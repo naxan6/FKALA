@@ -2,6 +2,7 @@
 {
     public enum MgmtAction
     {
-        LoadMeasures
+        LoadMeasures,
+        SortRawFiles
     }
 }

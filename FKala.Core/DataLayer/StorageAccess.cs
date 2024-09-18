@@ -18,14 +18,14 @@ namespace FKala.Core.DataLayers
         FileStreamOptions fileStreamOptions = new FileStreamOptions()
         {
             Access = FileAccess.Read,
-            BufferSize = 65536,
+            BufferSize = 131072,
             Mode = FileMode.Open,
             Share = FileShare.ReadWrite | FileShare.Delete
         };
 
         EnumerationOptions optionFindFilesRecursive = new EnumerationOptions()
         {
-            BufferSize = 65536,
+            BufferSize = 131072,
             RecurseSubdirectories = true,
             ReturnSpecialDirectories = false,
             AttributesToSkip = FileAttributes.Hidden
@@ -72,8 +72,13 @@ namespace FKala.Core.DataLayers
             var filteredYears = years.Where(y => y >= startYear && y <= endYear);
 
             // files
-            string filter = $"{measurementPathPart}_*.dat";
+            //string filter = $"{measurementPathPart}_*.dat";
+            string filter = $"{measurementPathPart}*.dat";
+
             var fileCandidates = filteredYears.AsParallel().SelectMany(y => Directory.GetFileSystemEntries(Path.Combine(measurementPath, y.ToString()), filter, optionFindFilesRecursive)).ToList();
+
+
+            
             SortedDictionary<DateTime, ReaderTuple> ret = new SortedDictionary<DateTime, ReaderTuple>();
 
             foreach (var candidate in fileCandidates)
@@ -107,7 +112,7 @@ namespace FKala.Core.DataLayers
 
         private List<int> GetYearFolders(string measurementDir)
         {
-            var entries = Directory.GetDirectories(measurementDir, "*", new EnumerationOptions() { ReturnSpecialDirectories = false, BufferSize = 16384, });
+            var entries = Directory.GetDirectories(measurementDir, "*", new EnumerationOptions() { ReturnSpecialDirectories = false, BufferSize = 131072, });
             return entries.Where(e => Path.GetFileName(e) != ".DS_Store").Select(y => int.Parse(Path.GetFileName(y))).ToList();
         }
 
@@ -145,15 +150,18 @@ namespace FKala.Core.DataLayers
             if (!persistenceIsSorted)
             {
                 dataPoints.Sort((a, b) => a.Time.CompareTo(b.Time));
+                
+                // persist sorted (if activated)
+                if (IsActiveAutoSortRawFiles)
+                {
+                    WriteSortedFile(readerTuple.FilePath, dataPoints);
+                    persistenceIsSorted = true;
+                }
             }
-            // persist sorted (if activated)
-            if (IsActiveAutoSortRawFiles)
-            {
-                WriteSortedFile(readerTuple.FilePath, dataPoints);
-                persistenceIsSorted = true;
-            }
-            // mark as sorted (if it already was or is now)
-            if (persistenceIsSorted)
+            
+            // mark as sorted (if it already was or is now) -
+            // and only if it's at least older than 1-2 days (pathdate is start of day at midnight!)
+            if (persistenceIsSorted && readerTuple.PathDate < DateTime.Now.AddDays(-1))
             {
                 MarkFileAsSorted(readerTuple.FilePath);
             }
@@ -179,7 +187,7 @@ namespace FKala.Core.DataLayers
             if (rs.Any())
             {
                 var writerSvc = DataLayer.WriterSvc;
-                writerSvc.CreateWriteDispose(filePath, (writer) =>
+                writerSvc.CreateWriteDispose(filePath + ".sorted", (writer) =>
                 {
                     foreach (var dp in rs)
                     {
@@ -191,6 +199,12 @@ namespace FKala.Core.DataLayers
                             writer.AppendNewline();
                         };
                     }
+                    writer.Flush();
+                    writer.Close();
+                    File.Move(filePath, filePath + ".bak");
+                    File.Move(filePath + ".sorted", filePath);
+                    //File.Delete(filePath + ".sorted", filePath);
+                    Console.WriteLine($"Sorted rewrite of file {filePath}");
                 });
             }
         }
@@ -220,7 +234,7 @@ namespace FKala.Core.DataLayers
             string? line;
             while ((line = sr.StreamReader!.ReadLine()) != null)
             {
-                var ret = DatFileParser.ParseLine(fileyear, filemonth, fileday, line);
+                var ret = DatFileParser.ParseLine(fileyear, filemonth, fileday, line, sr.FilePath);
                 if (ret.Time >= StartTime && ret.Time < EndTime)
                 {
                     yield return ret;

@@ -10,32 +10,42 @@ namespace FKala.Core.DataLayer.Infrastructure
 {
     public static class DatFileParser
     {
-        public static DataPoint ParseLine(int fileyear, int filemonth, int fileday, string? line)
+        public static DataPoint ParseLine(int fileyear, int filemonth, int fileday, string? line,string filepath)
         {
-            ReadOnlySpan<char> span = line.AsSpan();
-            var dateTime = new DateTime(fileyear, filemonth, fileday, int.Parse(span.Slice(0, 2)), int.Parse(span.Slice(3, 2)), int.Parse(span.Slice(6, 2)), DateTimeKind.Utc);
-
-            dateTime.AddTicks(int.Parse(span.Slice(9, 7)));
-            span = span.Slice(17);
-
-            var valueRaw = span.Slice(0);
-            decimal? value = null;
-            string? valuetext = null;
             try
             {
-                value = decimal.Parse(valueRaw, CultureInfo.InvariantCulture);
-            }
-            catch (Exception)
-            {
-                valuetext = valueRaw.ToString();
-            }
+                ReadOnlySpan<char> span = line.AsSpan();
+                var dateTime = new DateTime(fileyear, filemonth, fileday, int.Parse(span.Slice(0, 2)), int.Parse(span.Slice(3, 2)), int.Parse(span.Slice(6, 2)), DateTimeKind.Utc);
 
-            return new DataPoint
+                dateTime.AddTicks(int.Parse(span.Slice(9, 7)));
+                span = span.Slice(17);
+
+                var valueRaw = span.Slice(0);
+                decimal? value = null;
+                string? valuetext = null;
+
+
+                try
+                {
+                    value = decimal.Parse(valueRaw, CultureInfo.InvariantCulture);
+                }
+                catch (Exception)
+                {
+                    valuetext = valueRaw.ToString();
+                }
+
+                return new DataPoint
+                {
+                    Time = dateTime,
+                    Value = value,
+                    ValueText = valuetext
+                };
+            }
+            catch (Exception ex)
             {
-                Time = dateTime,
-                Value = value
-                // ValueText = valuetext
-            };
+                Console.WriteLine($"Error while parsing line {line} in {filepath}");
+                throw;
+            }
         }
     }
 }

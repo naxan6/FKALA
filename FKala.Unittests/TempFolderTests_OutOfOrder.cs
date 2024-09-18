@@ -32,7 +32,7 @@ namespace FKala.Unittests
         public void DataLayer_LoadData_CheckBorders()
         {
             // Act
-            var resultset = DataFaker.TestDataLayer.LoadData("m1", new DateTime(2024, 03, 01), new DateTime(2024, 03, 15), CacheResolutionPredefined.NoCache, false);
+            var resultset = DataFaker.TestDataLayer.LoadData("m1", new DateTime(2024, 03, 01), new DateTime(2024, 03, 15), CacheResolutionPredefined.NoCache, false, false);
 
 
 
@@ -47,7 +47,7 @@ namespace FKala.Unittests
             }
 
             // Assert 2
-            var resultsetAll = DataFaker.TestDataLayer.LoadData("m1", new DateTime(0001, 01, 01), new DateTime(9999, 12, 31), CacheResolutionPredefined.NoCache, false);
+            var resultsetAll = DataFaker.TestDataLayer.LoadData("m1", new DateTime(0001, 01, 01), new DateTime(9999, 12, 31), CacheResolutionPredefined.NoCache, false, false);
             using (new AssertionScope())
             {
                 resultsetAll.First().Time.Should().Be(new DateTime(2024, 01, 01, 0, 0, 10));
