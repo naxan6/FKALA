@@ -63,9 +63,10 @@ namespace FKala.Core.KalaQl
                     Window.Next();
                 }
             }
-
+            int seenPoints = 0;
             while (dataPointsEnumerator.MoveNext())
             {
+                seenPoints++;
                 var c = dataPointsEnumerator.Current;
                 if (Window.IsInWindow(c.Time))
                 {
@@ -73,7 +74,7 @@ namespace FKala.Core.KalaQl
                 }
                 else if (Window.DateTimeIsBeforeWindow(c.Time))
                 {
-                    throw new Exception($"Bug 1, Datenpunkt übersehen einzusortieren {this.Name}  {c.Time.ToString("s")} in {Window.StartTime.ToString("s")}-{Window.EndTime.ToString("s")}");
+                    throw new Exception($"Bug 1, Datenpunkt übersehen einzusortieren (nach {seenPoints}) {this.Name}  {c.Time.ToString("s")} in {Window.StartTime.ToString("s")}-{Window.EndTime.ToString("s")}");
                 }
                 else if (Window.DateTimeIsAfterWindow(c.Time))
                 {
@@ -98,9 +99,10 @@ namespace FKala.Core.KalaQl
                 {
                     if (dataPointsEnumerator.MoveNext() == true)
                     {
+                        seenPoints++;
                         if (Window.IsInWindow(dataPointsEnumerator.Current.Time))
                         {
-                            throw new Exception($"Bug 2, Datenpunkt übersehen einzusortieren  {this.Name}  {c.Time.ToString("s")} in {Window.StartTime.ToString("s")}-{Window.EndTime.ToString("s")}");
+                            throw new Exception($"Bug 2, Datenpunkt übersehen einzusortieren (nach {seenPoints})  {this.Name}  {c.Time.ToString("s")} in {Window.StartTime.ToString("s")}-{Window.EndTime.ToString("s")}");
                         }
                     }
                     break;
