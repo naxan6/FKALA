@@ -260,6 +260,8 @@ namespace FKala.Core.KalaQl
                     return Window.Aligned_1Week;
                 case "Aligned_1Month":
                     return Window.Aligned_1Month;
+                case "Aligned_1YearStartAtHalf":
+                    return Window.Aligned_1YearStartAtHalf;
                 case "Aligned_1Year":
                     return Window.Aligned_1Year;
                 case "Unaligned_1Month":

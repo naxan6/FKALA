@@ -121,6 +121,7 @@ Aggregates Data.
   - ```Aligned_1Week```- first window starts at the start of the week (Monday!)  of the starttime of the Source and is 7 days wide
   - ```Aligned_1Month```- first window starts at the start of the month of the starttime of the Source and is 1 month wide (different depending on the month)
   - ```Aligned_1Year```- first window starts at the start of the year of the starttime of the Source and is 1 year wide (different in case of a leap year)
+  - ```Aligned_1YearStartAtHalf```- first window starts at the half of the year of the starttime of the Source and is 1 year wide (different in case of a leap year)
   - ```Unaligned_1Month```- first window starts at the starttime of the Source and is 1 month wide (different depending on the month)
   - ```Unaligned_1Year```- first window starts at the starttime of the Source and is 1 year wide (different in case of a leap year)
   - ```Scalarize``` or ```Infinite``` -  first window starts at the starttime of the Source and is infinite -so only one single number will result.

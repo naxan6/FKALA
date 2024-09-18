@@ -11,6 +11,7 @@ namespace FKala.Core.KalaQl.Windowing
         public static Window Aligned_1Day { get { return new Window() { Mode = WindowMode.AlignedDay, Interval = new TimeSpan(1, 0, 0, 0) }; } }
         public static Window Aligned_1Week { get { return new Window() { Mode = WindowMode.AlignedWeek, Interval = new TimeSpan(7, 0, 0, 0) }; } }
         public static Window Aligned_1Month { get { return new Window() { Mode = WindowMode.AlignedMonth, Interval = TimeSpan.MaxValue }; } }
+        public static Window Aligned_1YearStartAtHalf { get { return new Window() { Mode = WindowMode.AlignedYearStartAtHalf, Interval = TimeSpan.MaxValue }; } }
         public static Window Aligned_1Year { get { return new Window() { Mode = WindowMode.AlignedYear, Interval = TimeSpan.MaxValue }; } }
         public static Window Unaligned_1Month { get { return new Window() { Mode = WindowMode.UnalignedMonth, Interval = TimeSpan.MaxValue }; } }
         public static Window Unaligned_1Year { get { return new Window() { Mode = WindowMode.UnalignedYear, Interval = TimeSpan.MaxValue }; } }
@@ -76,10 +77,17 @@ namespace FKala.Core.KalaQl.Windowing
                     });
                     this.StartTime = starttime;                    
                     break;
+                case WindowMode.AlignedYearStartAtHalf:
+                    starttime = ModifyAlignedToTimezone(starttime, tzTimezoneId ?? "UTC", (LocalDateTime alignedDate) => {
+                        return alignedDate.With(DateAdjusters.Month(6)).With(DateAdjusters.StartOfMonth).Date.AtMidnight();
+                    });          
+                    this.StartTime = starttime;                  
+                    break;
                 case WindowMode.AlignedYear:
                     starttime = ModifyAlignedToTimezone(starttime, tzTimezoneId ?? "UTC", (LocalDateTime alignedDate) => {
                         return alignedDate.With(DateAdjusters.Month(1)).With(DateAdjusters.StartOfMonth).Date.AtMidnight();
                     });                    
+                    this.StartTime = starttime;        
                     break;
 
                 default:
@@ -144,6 +152,7 @@ namespace FKala.Core.KalaQl.Windowing
                         this.EndTime = this.StartTime.AddMonths(1);
                         break;
                     case WindowMode.AlignedYear:
+                    case WindowMode.AlignedYearStartAtHalf:
                     case WindowMode.UnalignedYear:
                         this.EndTime = this.StartTime.AddYears(1);
                         break;

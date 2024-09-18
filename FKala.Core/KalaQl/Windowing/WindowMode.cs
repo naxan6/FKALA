@@ -10,6 +10,7 @@
         AlignedDay,
         AlignedWeek,
         AlignedMonth,
+        AlignedYearStartAtHalf,
         AlignedYear,
         UnalignedMonth,
         UnalignedYear,
