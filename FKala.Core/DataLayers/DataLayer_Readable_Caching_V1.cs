@@ -125,8 +125,8 @@ namespace FKala.Core
                         int fileday = int.Parse(dateSpan.Slice(8, 2));
 
                         // Datei hat keine Überlappung mit Anfrage.
-                        if (!(startTime < new DateTime(fileyear, filemonth, fileday, 0, 0, 0).AddDays(1) &&
-                            endTime > new DateTime(fileyear, filemonth, fileday, 0, 0, 0)))
+                        if (!(startTime < new DateTime(fileyear, filemonth, fileday, 0, 0, 0, DateTimeKind.Utc).AddDays(1) &&
+                            endTime > new DateTime(fileyear, filemonth, fileday, 0, 0, 0, DateTimeKind.Utc)))
                         {
                             continue;
                         }

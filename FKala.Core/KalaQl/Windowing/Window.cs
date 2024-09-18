@@ -180,26 +180,26 @@ namespace FKala.Core.KalaQl.Windowing
 
         private static DateTime RoundToPreviousFullHour(DateTime dateTime)
         {
-            return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, 0, 0, 0);
+            return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, 0, 0, 0, DateTimeKind.Utc);
         }
 
         private static DateTime RoundToPreviousFifteenMinutes(DateTime dateTime)
         {
             int minutes = dateTime.Minute;
             int previousQuarterHour = (minutes / 15) * 15;
-            return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, previousQuarterHour, 0);
+            return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, previousQuarterHour, 0, DateTimeKind.Utc);
         }
 
 
         private static DateTime RoundToPreviousFullMinute(DateTime dateTime)
         {
-            return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, dateTime.Minute, 0);
+            return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, dateTime.Minute, 0, DateTimeKind.Utc);
         }
         private static DateTime RoundToPreviousFiveMinutes(DateTime dateTime)
         {
             int minutes = dateTime.Minute;
             int previousFiveMinutes = (minutes / 5) * 5;
-            return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, previousFiveMinutes, 0);
+            return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, previousFiveMinutes, 0, DateTimeKind.Utc);
         }
 
     }

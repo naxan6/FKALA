@@ -18,9 +18,9 @@ namespace FKala.Core.DataLayers
         public abstract IEnumerable<DataPoint> GetAggregateForCaching(string measurement, DateTime start, DateTime end, AggregateFunction aggrFunc);
         public abstract string GetTimeFormat();
         public abstract DataPoint ReadLine(int fileyear, string? line);
-        public abstract string CacheSubdir {  get; }
+        public abstract string CacheSubdir { get; }
         public abstract DateTime ShouldUpdateFromWhere(DataPoint? newestInCache, DataPoint? newestInRaw);
-        
+
         public IEnumerable<DataPoint?> LoadNewestDatapoint(string newestFile)
         {
             var parts = newestFile.Split('_');
@@ -36,7 +36,7 @@ namespace FKala.Core.DataLayers
                 if (File.Exists(cacheFilePath)) File.Delete(cacheFilePath);
             }
 
-            IEnumerable<DataPoint> rs = GetAggregateForCaching(measurement, new DateTime(year, 1, 1), new DateTime(year + 1, 1, 1), aggrFunc);
+            IEnumerable<DataPoint> rs = GetAggregateForCaching(measurement, new DateTime(year, 1, 1, 0, 0, 0, DateTimeKind.Utc), new DateTime(year + 1, 1, 1, 0, 0, 0, DateTimeKind.Utc), aggrFunc);
             WriteCacheFile(cacheFilePath, rs);
         }
 
@@ -94,7 +94,7 @@ namespace FKala.Core.DataLayers
             FileFromEndProcessor.ProcessFileFromEnd(newestCacheFile, line => line != "" && this.ReadLine(fileYear, line).Time <= rebuildFromDateTime, "");
 
             //var newFileContent = validCacheEntries.Concat(updateData);
-            
+
             WriteCacheFile(newestCacheFile, updateData);
 
 
