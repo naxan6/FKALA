@@ -37,7 +37,8 @@ namespace FKala.Core.DataLayer.Cache
             years = FilterYearsForExistingRawData(measurement, years);
             foreach (int year in years)
             {
-                var cacheFilePath = Path.Combine(measurementCachePath, $"{measurementPath}_{year}_{cacheResolution.AggregateFunction}.dat");
+                string cachefile = $"{measurementPath}_{year}_{cacheResolution.AggregateFunction}.dat"
+                var cacheFilePath = Path.Combine(measurementCachePath, cachefile);
 
                 // synchronize Cache-Updates
                 using (var lockHandle = _lockManager.AcquireLock(cacheFilePath))
@@ -56,7 +57,7 @@ namespace FKala.Core.DataLayer.Cache
                             IncrementalUpdateCache(measurement, cacheResolution, cacheFilePath);
                         }
                     }
-
+                    Console.WriteLine($"Loading from Cache: {cachefile}");
                     var yearEnumerable = cache.LoadCache(startTime, endTime, year, cacheFilePath);
                     foreach (var item in yearEnumerable)
                     {
