@@ -15,7 +15,10 @@ namespace FKala.Core.KalaQl
         public AggregateFunction AggregateFunc { get; }
         public bool EmptyWindows { get; }
         public bool UseMaterializing { get; }
-        
+
+        public DateTime Result_Starttime;
+        public DateTime Result_Endtime;
+
         public Op_Aggregate(string? line, string name, string inputDataSet, Window window, AggregateFunction aggregate, bool emptyWindows, bool useMaterializing = true) : base(line)
         {
             Name = name;
@@ -43,7 +46,7 @@ namespace FKala.Core.KalaQl
             {
                 result = result.ToList();
             }
-            context.IntermediateResults.Add(new Result() { Name = this.Name, Resultset = result, StartTime = input.StartTime, EndTime = input.EndTime, Creator = this });
+            context.IntermediateResults.Add(new Result() { Name = this.Name, Resultset = result, StartTime = Result_Starttime, EndTime = Result_Endtime, Creator = this });
             this.hasExecuted = true;
         }
 
@@ -52,6 +55,7 @@ namespace FKala.Core.KalaQl
             var dataPointsEnumerator = input.Resultset.GetEnumerator();
 
             Window.Init(input.StartTime, context.AlignTzTimeZoneId);
+            Result_Starttime = Window.StartTime;
             var currentDataPoint = new DataPoint() { Time = Window.StartTime };
             var currentAggregator = new StreamingAggregator(AggregateFunc, Window, 0);
             var results = new List<DataPoint>();
@@ -125,12 +129,14 @@ namespace FKala.Core.KalaQl
                     if (EmptyWindows || currentDataPoint.Value != null) yield return currentDataPoint;
                 }
             }
+            Result_Endtime = Window.EndTime;
         }
 
         private IEnumerable<DataPoint> InternalExecute21(KalaQlContext context, Result input)
         {
             
             Window.Init(input.StartTime, context.AlignTzTimeZoneId);
+            Result_Starttime = Window.StartTime;
             var currentDataPoint = new DataPoint() { Time = Window.StartTime };
             var currentAggregator = new StreamingAggregator(AggregateFunc, Window, 0);
             bool scrolledForward = false;
@@ -200,6 +206,7 @@ namespace FKala.Core.KalaQl
                     if (EmptyWindows || currentDataPoint.Value != null) yield return currentDataPoint;
                 }
             }
+            Result_Endtime = Window.EndTime;
             yield break;
         }
     }

@@ -15,13 +15,13 @@ namespace FKala.Core.KalaQl
         
 
         public override bool CanExecute(KalaQlContext context)
-        {
-            context.AlignTzTimeZoneId= TzId;
+        {            
             return true;
         }
 
         public override void Execute(KalaQlContext context)
         {
+            context.AlignTzTimeZoneId = TzId;
             this.hasExecuted = true;
         }
 

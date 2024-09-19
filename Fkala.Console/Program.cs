@@ -13,10 +13,15 @@ using System.Text.RegularExpressions;
 
 
 
-ForProfiling();
+//ForProfiling();
 //BenchmarkWrites();
 //BenchmarkReads();
 //RepairBuggedNames();
+
+static void TzTesting()
+{
+
+}
 
 static void ForProfiling()
 {

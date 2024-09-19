@@ -19,6 +19,8 @@ namespace FKala.Core.KalaQl.Windowing
 
         public DateTime StartTime { get; private set; }
         public DateTime EndTime { get; private set; }
+        public string? TzTimezoneId { get; private set; }
+
         public TimeSpan Interval = TimeSpan.MaxValue;
         public WindowMode Mode;
 
@@ -38,6 +40,7 @@ namespace FKala.Core.KalaQl.Windowing
         }
         public void Init(DateTime starttime, string? tzTimezoneId)
         {
+            this.TzTimezoneId = tzTimezoneId;
             switch (Mode)
             {
                 case WindowMode.FixedIntervall:
@@ -58,36 +61,41 @@ namespace FKala.Core.KalaQl.Windowing
                     this.StartTime = RoundToPreviousFullHour(starttime);
                     break;
                 case WindowMode.AlignedDay:
-                    starttime = ModifyAlignedToTimezone(starttime, tzTimezoneId ?? "UTC", (LocalDateTime alignedDate) => { 
-                        return alignedDate.Date.AtMidnight(); 
+                    starttime = ModifyAlignedToTimezone(starttime, tzTimezoneId ?? "UTC", (LocalDateTime alignedDate) =>
+                    {
+                        return alignedDate.Date.AtMidnight();
                     });
                     this.StartTime = starttime;
 
                     break;
                 case WindowMode.AlignedWeek:
-                    starttime = ModifyAlignedToTimezone(starttime, tzTimezoneId ?? "UTC", (LocalDateTime alignedDate) => {
+                    starttime = ModifyAlignedToTimezone(starttime, tzTimezoneId ?? "UTC", (LocalDateTime alignedDate) =>
+                    {
                         if (alignedDate.DayOfWeek == IsoDayOfWeek.Monday) { return alignedDate.Date.AtMidnight(); }
                         return alignedDate.Previous(IsoDayOfWeek.Monday).Date.AtMidnight();
                     });
                     this.StartTime = starttime;
                     break;
                 case WindowMode.AlignedMonth:
-                    starttime = ModifyAlignedToTimezone(starttime, tzTimezoneId ?? "UTC", (LocalDateTime alignedDate) => {
+                    starttime = ModifyAlignedToTimezone(starttime, tzTimezoneId ?? "UTC", (LocalDateTime alignedDate) =>
+                    {
                         return alignedDate.With(DateAdjusters.StartOfMonth).Date.AtMidnight();
                     });
-                    this.StartTime = starttime;                    
+                    this.StartTime = starttime;
                     break;
                 case WindowMode.AlignedYearStartAtHalf:
-                    starttime = ModifyAlignedToTimezone(starttime, tzTimezoneId ?? "UTC", (LocalDateTime alignedDate) => {
+                    starttime = ModifyAlignedToTimezone(starttime, tzTimezoneId ?? "UTC", (LocalDateTime alignedDate) =>
+                    {
                         return alignedDate.With(DateAdjusters.Month(7)).With(DateAdjusters.StartOfMonth).Date.AtMidnight();
-                    });          
-                    this.StartTime = starttime;                  
+                    });
+                    this.StartTime = starttime;
                     break;
                 case WindowMode.AlignedYear:
-                    starttime = ModifyAlignedToTimezone(starttime, tzTimezoneId ?? "UTC", (LocalDateTime alignedDate) => {
+                    starttime = ModifyAlignedToTimezone(starttime, tzTimezoneId ?? "UTC", (LocalDateTime alignedDate) =>
+                    {
                         return alignedDate.With(DateAdjusters.Month(1)).With(DateAdjusters.StartOfMonth).Date.AtMidnight();
-                    });                    
-                    this.StartTime = starttime;        
+                    });
+                    this.StartTime = starttime;
                     break;
 
                 default:
@@ -144,7 +152,16 @@ namespace FKala.Core.KalaQl.Windowing
                         }
                         else
                         {
-                            this.EndTime = this.StartTime.Add(Interval);
+                            var NewEndtime = ModifyAlignedToTimezone(this.StartTime, this.TzTimezoneId ?? "UTC", (LocalDateTime alignedDate) =>
+                            {
+                                return alignedDate 
+                                    + Period.FromDays(Interval.Days)
+                                    + Period.FromHours(Interval.Hours)
+                                    + Period.FromMinutes(Interval.Minutes)
+                                    + Period.FromSeconds(Interval.Seconds);
+                            });
+                            this.EndTime = NewEndtime;
+                            //this.EndTime = this.StartTime.Add(Interval);
                         }
                         break;
                     case WindowMode.UnalignedMonth:

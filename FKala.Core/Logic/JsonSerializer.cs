@@ -15,6 +15,7 @@ namespace FKala.Core.Logic
             var settings = new JsonSerializerSettings
             {
                 NullValueHandling = NullValueHandling.Ignore,                
+                Formatting = Formatting.Indented,
             };
             return JsonConvert.SerializeObject(serObject, settings);
         }

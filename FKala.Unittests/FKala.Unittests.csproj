@@ -21,4 +21,16 @@
     <ProjectReference Include="..\FKala.Core\FKala.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="TestData\UTC_CET_CEST\data\UTC_CET_CEST_Load\2024\03\UTC_CET_CEST_Load#2024-03-29.dat">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestData\UTC_CET_CEST\data\UTC_CET_CEST_Load\2024\03\UTC_CET_CEST_Load#2024-03-30.dat">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestData\UTC_CET_CEST\data\UTC_CET_CEST_Load\2024\03\UTC_CET_CEST_Load#2024-03-31.dat">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
