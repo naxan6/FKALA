@@ -79,7 +79,7 @@ namespace FKala.Core.KalaQl.Windowing
                     break;
                 case WindowMode.AlignedYearStartAtHalf:
                     starttime = ModifyAlignedToTimezone(starttime, tzTimezoneId ?? "UTC", (LocalDateTime alignedDate) => {
-                        return alignedDate.With(DateAdjusters.Month(6)).With(DateAdjusters.StartOfMonth).Date.AtMidnight();
+                        return alignedDate.With(DateAdjusters.Month(7)).With(DateAdjusters.StartOfMonth).Date.AtMidnight();
                     });          
                     this.StartTime = starttime;                  
                     break;
