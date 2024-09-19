@@ -16,7 +16,7 @@ builder.Services.AddControllers(
     //        {
     //            options.SerializerSettings.DateFormatString = "yyyy'-'MM'-'dd'T'HH':'mm':'ssZ";
     //        }
-    //); ;
+    //);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

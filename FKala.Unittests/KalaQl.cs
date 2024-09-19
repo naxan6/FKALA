@@ -29,8 +29,7 @@ namespace FKala.Unittests
                 .Add(new Op_BaseQuery(null, "PV2", "Sofar/measure/PVInput1/0x589_Leistung_PV2[kW]", startTime, endTime, CacheResolutionPredefined.NoCache))
                 .Add(new Op_Publish(null, new List<string>() { "PV1", "PV2" }, PublishMode.MultipleResultsets));
 
-            var result = q.Execute(dl);
-
+            var result = q.Execute(dl);            
 
             sw.Stop();
             var ts = sw.Elapsed;
@@ -38,7 +37,7 @@ namespace FKala.Unittests
             Console.WriteLine("Verstrichene Zeit: " + elapsedTime);
 
             Assert.AreEqual(2, result?.ResultSets?.Count);
-            //Console.WriteLine(KalaJson.Serialize(result));// JSON serialize
+            Console.WriteLine(KalaJson.Serialize(result));// JSON serialize
         }
         [TestMethod]
         public void KalaQl_2_Datasets_Aggregated()

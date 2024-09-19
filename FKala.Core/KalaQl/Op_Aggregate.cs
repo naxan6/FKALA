@@ -38,7 +38,7 @@ namespace FKala.Core.KalaQl
             // und gleichzeitiger Ausgabe aller dieser Serien im Publish
             // sich die Zugriffe auf den Enumerable überschneiden und das ganze dann buggt
             // (noch nicht final geklärt, z.B. siehe BUGTEST_KalaQl_2_Datasets_Aggregated_Expresso). 
-            var result = InternalExecute21(context, input);
+            var result = InternalExecute(context, input);
             if (UseMaterializing)
             {
                 result = result.ToList();
@@ -61,6 +61,7 @@ namespace FKala.Core.KalaQl
                 var firstPoint = input.Resultset.FirstOrDefault();
                 while (Window.EndTime < (firstPoint?.Time ?? DateTime.MinValue)) {
                     Window.Next();
+                    currentDataPoint.Time = Window.StartTime;
                 }
             }
             int seenPoints = 0;

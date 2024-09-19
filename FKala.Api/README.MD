@@ -6,9 +6,12 @@ View e.g. in https://dillinger.io/
 
 ## TODOS
 - find invalid files (invalid filename, invalid dataformat)
+  - *Partially* done (in a console app for manual debug use) 
 - mark files as sorted
+  - * Done
 - merge measures (maybe with a hard cut at some point in time)
 - support textvalues (maybe even long?)
+  - Done
 - function for shifting windows
 - worker for cache-refresh schedule
 

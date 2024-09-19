@@ -8,13 +8,15 @@ using FKala.Unittests;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 
 
 
 
-//ForProfiling();
-BenchmarkWrites();
-BenchmarkReads();
+ForProfiling();
+//BenchmarkWrites();
+//BenchmarkReads();
+//RepairBuggedNames();
 
 static void ForProfiling()
 {
@@ -65,7 +67,7 @@ static void BenchmarkReads()
 
         fileStreamOptions.BufferSize = 2 << i;
         sw.Start();
-        for (int repeat = 0; repeat < 10; repeat++)
+        for (int repeat = 0; repeat < 1; repeat++)
         {
 
             var sr = new StreamReader(@$"\\naxds2\docker\fkala\TEST{i}.DAT", Encoding.UTF8, false, fileStreamOptions);
@@ -81,9 +83,9 @@ static void BenchmarkReads()
             minString = outs;
         }
         sw.Reset();
-
-        Console.WriteLine("FASTEST READ: " + minString);
+        
     }
+    Console.WriteLine("FASTEST READ: " + minString);
 }
 
 
@@ -143,6 +145,8 @@ static void RepairBuggedNames()
     };
     var fileCandidates = Directory.GetFileSystemEntries(StoragePathData, "*.dat", optionFindFilesRecursive).ToList();
 
+    Regex regex = new Regex(@".*(_|#)\d\d\d\d-\d\d-\d\d\.dat");
+
     int i = 0;
     int ren = 0;
     int total = fileCandidates.Count;
@@ -150,14 +154,24 @@ static void RepairBuggedNames()
     foreach (var candidate in fileCandidates)
     {
         i++;
-
-        // Defect
         var measure = new DirectoryInfo(candidate).Parent.Parent.Parent.Name;
+        
+        // Pattern
+        if (!regex.IsMatch(Path.GetFileName(candidate)))
+        {
+            var size = new FileInfo(candidate).Length;
+            File.Delete(candidate);
+            Console.WriteLine($"Deleted (1) wronly named {candidate} in measure {measure} {size}");
+            del++;
+            continue;
+        }
+
+        // Measure        
         if (Path.GetFileName(candidate).IndexOf(measure) == -1)
         {
             var size = new FileInfo(candidate).Length;
             File.Delete(candidate);
-            Console.WriteLine($"Deleted wronly named {candidate} in measure {measure} {size}");
+            Console.WriteLine($"Deleted (2) wronly named {candidate} in measure {measure} {size}");
             del++;
             continue;
         }
