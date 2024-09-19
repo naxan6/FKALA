@@ -37,7 +37,7 @@ namespace FKala.Core.DataLayer.Cache
             years = FilterYearsForExistingRawData(measurement, years);
             foreach (int year in years)
             {
-                string cachefile = $"{measurementPath}_{year}_{cacheResolution.AggregateFunction}.dat"
+                string cachefile = $"{measurementPath}_{year}_{cacheResolution.AggregateFunction}.dat";
                 var cacheFilePath = Path.Combine(measurementCachePath, cachefile);
 
                 // synchronize Cache-Updates
