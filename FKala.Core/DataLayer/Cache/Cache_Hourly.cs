@@ -51,7 +51,7 @@ namespace FKala.Core.DataLayer.Cache
             };
         }
 
-        public override DateTime ShouldUpdateFromWhere(DataPoint? newestInCache, DataPoint? newestInRaw)
+        public override DateTime ShouldUpdateFromWhere(int cacheYear,  DataPoint? newestInCache, DataPoint? newestInRaw)
         {
             // no refresh for non-existent cache
             if (newestInCache == null || newestInRaw == null)
@@ -66,7 +66,9 @@ namespace FKala.Core.DataLayer.Cache
             }
 
             // ..dann so viel refreshen: die letzten 2 Stunden
-            return newestInCache.Time.Subtract(new TimeSpan(2, 0, 0));
+            DateTime calculated = newestInCache.Time.Subtract(new TimeSpan(2, 0, 0));
+            DateTime maxValueInCacheFile = new DateTime(cacheYear, 12, 31, 0, 0, 0, DateTimeKind.Utc);
+            return calculated < maxValueInCacheFile ? calculated : maxValueInCacheFile;
         }
     }
 }

@@ -231,10 +231,13 @@ namespace FKala.Core.DataLayers
 
         private IEnumerable<DataPoint> InternalStreamDataPoints(ReaderTuple sr, int fileyear, int filemonth, int fileday)
         {
-            string? line;
-            while ((line = sr.StreamReader!.ReadLine()) != null)
+            int lineIdx = 0;
+            string? dataline;
+            while ((dataline = sr.StreamReader!.ReadLine()) != null)
             {
-                var ret = DatFileParser.ParseLine(fileyear, filemonth, fileday, line, sr.FilePath);
+                lineIdx++;
+                var ret = DatFileParser.ParseLine(fileyear, filemonth, fileday, dataline, sr.FilePath);
+                ret.Source = $"{sr.FilePath}, Line {lineIdx} {sr.MarkedAsSorted}";
                 if (ret.Time >= StartTime && ret.Time < EndTime)
                 {
                     yield return ret;

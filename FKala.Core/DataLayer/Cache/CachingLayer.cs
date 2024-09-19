@@ -32,7 +32,6 @@ namespace FKala.Core.DataLayer.Cache
 
             var measurementCachePath = cache.EnsureDirectory(CacheDirectory);
 
-
             var years = Enumerable.Range(startTime.Year, endTime.Year - startTime.Year + 1);
             years = FilterYearsForExistingRawData(measurement, years);
             foreach (int year in years)
@@ -110,9 +109,11 @@ namespace FKala.Core.DataLayer.Cache
         public DateTime ShouldUpdateFromWhere(string sanitizedMeasurement, Resolution resolution, AggregateFunction aggregateFunction, ICache cache)
         {
             string newest = GetNewestCacheFilepath(sanitizedMeasurement, cache, aggregateFunction);
+            var parts = newest.Split('_');
+            var cacheYear = int.Parse(parts[parts.Length - 2]);
             var newestInRaw = DataLayer.LoadNewestDatapoint(sanitizedMeasurement);
             var newestInCache = cache.LoadNewestDatapoint(newest);
-            return cache.ShouldUpdateFromWhere(newestInCache.First(), newestInRaw.First());
+            return cache.ShouldUpdateFromWhere(cacheYear, newestInCache.First(), newestInRaw.First());
         }
 
 

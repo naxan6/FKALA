@@ -26,7 +26,7 @@ namespace FKala.Core.DataLayer.Cache
         public abstract string CacheSubdir { get; }
         public IDataLayer DataLayer { get; }
 
-        public abstract DateTime ShouldUpdateFromWhere(DataPoint? newestInCache, DataPoint? newestInRaw);
+        public abstract DateTime ShouldUpdateFromWhere(int cacheYear, DataPoint? newestInCache, DataPoint? newestInRaw);
 
         public IEnumerable<DataPoint?> LoadNewestDatapoint(string newestFile)
         {
@@ -99,7 +99,7 @@ namespace FKala.Core.DataLayer.Cache
         {
             var parts = newestCacheFile.Split('_');
             var fileYear = int.Parse(parts[parts.Length - 2]);
-            IEnumerable<DataPoint> updateData = GetAggregateForCaching(measurement, rebuildFromDateTime, DateTime.MaxValue, aggrFunc);
+            IEnumerable<DataPoint> updateData = GetAggregateForCaching(measurement, rebuildFromDateTime, new DateTime(fileYear, 12, 31,0,0,0, DateTimeKind.Utc), aggrFunc);
 
             FileFromEndProcessor.ProcessFileFromEnd(newestCacheFile, line => line != "" && ReadLine(fileYear, line).Time <= rebuildFromDateTime, "");
 

@@ -100,7 +100,7 @@ namespace FKala.Core
             using (var sa = StorageAccess.Init(measurementPath, measurementPathPart, startTime, endTime))
             {
                 if (doSortRawFiles) { sa.ActiveAutoSortRawFiles(this); }
-                foreach (var dp in sa.OpenStreamReaders().StreamDataPoints()) {
+                foreach (var dp in sa.OpenStreamReaders().StreamDataPoints()) {                    
                     yield return dp;
                 }
             }
