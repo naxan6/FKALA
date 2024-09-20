@@ -1,5 +1,7 @@
 using FKala.Api.Controller;
 using FKala.Api.InputFormatter;
+using FKala.Api.Settings;
+using FKala.Api.Worker;
 using FKala.Core;
 using FKala.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -17,11 +19,18 @@ builder.Services.AddControllers(
     //            options.SerializerSettings.DateFormatString = "yyyy'-'MM'-'dd'T'HH':'mm':'ssZ";
     //        }
     //);
+builder.Services.AddOptions<MqttSettings>().Configure((MqttSettings options, IConfiguration config) => options.Configure(config));
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var storagePath = builder.Configuration["DataStorage"] ?? "\\\\naxds2\\docker\\fkala";
 builder.Services.AddSingleton<IDataLayer>(new DataLayer_Readable_Caching_V1(storagePath));
+
+if (builder.Configuration.GetSection(MqttSettings.ConfigurationSection).Exists()) {
+    builder.Services.AddHostedService<MqttWorker>();
+}
+
 
 var app = builder.Build();
 

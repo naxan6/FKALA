@@ -337,8 +337,9 @@ ASALocalRun/
 # Local History for Visual Studio
 .localhistory/
 
-# Local developer settings
+# Local developer /production settings
 **/appsettings.Development.json
+**/appsettings.Production.json
 
 /DataStore
 /kala_v01.tar
