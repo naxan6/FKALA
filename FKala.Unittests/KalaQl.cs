@@ -37,16 +37,14 @@ namespace FKala.Unittests
             Console.WriteLine("Verstrichene Zeit: " + elapsedTime);
 
             Assert.AreEqual(2, result?.ResultSets?.Count);
-            Result o;
             DataPoint p;
-            foreach (var item in result.ResultSets)
+            foreach (var item in result!.ResultSets!)
             {
-                foreach (var item1 in item.Resultset)
+                foreach (var item1 in item.ResultsetFactory())
                 {
                     p = item1;
                 }
             }
-            //Console.WriteLine(KalaJson.Serialize(result));// JSON serialize
         }
         [TestMethod]
         public void KalaQl_2_Datasets_Aggregated()
@@ -135,7 +133,7 @@ namespace FKala.Unittests
 
             foreach (var rs in result!.ResultSets!)
             {
-                rs.Resultset.ToList();
+                rs.ResultsetFactory().ToList();
             }
             sw.Stop();
             var ts = sw.Elapsed;

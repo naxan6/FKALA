@@ -78,7 +78,7 @@ namespace FKala.Core.DataLayers
             var fileCandidates = filteredYears.AsParallel().SelectMany(y => Directory.GetFileSystemEntries(Path.Combine(measurementPath, y.ToString()), filter, optionFindFilesRecursive)).ToList();
 
 
-            
+
             SortedDictionary<DateTime, ReaderTuple> ret = new SortedDictionary<DateTime, ReaderTuple>();
 
             foreach (var candidate in fileCandidates)
@@ -150,7 +150,7 @@ namespace FKala.Core.DataLayers
             if (!persistenceIsSorted)
             {
                 dataPoints.Sort((a, b) => a.Time.CompareTo(b.Time));
-                
+
                 // persist sorted (if activated)
                 if (IsActiveAutoSortRawFiles)
                 {
@@ -158,7 +158,7 @@ namespace FKala.Core.DataLayers
                     persistenceIsSorted = true;
                 }
             }
-            
+
             // mark as sorted (if it already was or is now) -
             // and only if it's at least older than 1-2 days (pathdate is start of day at midnight!)
             if (persistenceIsSorted && readerTuple.PathDate < DateTime.Now.AddDays(-1))
@@ -232,17 +232,43 @@ namespace FKala.Core.DataLayers
         private IEnumerable<DataPoint> InternalStreamDataPoints(ReaderTuple sr, int fileyear, int filemonth, int fileday)
         {
             int lineIdx = 0;
+            DataPoint? retPrev = null;
             string? dataline;
             while ((dataline = sr.StreamReader!.ReadLine()) != null)
             {
                 lineIdx++;
                 var ret = DatFileParser.ParseLine(fileyear, filemonth, fileday, dataline, sr.FilePath);
                 ret.Source = $"{sr.FilePath}, Line {lineIdx} {sr.MarkedAsSorted}";
-                if (ret.Time >= StartTime && ret.Time < EndTime)
+
+
+                if (retPrev == null) // initial pair or previous pair was fully consumed
                 {
-                    yield return ret;
+                    retPrev = ret;
+                    continue;
                 }
+
+                if (retPrev.Time == ret.Time) // combine, if same time and consume both
+                {
+                    retPrev.Value = retPrev.Value ?? ret.Value;
+                    retPrev.ValueText = retPrev.ValueText ?? ret.ValueText;
+                    yield return retPrev;
+
+                    retPrev = null;
+                    continue;
+                }
+
+                if (retPrev.Time >= StartTime && retPrev.Time < EndTime) // send if DataPoint is in window
+                {
+                    yield return retPrev; //send retPrev
+                }
+                retPrev = ret; //consume retPrev
             }
+            // send last DataPoint is in window
+            if (retPrev != null && retPrev.Time >= StartTime && retPrev.Time < EndTime)
+            {
+                yield return retPrev;
+            }
+
             sr.StreamReader.Close();
         }
 

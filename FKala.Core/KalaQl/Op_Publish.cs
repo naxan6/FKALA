@@ -1,4 +1,5 @@
-﻿using FKala.Core.Interfaces;
+﻿using FKala.Core.DataLayer.Infrastructure;
+using FKala.Core.Interfaces;
 using FKala.Core.Logic;
 using System.Dynamic;
 
@@ -37,7 +38,7 @@ namespace FKala.Core.KalaQl
             }
             else if (PublishMode == PublishMode.CombinedResultset)
             {
-                var synced = DatasetsCombiner.CombineSynchronizedResults(resultsets);
+                var synced = DatasetsCombiner2.CombineSynchronizedResults(resultsets);
 
                 List<ExpandoObject> resultRows = new List<ExpandoObject>();
                 foreach (var syncedResult in synced)
@@ -48,7 +49,15 @@ namespace FKala.Core.KalaQl
                     foreach (var item in syncedResult)
                     {
                         expandoDict["time"] = item.DataPoint.Time;
-                        expandoDict[item.ResultName] = item.DataPoint.Value;
+                        if (item.DataPoint.Value.HasValue)
+                        {
+                            expandoDict[item.Result.Name] = item.DataPoint.Value;
+                        }
+                        else
+                        {
+                            expandoDict[item.Result.Name] = item.DataPoint.ValueText;
+                        }
+                        Pools.DataPoint.Return(item.DataPoint);
                     }
                     resultRows.Add(row);
                 }

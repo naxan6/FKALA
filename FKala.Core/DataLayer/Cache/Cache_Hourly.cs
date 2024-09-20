@@ -30,7 +30,7 @@ namespace FKala.Core.DataLayer.Cache
             {
                 throw new Exception("could not aquire aggregate for caching");
             }
-            var rs = aggResult!.ResultSets.First().Resultset;
+            var rs = aggResult!.ResultSets.First().ResultsetFactory();
             return rs;
         }
 

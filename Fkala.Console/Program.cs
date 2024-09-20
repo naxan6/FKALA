@@ -13,7 +13,7 @@ using System.Text.RegularExpressions;
 
 
 
-//ForProfiling();
+ForProfiling();
 //BenchmarkWrites();
 //BenchmarkReads();
 //RepairBuggedNames();
@@ -25,9 +25,21 @@ static void TzTesting()
 
 static void ForProfiling()
 {
-    KalaQl t = new KalaQl();
+    //KalaQl t = new KalaQl();    
+    //t.KalaQl_2_Datasets();
     //TempFolderTests_OutOfOrder.Initialize(null);
-    t.KalaQl_2_Datasets();
+
+    var t = new TzTests();
+    for (int i = 0; i < 20; i++)
+    {
+        t.Test_CET2CEST();
+    }
+
+    //var t = new TempFolderTests_OutOfOrder();
+    //for (int i = 0; i < 5; i++)
+    //{
+    //    t.KalaQuery_CacheHourly_CheckBorders_First();
+    //}
 }
 
 // local 65536
@@ -159,7 +171,7 @@ static void RepairBuggedNames()
     foreach (var candidate in fileCandidates)
     {
         i++;
-        var measure = new DirectoryInfo(candidate).Parent.Parent.Parent.Name;
+        var measure = new DirectoryInfo(candidate).Parent!.Parent!.Parent!.Name;
         
         // Pattern
         if (!regex.IsMatch(Path.GetFileName(candidate)))

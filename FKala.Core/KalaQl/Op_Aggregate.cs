@@ -36,62 +36,75 @@ namespace FKala.Core.KalaQl
 
         public override void Execute(KalaQlContext context)
         {
-            var input = context.IntermediateResults.First(x => x.Name == InputDataSetName);
+             //var input = context.IntermediateResults.First(x => x.Name == InputDataSetName);
             // Dieses ToList ist wichtig, da bei nachfolgendem Expresso mit Vermarmelung mehrerer Serien
             // und gleichzeitiger Ausgabe aller dieser Serien im Publish
             // sich die Zugriffe auf den Enumerable überschneiden und das ganze dann buggt
             // (noch nicht final geklärt, z.B. siehe BUGTEST_KalaQl_2_Datasets_Aggregated_Expresso). 
-            var result = InternalExecute(context, input);
-            if (UseMaterializing)
-            {
-                result = result.ToList();
-            }
-            context.IntermediateResults.Add(new Result() { Name = this.Name, Resultset = result, StartTime = Result_Starttime, EndTime = Result_Endtime, Creator = this });
+            context.IntermediateResults.Add(
+                new Result() { 
+                    Name = this.Name,
+                    StartTime = Result_Starttime, 
+                    EndTime = Result_Endtime, 
+                    Creator = this, 
+                    ResultsetFactory = () => {
+                        var input = context.IntermediateResults.First(x => x.Name == InputDataSetName);
+
+                        var result = InternalExecute(context, input);
+                        return result;
+                    }
+                });
             this.hasExecuted = true;
         }
 
         private IEnumerable<DataPoint> InternalExecute(KalaQlContext context, Result input)
         {
-            var dataPointsEnumerator = input.Resultset.GetEnumerator();
+            var dataPointsEnumerator = input.ResultsetFactory().GetEnumerator();
 
             Window.Init(input.StartTime, context.AlignTzTimeZoneId);
             Result_Starttime = Window.StartTime;
-            var currentDataPoint = new DataPoint() { Time = Window.StartTime };
-            var currentAggregator = new StreamingAggregator(AggregateFunc, Window, 0);
-            var results = new List<DataPoint>();
+            var currentAggregator = new StreamingAggregator(AggregateFunc, Window);
 
-            if (!EmptyWindows)
-            {
-                var firstPoint = input.Resultset.FirstOrDefault();
-                while (Window.EndTime < (firstPoint?.Time ?? DateTime.MinValue)) {
-                    Window.Next();
-                    currentDataPoint.Time = Window.StartTime;
-                }
-            }
+            bool scrolledForward = false;
             int seenPoints = 0;
             while (dataPointsEnumerator.MoveNext())
             {
                 seenPoints++;
                 var c = dataPointsEnumerator.Current;
+
+                
+
                 if (Window.IsInWindow(c.Time))
                 {
                     currentAggregator.AddValue(c.Time, c.Value);
                 }
                 else if (Window.DateTimeIsBeforeWindow(c.Time))
                 {
-                    throw new Exception($"Bug 1, Datenpunkt übersehen einzusortieren (nach {seenPoints}) {this.Name}  {c.Time.ToString("s")} in {Window.StartTime.ToString("s")}-{Window.EndTime.ToString("s")}");
+                    if (!scrolledForward)
+                    {
+                        while (Window.EndTime < c.Time)
+                        {
+                            Window.Next();
+                        }
+                        currentAggregator.AddValue(c.Time, c.Value);
+                        scrolledForward = true;
+
+                    }
+                    else
+                    {
+                        throw new Exception($"Bug 1, Datenpunkt übersehen einzusortieren (nach {seenPoints}) {this.Name}  {c.Time.ToString("s")} in {Window.StartTime.ToString("s")}-{Window.EndTime.ToString("s")}");
+                    }
                 }
                 else if (Window.DateTimeIsAfterWindow(c.Time))
                 {
                     while (Window.DateTimeIsAfterWindow(c.Time))
                     {
-                        currentDataPoint.Value = currentAggregator.GetAggregatedValue();
+                        var currentDataPoint = Window.GetDataPoint(currentAggregator.GetAggregatedValue());
                         if (EmptyWindows || currentDataPoint.Value != null) yield return currentDataPoint;
 
                         Window.Next();
 
-                        currentDataPoint = new DataPoint() { Time = Window.StartTime };
-                        currentAggregator = new StreamingAggregator(AggregateFunc, Window, currentAggregator.LastAggregatedValue);
+                        currentAggregator.Reset(currentAggregator.LastAggregatedValue);
                         if (Window.IsInWindow(c.Time))
                         {
                             currentAggregator.AddValue(c.Time, c.Value);
@@ -114,19 +127,17 @@ namespace FKala.Core.KalaQl
                 }
             }
             // finales Interval hinzufügen
-            currentDataPoint.Value = currentAggregator.GetAggregatedValue();
-            if (EmptyWindows || currentDataPoint.Value != null) yield return currentDataPoint;
+            var finalContentDataPoint = Window.GetDataPoint(currentAggregator.GetAggregatedValue());
+            if (EmptyWindows || finalContentDataPoint.Value != null) yield return finalContentDataPoint;
 
             if (EmptyWindows)
             {
                 while (Window.EndTime < input.EndTime)
                 {
-                    Window.Next();
-
-                    currentDataPoint = new DataPoint() { Time = Window.StartTime };
-                    currentAggregator = new StreamingAggregator(AggregateFunc, Window, currentAggregator.LastAggregatedValue);
-                    currentDataPoint.Value = currentAggregator.GetAggregatedValue();
-                    if (EmptyWindows || currentDataPoint.Value != null) yield return currentDataPoint;
+                    Window.Next();                    
+                    currentAggregator.Reset(currentAggregator.LastAggregatedValue);
+                    var closingDataPoint = Window.GetDataPoint(currentAggregator.GetAggregatedValue());
+                    if (EmptyWindows || closingDataPoint.Value != null) yield return closingDataPoint;
                 }
             }
             Result_Endtime = Window.EndTime;
@@ -137,11 +148,10 @@ namespace FKala.Core.KalaQl
             
             Window.Init(input.StartTime, context.AlignTzTimeZoneId);
             Result_Starttime = Window.StartTime;
-            var currentDataPoint = new DataPoint() { Time = Window.StartTime };
-            var currentAggregator = new StreamingAggregator(AggregateFunc, Window, 0);
+            var currentAggregator = new StreamingAggregator(AggregateFunc, Window);
             bool scrolledForward = false;
             int seenPoints = 0;
-            foreach (var c in input.Resultset)
+            foreach (var c in input.ResultsetFactory())
             {
                 seenPoints++;
                 if (!EmptyWindows && !scrolledForward)
@@ -164,15 +174,13 @@ namespace FKala.Core.KalaQl
                 else if (Window.DateTimeIsAfterWindow(c.Time))
                 {
 
-                    currentDataPoint.Value = currentAggregator.GetAggregatedValue();
+                    var currentDataPoint = Window.GetDataPoint(currentAggregator.GetAggregatedValue());
                     if (EmptyWindows || currentDataPoint.Value != null) yield return currentDataPoint;
 
                     while (Window.DateTimeIsAfterWindow(c.Time))
                     {
                         Window.Next();
-
-                        currentDataPoint = new DataPoint() { Time = Window.StartTime };
-                        currentAggregator = new StreamingAggregator(AggregateFunc, Window, currentAggregator.LastAggregatedValue);
+                        currentAggregator.Reset(currentAggregator.LastAggregatedValue);
                         if (Window.IsInWindow(c.Time))
                         {
                             currentAggregator.AddValue(c.Time, c.Value);
@@ -192,18 +200,19 @@ namespace FKala.Core.KalaQl
                 }
             }
             // finales Interval hinzufügen
-            currentDataPoint.Value = currentAggregator.GetAggregatedValue();
-            if (EmptyWindows || currentDataPoint.Value != null) yield return currentDataPoint;
+            
+            var finalContentDataPoint = Window.GetDataPoint(currentAggregator.GetAggregatedValue());
+            if (EmptyWindows || finalContentDataPoint.Value != null) yield return finalContentDataPoint;
 
             if (EmptyWindows)
             {
                 while (Window.EndTime < input.EndTime)
                 {
                     Window.Next();
-                    currentDataPoint = new DataPoint() { Time = Window.StartTime };
-                    currentAggregator = new StreamingAggregator(AggregateFunc, Window, currentAggregator.LastAggregatedValue);
-                    currentDataPoint.Value = currentAggregator.GetAggregatedValue();
-                    if (EmptyWindows || currentDataPoint.Value != null) yield return currentDataPoint;
+                    
+                    currentAggregator.Reset(currentAggregator.LastAggregatedValue);
+                    var closingDataPoint = Window.GetDataPoint(currentAggregator.GetAggregatedValue());                    
+                    if (EmptyWindows || closingDataPoint.Value != null) yield return closingDataPoint;
                 }
             }
             Result_Endtime = Window.EndTime;

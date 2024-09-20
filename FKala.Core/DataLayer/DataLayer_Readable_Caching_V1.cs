@@ -130,7 +130,7 @@ namespace FKala.Core
             span = span.Slice(index + 1);
             ReadOnlySpan<char> valueRaw = null;            
             valueRaw = span.Slice(0);
-            var valueString = valueRaw.ToString();
+            var valueString = valueRaw.ToString().Replace('\n', '|');
 
             // Create the directory path
             var directoryPath = Path.Combine(DataDirectory, measurement, datetime.Slice(0, 4).ToString(), datetime.Slice(5, 2).ToString());
@@ -150,15 +150,24 @@ namespace FKala.Core
             sb.Append(".dat");
 
             var filePath = Path.Combine(directoryPath, sb.ToString());
-            stringBuilderPool.Return(sb);            
-            WriterSvc.DoWrite(filePath, (writer) =>
+            stringBuilderPool.Return(sb);
+            //WriterSvc.DoWrite(filePath, (writer) =>
+            //{
+            //    // Format the line to write
+            //    writer.Append(datetimeHHmmssfffffff);
+            //    writer.Append(" ");
+            //    writer.Append(valueString);
+            //    writer.AppendNewline();
+            //});
+            var writer = WriterSvc.GetWriter("filePath");
+            lock (writer.LOCK)
             {
-                // Format the line to write
                 writer.Append(datetimeHHmmssfffffff);
                 writer.Append(" ");
                 writer.Append(valueString);
                 writer.AppendNewline();
-            });
+            }
+
         }
 
         public List<string> LoadMeasurementList()

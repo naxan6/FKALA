@@ -13,20 +13,39 @@ namespace FKala.Core.Logic
     public class StreamingAggregator
     {
         private AggregateFunction AggregationFunction { get; set; }
+        public Window Window { get; private set; }
+
+        public decimal? LastAggregatedValue { get; private set; }
+
         private decimal? aggregatedValue { get; set; } = null;
         private int _count { get; set; }
-
         private decimal previousTicks { get; set; }
         private decimal? LastValuePreviousWindow { get; set; }
         private decimal durationTickSum { get; set; }
 
-        public decimal? LastAggregatedValue { get; private set; }
-        public Window Window { get; private set; }
 
-        public StreamingAggregator(AggregateFunction aggregationFunction, Window window, decimal? lastValuePreviousWindow)
+
+
+        public void Reset(decimal? lastValuePreviousWindow)
+        {
+            InternalInit(this.Window, lastValuePreviousWindow);
+        }
+
+        public StreamingAggregator(AggregateFunction aggregationFunction, Window window)
         {
             this.AggregationFunction = aggregationFunction;
             this.Window = window;
+
+            InternalInit(window, 0);
+        }
+
+        private void InternalInit(Window window, decimal? lastValuePreviousWindow)
+        {
+            aggregatedValue = null;
+            _count = 0;
+            previousTicks = 0;
+            LastValuePreviousWindow = null;
+            durationTickSum = 0;
 
             switch (AggregationFunction)
             {
@@ -79,12 +98,12 @@ namespace FKala.Core.Logic
             decimal totalticks = durationTickSum + durationTicks;
             aggregatedValue = aggregatedValue ?? 0;
             if (totalticks != 0)
-            {                
+            {
                 aggregatedValue = ((durationTicks * LastAggregatedValue) + (durationTickSum * aggregatedValue)) / (durationTickSum + durationTicks);
             }
 
             previousTicks = time.Ticks;
-            durationTickSum += durationTicks;            
+            durationTickSum += durationTicks;
             LastAggregatedValue = toIntegrate;
         }
 
@@ -94,7 +113,7 @@ namespace FKala.Core.Logic
             {
                 case AggregateFunction.WAvg:
                     // wenn wir mindestens einen Punkt im Fenster haben rechnen wir noch bis zum Ende des Fensters
-                    if (aggregatedValue != null) 
+                    if (aggregatedValue != null)
                     {
                         AddWeightedMeanValue(this.Window.EndTime, LastAggregatedValue);
                     }
@@ -111,7 +130,7 @@ namespace FKala.Core.Logic
                     AddMeanValue(toIntegrate);
                     break;
                 case AggregateFunction.WAvg:
-                    AddWeightedMeanValue(time, toIntegrate);                    
+                    AddWeightedMeanValue(time, toIntegrate);
                     break;
                 case AggregateFunction.First:
                     aggregatedValue = aggregatedValue ?? toIntegrate;

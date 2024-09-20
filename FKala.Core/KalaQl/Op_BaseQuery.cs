@@ -37,10 +37,25 @@ namespace FKala.Core.KalaQl
 
         public override void Execute(KalaQlContext context)
         {
-            var result = context.DataLayer.LoadData(this.Measurement, this.StartTime, this.EndTime, CacheResolution, NewestOnly, DoSortRawFiles);
-            // bei ForceRebuild auch ohne Ausgabe etc. den Rebuild durchführen, ..was erst geschieht beim Materialisieren
-            if (CacheResolution.ForceRebuild) result = result.ToList();
-            context.IntermediateResults.Add(new Result() { Name = this.Name, Resultset = result, StartTime = StartTime, EndTime = EndTime, Creator = this });
+            //var result = context.DataLayer.LoadData(this.Measurement, this.StartTime, this.EndTime, CacheResolution, NewestOnly, DoSortRawFiles);
+
+//TODODODODODODDODODO REBUILD IST SOMIT DEFEKT            
+            // bei ForceRebuild auch ohne Ausgabe etc. den Rebuild durchführen, ..was erst geschieht beim Materialisieren                        
+            //if (CacheResolution.ForceRebuild) result = result.ToList();
+            
+            context.IntermediateResults.Add(
+                new Result()
+                {
+                    Name = this.Name,
+                    StartTime = StartTime,
+                    EndTime = EndTime,
+                    Creator = this,
+                    ResultsetFactory = () =>
+                    {
+                        var result = context.DataLayer.LoadData(this.Measurement, this.StartTime, this.EndTime, CacheResolution, NewestOnly, DoSortRawFiles);
+                        return result;
+                    }
+                });
             this.hasExecuted = true;
         }
     }

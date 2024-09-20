@@ -1,8 +1,10 @@
-﻿using FKala.Core.Model;
+﻿using FKala.Core.Logic;
+using FKala.Core.Model;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -10,38 +12,37 @@ namespace FKala.Core.DataLayer.Infrastructure
 {
     public static class DatFileParser
     {
-        public static DataPoint ParseLine(int fileyear, int filemonth, int fileday, string? line,string filepath)
+        public static DataPoint ParseLine(int fileyear, int filemonth, int fileday, string? line, string filepath)
         {
             try
             {
                 ReadOnlySpan<char> span = line.AsSpan();
-                var dateTime = new DateTime(fileyear, filemonth, fileday, int.Parse(span.Slice(0, 2)), int.Parse(span.Slice(3, 2)), int.Parse(span.Slice(6, 2)), DateTimeKind.Utc);
+                int hh, mm, ss;
+                int.TryParse(span.Slice(0, 2), out hh);
+                int.TryParse(span.Slice(3, 2), out mm);
+                int.TryParse(span.Slice(6, 2), out ss);
+                var dateTime = new DateTime(fileyear, filemonth, fileday, hh, mm, ss, DateTimeKind.Utc);
 
                 dateTime.AddTicks(int.Parse(span.Slice(9, 7)));
                 span = span.Slice(17);
 
                 var valueRaw = span.Slice(0);
-                decimal? value = null;
-                string? valuetext = null;
+                decimal value;
 
+                var dp = Pools.DataPoint.Get();
+                dp.Time = dateTime;
+                var success = decimal.TryParse(valueRaw, CultureInfo.InvariantCulture, out value);
 
-                try
+                dp.Value = value;
+                if (!success)
                 {
-                    value = decimal.Parse(valueRaw, CultureInfo.InvariantCulture);
+                    dp.ValueText = valueRaw.ToString();
+
                 }
-                catch (Exception)
-                {
-                    valuetext = valueRaw.ToString();
-                }
 
-                return new DataPoint
-                {
-                    Time = dateTime,
-                    Value = value,
-                    ValueText = valuetext
-                };
+                return dp;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 Console.WriteLine($"Error while parsing line {line} in {filepath}");
                 throw;

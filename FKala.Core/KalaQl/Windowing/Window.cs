@@ -1,4 +1,6 @@
-﻿using NodaTime;
+﻿using FKala.Core.DataLayer.Infrastructure;
+using FKala.Core.Model;
+using NodaTime;
 
 namespace FKala.Core.KalaQl.Windowing
 {
@@ -228,5 +230,12 @@ namespace FKala.Core.KalaQl.Windowing
             return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, previousFiveMinutes, 0, DateTimeKind.Utc);
         }
 
+        public DataPoint GetDataPoint(decimal? value)
+        {
+            var dp = Pools.DataPoint.Get();
+            dp.Time = this.StartTime;
+            dp.Value = value;
+            return dp;
+        }
     }
 }

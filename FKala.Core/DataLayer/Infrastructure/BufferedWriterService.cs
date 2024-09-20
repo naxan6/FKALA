@@ -79,5 +79,27 @@ namespace FKala.Core.DataLayer.Infrastructure
                 }
             }
         }
+
+        public IBufferedWriter GetWriter(string filePath)
+        {
+            lock (filePath)
+            {
+                if (!_bufferedWriters.TryGetValue(filePath, out IBufferedWriter? writer))
+                {
+                    try
+                    {
+                        writer = new BufferedWriter(filePath);
+                    }
+                    catch (Exception)
+                    {
+                        Console.WriteLine("Error at BufferedWriter with path <{filePath}>");
+                        throw;
+                    }
+                    _bufferedWriters[filePath] = writer;
+                }
+                return writer;
+            }
+        }
+
     }
 }
