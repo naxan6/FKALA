@@ -112,7 +112,7 @@ namespace FKala.Core.KalaQl.Windowing
                 var localDatetime = ConvertDateTimeToDifferentTimeZone(starttime, "UTC", tzTimezoneId);
                 var localDatetimeAligned = alignFunc(localDatetime);
                 var utcStarttime = ConvertDateTimeToDifferentTimeZone(localDatetimeAligned.ToDateTimeUnspecified(), tzTimezoneId, "UTC");
-                starttime = utcStarttime.ToDateTimeUnspecified();
+                starttime = utcStarttime.InUtc().ToInstant().ToDateTimeUtc();
             }
 
             return starttime;

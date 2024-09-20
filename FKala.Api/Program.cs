@@ -42,7 +42,8 @@ app.UseEndpoints(endpoints =>
 app.UseHttpsRedirection();
 
 // Run GC regularly
-Task task = Task.Run(async () => {
+Task task = Task.Run(async () =>
+{
     while (true)
     {
         await Task.Delay(TimeSpan.FromSeconds(10));
