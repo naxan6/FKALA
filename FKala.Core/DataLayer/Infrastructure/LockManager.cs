@@ -34,7 +34,7 @@ namespace FKala.Core.DataLayer.Infrastructure
             var semaphore = _locks.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
 
             // Warte auf den Lock
-            return semaphore.Wait(0);
+            return semaphore.CurrentCount == 0;
         }
 
         /// <summary>

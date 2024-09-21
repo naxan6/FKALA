@@ -43,25 +43,31 @@ namespace FKala.Core.DataLayer.Cache
 
                 if (!File.Exists(cacheFilePath) || cacheResolution.ForceRebuild)
                 {
-                    using (var lockHandle = _lockManager.AcquireLock(cacheFilePath))
+                    if (!_lockManager.IsLocked(cacheFilePath)) // dont refresh if cache is already in work
                     {
-                        Console.WriteLine($"Building Cache: {Path.GetFileName(cacheFilePath)} {cacheResolution}");
-                        cache.GenerateWholeYearCache(measurement, year, cacheFilePath, cacheResolution.AggregateFunction, cacheResolution.ForceRebuild);
+                        using (var lockHandle = _lockManager.AcquireLock(cacheFilePath))
+                        {
+                            Console.WriteLine($"Building Cache: {Path.GetFileName(cacheFilePath)} {cacheResolution}");
+                            cache.GenerateWholeYearCache(measurement, year, cacheFilePath, cacheResolution.AggregateFunction, cacheResolution.ForceRebuild);
+                        }
                     }
                 }
                 else
                 {
                     if (cacheResolution.IncrementalRefresh && year == years.Max())
                     {
-                        using (var lockHandle = _lockManager.AcquireLock(cacheFilePath))
+                        if (!_lockManager.IsLocked(cacheFilePath)) // dont refresh if cache is already in work
                         {
-                            Console.WriteLine($"Incremental Update requested: {Path.GetFileName(cacheFilePath)}");
-                            IncrementalUpdateCache(measurement, cacheResolution, cacheFilePath);
+                            using (var lockHandle = _lockManager.AcquireLock(cacheFilePath))
+                            {
+                                Console.WriteLine($"Incremental Update requested: {Path.GetFileName(cacheFilePath)}");
+                                IncrementalUpdateCache(measurement, cacheResolution, cacheFilePath);
+                            }
                         }
                     }
                 }
 
-                Console.WriteLine($"Loading from Cache: {cachefile}");
+                Console.WriteLine($"Loading from Cache: {cache.CacheSubdir}/{cachefile}");
                 var yearEnumerable = cache.LoadCache(startTime, endTime, year, cacheFilePath);
                 foreach (var item in yearEnumerable)
                 {
