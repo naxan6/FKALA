@@ -16,7 +16,7 @@ namespace FKala.Core.KalaQl
         Lambda Lambda;
         public string Name { get; }
         public string Expresso { get; }
-
+        public IdentifiersInfo UnknownIdInfo { get; private set; }
 
         public Op_Expresso(string? line, string name, string expresso) : base(line)
         {
@@ -42,7 +42,7 @@ namespace FKala.Core.KalaQl
 
         public override void Execute(KalaQlContext context)
         {
-            
+            UnknownIdInfo = Interpreter.DetectIdentifiers(Expresso);
 
             context.IntermediateDatasources.Add(
                 new Result()
@@ -51,8 +51,8 @@ namespace FKala.Core.KalaQl
                     Creator = this,
                     ResultsetFactory = () =>
                     {
-                        var unknownIdInfo = Interpreter.DetectIdentifiers(Expresso);
-                        var datenquellen = context.IntermediateDatasources.Where(im => unknownIdInfo.UnknownIdentifiers.Contains(im.Name));
+                        
+                        var datenquellen = context.IntermediateDatasources.Where(im => UnknownIdInfo.UnknownIdentifiers.Contains(im.Name));
                         var result = ExecuteInternal(context, datenquellen);
                         return result;
                     }
@@ -72,7 +72,21 @@ namespace FKala.Core.KalaQl
                 {
                     firstStartTime = timeSynchronizedItems.First().DataPoint.Time;
                 }
-                var paramValues = timeSynchronizedItems.Select(si => new Parameter(si.Result.Name, si.DataPoint));
+
+                var missingIdentifiers = UnknownIdInfo.UnknownIdentifiers.ToList();
+                var paramValues = new List<Parameter>();
+                foreach (var si in timeSynchronizedItems)
+                {
+                    paramValues.Add(new Parameter(si.Result.Name, si.DataPoint));
+                    missingIdentifiers.Remove(si.Result.Name);
+                }
+                var localDps = new List<DataPoint>();
+                foreach (string mi in missingIdentifiers)
+                {
+                    var ldp = Pools.DataPoint.Get();
+                    localDps.Add(ldp);
+                    paramValues.Add(new Parameter(mi, ldp));
+                }
 
                 decimal? expressoResultValue = (decimal?)Lambda.Invoke(paramValues);
 
