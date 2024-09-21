@@ -50,7 +50,7 @@ namespace FKala.Core.DataLayer.Cache
                         {
                             if (!cacheAlreadyInWork)
                             {
-                                Console.WriteLine($"Building Cache: {Path.GetFileName(cacheFilePath)} {cacheResolution}");
+                                Console.WriteLine($"Building Cache: {cache.CacheSubdir}/{Path.GetFileName(cacheFilePath)} {cacheResolution}");
                                 cache.GenerateWholeYearCache(measurement, year, cacheFilePath, cacheResolution.AggregateFunction, cacheResolution.ForceRebuild);
                             }
                         }
@@ -66,7 +66,7 @@ namespace FKala.Core.DataLayer.Cache
                             {
                                 if (!cacheAlreadyInWork)
                                 {
-                                    Console.WriteLine($"Incremental Update requested: {Path.GetFileName(cacheFilePath)}");
+                                    Console.WriteLine($"Incremental Update requested: {cache.CacheSubdir}/{Path.GetFileName(cacheFilePath)}");
                                     IncrementalUpdateCache(measurement, cacheResolution, cacheFilePath);
                                 }
                             }
