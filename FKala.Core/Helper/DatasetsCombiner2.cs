@@ -42,7 +42,7 @@ namespace FKala.Core.Logic
                     someLeft = someLeft | success;
                     if (!success) enumerators.Remove(result);
                 }
-                if (!someLeft)
+                if (!enumerators.Any())
                 {
                     yield break;
                 }

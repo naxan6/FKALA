@@ -122,17 +122,17 @@ namespace FKala.Core.KalaQl
             var finalContentDataPoint = slidingWindow.GetDataPoint(currentAggregator.GetAggregatedValue());
             if (EmptyWindows || finalContentDataPoint.Value != null) yield return finalContentDataPoint;
 
-            if (EmptyWindows)
-            {
-                //TODO
-                //while (Window.EndTime < context.EndTime)
-                //{
-                //    Window.Next();
-                //    currentAggregator.Reset(currentAggregator.LastAggregatedValue);
-                //    var closingDataPoint = Window.GetDataPoint(currentAggregator.GetAggregatedValue());
-                //    if (EmptyWindows || closingDataPoint.Value != null) yield return closingDataPoint;
-                //}
-            }
+            //if (EmptyWindows)
+            //{
+            //    //TODO
+            //    while (slidingWindow.EndTime < new DateTime(2022,11,30,0,0,0))
+            //    {
+            //        slidingWindow.Next();
+            //        currentAggregator.Reset(currentAggregator.LastAggregatedValue);
+            //        var closingDataPoint = slidingWindow.GetDataPoint(currentAggregator.GetAggregatedValue());
+            //        if (EmptyWindows || closingDataPoint.Value != null) yield return closingDataPoint;
+            //    }
+            //}
         }
     }
 }
