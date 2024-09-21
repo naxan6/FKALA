@@ -44,7 +44,7 @@ namespace FKala.Core.KalaQl
                 int count = 0;
                 foreach (var syncedResult in synced)
                 {
-                    if (count++ > 50000) // limit result to 50000 datapoints
+                    if (count++ >= 50000) // limit result to 50000 datapoints
                     {
                         break;
                     };

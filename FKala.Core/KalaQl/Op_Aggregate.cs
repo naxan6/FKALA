@@ -63,7 +63,8 @@ namespace FKala.Core.KalaQl
             var enumerable = input.ResultsetFactory();
             var dataPointsEnumerator = enumerable.GetEnumerator();
             Window slidingWindow = WindowTemplate.GetCopy();
-            StreamingAggregator currentAggregator = null;
+            //hint: this StreamingAggregator instance is only unused input is empty
+            StreamingAggregator currentAggregator = new StreamingAggregator(AggregateFunc, slidingWindow); 
             bool scrolledForward = false;
             bool isFirstAfterMoveNext = true;
             int seenPoints = 0;
@@ -123,10 +124,10 @@ namespace FKala.Core.KalaQl
                 }
                 Pools.DataPoint.Return(c);
             }
-            // finales Interval hinzufügen
+            // add final interval
             var finalContentDataPoint = slidingWindow.GetDataPoint(currentAggregator.GetAggregatedValue());
             if (EmptyWindows || finalContentDataPoint.Value != null) yield return finalContentDataPoint;
-
+            
             if (EmptyWindows)
             {
                 //TODO

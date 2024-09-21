@@ -43,46 +43,47 @@ namespace FKala.Api.Controller
         //[SwaggerRequestBody("Weather forecast data", Required = true)]
         public IActionResult QueryPost([FromBody] string input)
         {
-            try
+            if (string.IsNullOrEmpty(input))
             {
-                if (string.IsNullOrEmpty(input))
-                {
-                    return BadRequest("Input string is required.");
-                }
-
-                // Verarbeite den String hier nach Bedarf
-                var inputmultiline = ProcessString(input);
-
-                return DoQuery(inputmultiline);
+                return BadRequest("Input string is required.");
             }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Exception");
-                throw;
-            }
+
+            // Verarbeite den String hier nach Bedarf
+            var inputmultiline = ProcessString(input);
+
+            return DoQuery(inputmultiline);
+
         }
 
         private IActionResult DoQuery(string query)
         {
-            var q = KalaQuery.Start()
-                .FromQuery(query);
-
-            var result = q.Execute(this.DataLayer);
-
-
-            if (result?.Errors.Count() != 0)
+            try
             {
-                return BadRequest(result!.Errors);
+                var q = KalaQuery.Start()
+                    .FromQuery(query);
+
+                var result = q.Execute(this.DataLayer);
+
+
+                if (result?.Errors.Count() != 0)
+                {
+                    return BadRequest(result!.Errors);
+                }
+                else if (result?.ResultSets != null)
+                {
+                    return Ok(result.ResultSets);
+                }
+                else if (result?.ResultTable != null)
+                {
+                    return Ok(result.ResultTable);
+                }
+                return NoContent();
             }
-            else if (result?.ResultSets != null)
+            catch (Exception ex)
             {
-                return Ok(result.ResultSets);
+                Logger.LogError(ex, "Exception");
+                return BadRequest(ex);
             }
-            else if (result?.ResultTable != null)
-            {
-                return Ok(result.ResultTable);
-            }
-            return NoContent();
         }
 
         private string ProcessString(string input)
