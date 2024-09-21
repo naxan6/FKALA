@@ -78,6 +78,10 @@ namespace FKala.Core.DataLayer.Cache
             {
                 cache = new Cache_Hourly(DataLayer);
             }
+            else if (cacheResolution.Resolution == Resolution.FiveMinutely)
+            {
+                cache = new Cache_5Minutely(DataLayer);
+            }
             else if (cacheResolution.Resolution == Resolution.Minutely)
             {
                 cache = new Cache_Minutely(DataLayer);

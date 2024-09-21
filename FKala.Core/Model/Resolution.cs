@@ -10,6 +10,7 @@ namespace FKala.Core.Model
     {
         Full,
         Hourly,
-        Minutely
+        Minutely,
+        FiveMinutely
     }
 }
