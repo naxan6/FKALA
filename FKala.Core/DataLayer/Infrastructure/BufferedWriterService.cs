@@ -47,11 +47,11 @@ namespace FKala.Core.DataLayer.Infrastructure
             }
         }
         
-        public void CreateWriteDispose(string filePath, Action<IBufferedWriter> writeAction)
+        public void CreateWriteDispose(string filePath, bool append, Action<IBufferedWriter> writeAction)
         {
             lock (filePath)
             {                
-                using var writer = new BufferedWriter(filePath);
+                using var writer = new BufferedWriter(filePath, append);
                 writeAction(writer);                
             }
         }

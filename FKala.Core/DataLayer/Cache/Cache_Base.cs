@@ -34,6 +34,7 @@ namespace FKala.Core.DataLayer.Cache
             var fileYear = int.Parse(parts[parts.Length - 2]);
             var lastLine = LastLineReader.ReadLastLine(newestFile);
             var datapoint = ReadLine(fileYear, lastLine);
+            datapoint.Source = $"{newestFile}, Last Line";
             yield return datapoint;
         }
         public void GenerateWholeYearCache(string measurement, int year, string cacheFilePath, AggregateFunction aggrFunc, bool forceRebuild)
@@ -53,7 +54,7 @@ namespace FKala.Core.DataLayer.Cache
             {
                 var timeFormat = GetTimeFormat();
                 var writerSvc = DataLayer.WriterSvc;
-                writerSvc.CreateWriteDispose(cacheFilePath, (writer) =>
+                writerSvc.CreateWriteDispose(cacheFilePath, false, (writer) =>
                 {
                     foreach (var dp in rs)
                     {
@@ -80,6 +81,7 @@ namespace FKala.Core.DataLayer.Cache
             while ((line = sr.ReadLine()) != null)
             {
                 var datapoint = ReadLine(fileyear, line);
+                datapoint.Source = $"Cache {yearFilePath} Line {line}";
                 if (datapoint.Time >= startTime && datapoint.Time < endTime)
                 {
                     yield return datapoint;

@@ -15,8 +15,13 @@ namespace FKala.Core.DataLayer.Infrastructure
 
         public object LOCK { get { return LOCKI; } }
 
-        public BufferedWriter(string filePath)
+        public BufferedWriter(string filePath, bool append = true)
         {
+            var fileMode = FileMode.Append;
+            if (!append)
+            {
+                fileMode = FileMode.Create;
+            }
             _filePath = filePath;
             _fileStream = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.Read);
             _streamWriter = new StreamWriter(_fileStream, Encoding.UTF8, 16384);

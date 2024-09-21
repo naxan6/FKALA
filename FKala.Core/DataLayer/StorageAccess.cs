@@ -188,7 +188,7 @@ namespace FKala.Core.DataLayers
             if (rs.Any())
             {
                 var writerSvc = DataLayer.WriterSvc;
-                writerSvc.CreateWriteDispose(filePath + ".sorted", (writer) =>
+                writerSvc.CreateWriteDispose(filePath + ".sorted", false, (writer) =>
                 {
                     foreach (var dp in rs)
                     {
