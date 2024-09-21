@@ -4,6 +4,7 @@ using FKala.Core.KalaQl;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Runtime;
+using Microsoft.Extensions.Logging;
 
 namespace FKala.Api.Controller
 {
@@ -13,8 +14,12 @@ namespace FKala.Api.Controller
     public class QueryController : ControllerBase
     {
         public IDataLayer DataLayer { get; }
-        public QueryController(IDataLayer dataLayer) {
+        public ILogger<QueryController> Logger { get; }
+
+        public QueryController(IDataLayer dataLayer, ILogger<QueryController> logger)
+        {
             this.DataLayer = dataLayer;
+            this.Logger = logger;
         }
 
         // GET api/string
@@ -34,24 +39,27 @@ namespace FKala.Api.Controller
 
         // GET api/string
         [HttpPost]
-        //[Consumes("application/json", "text/plain")]
         [Consumes("text/plain")]
-        [SwaggerOperation(
-            Summary = "Create a new weather forecast",
-            Description = "Creates a new weather forecast and returns the created forecast."
-        )]
         //[SwaggerRequestBody("Weather forecast data", Required = true)]
         public IActionResult QueryPost([FromBody] string input)
         {
-            if (string.IsNullOrEmpty(input))
+            try
             {
-                return BadRequest("Input string is required.");
+                if (string.IsNullOrEmpty(input))
+                {
+                    return BadRequest("Input string is required.");
+                }
+
+                // Verarbeite den String hier nach Bedarf
+                var inputmultiline = ProcessString(input);
+
+                return DoQuery(inputmultiline);
             }
-
-            // Verarbeite den String hier nach Bedarf
-            var inputmultiline = ProcessString(input);
-
-            return DoQuery(inputmultiline);
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Exception");
+                throw;
+            }
         }
 
         private IActionResult DoQuery(string query)
@@ -61,7 +69,7 @@ namespace FKala.Api.Controller
 
             var result = q.Execute(this.DataLayer);
 
-            
+
             if (result?.Errors.Count() != 0)
             {
                 return BadRequest(result!.Errors);

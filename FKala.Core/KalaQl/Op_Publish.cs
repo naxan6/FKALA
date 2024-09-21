@@ -41,8 +41,13 @@ namespace FKala.Core.KalaQl
                 var synced = DatasetsCombiner2.CombineSynchronizedResults(resultsets);
 
                 List<ExpandoObject> resultRows = new List<ExpandoObject>();
+                int count = 0;
                 foreach (var syncedResult in synced)
                 {
+                    if (count++ > 50000) // limit result to 50000 datapoints
+                    {
+                        break;
+                    };
                     dynamic row = new ExpandoObject();
                     var expandoDict = (IDictionary<string, object?>)row;
                     
@@ -60,6 +65,7 @@ namespace FKala.Core.KalaQl
                         Pools.DataPoint.Return(item.DataPoint);
                     }
                     resultRows.Add(row);
+                    
                 }
                 context.Result = new KalaResult()
                 {                    

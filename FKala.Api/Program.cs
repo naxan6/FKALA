@@ -14,20 +14,23 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers(
     options => options.InputFormatters.Add(new PlainTextFormatter())
     );
-    //.AddNewtonsoftJson(options =>
-    //        {
-    //            options.SerializerSettings.DateFormatString = "yyyy'-'MM'-'dd'T'HH':'mm':'ssZ";
-    //        }
-    //);
+//.AddNewtonsoftJson(options =>
+//        {
+//            options.SerializerSettings.DateFormatString = "yyyy'-'MM'-'dd'T'HH':'mm':'ssZ";
+//        }
+//);
 builder.Services.AddOptions<MqttSettings>().Configure((MqttSettings options, IConfiguration config) => options.Configure(config));
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Logging.AddConsole();
+
 var storagePath = builder.Configuration["DataStorage"] ?? "\\\\naxds2\\docker\\fkala";
 builder.Services.AddSingleton<IDataLayer>(new DataLayer_Readable_Caching_V1(storagePath));
 
-if (builder.Configuration.GetSection(MqttSettings.ConfigurationSection).Exists()) {
+if (builder.Configuration.GetSection(MqttSettings.ConfigurationSection).Exists())
+{
     builder.Services.AddHostedService<MqttWorker>();
 }
 
