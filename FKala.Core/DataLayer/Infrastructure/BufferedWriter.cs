@@ -23,7 +23,7 @@ namespace FKala.Core.DataLayer.Infrastructure
                 fileMode = FileMode.Create;
             }
             _filePath = filePath;
-            _fileStream = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.Read);
+            _fileStream = new FileStream(filePath, fileMode, FileAccess.Write, FileShare.Read);
             _streamWriter = new StreamWriter(_fileStream, Encoding.UTF8, 16384);
         }
 

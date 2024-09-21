@@ -37,15 +37,17 @@ namespace FKala.Core.KalaQl
             // und gleichzeitiger Ausgabe aller dieser Serien im Publish
             // sich die Zugriffe auf den Enumerable überschneiden und das ganze dann buggt
             // (noch nicht final geklärt, z.B. siehe BUGTEST_KalaQl_2_Datasets_Aggregated_Expresso). 
-
+            var input = context.IntermediateDatasources.First(x => x.Name == InputDataSetName);
+            
             var outgoingResult =
                 new ResultPromise()
                 {
                     Name = this.Name,
                     Creator = this,
+                    Query_StartTime = input.Query_StartTime,
+                    Query_EndTime = input.Query_EndTime,
                     ResultsetFactory = () =>
                     {
-                        var input = context.IntermediateDatasources.First(x => x.Name == InputDataSetName);
                         var resultset = InternalExecute(context, input);
                         return resultset;
                     }
@@ -57,9 +59,6 @@ namespace FKala.Core.KalaQl
 
         private IEnumerable<DataPoint> InternalExecute(KalaQlContext context, ResultPromise input)
         {
-            var startTime = input.Query_StartTime;
-            var endTime = input.Query_EndTime;
-
             var enumerable = input.ResultsetFactory();
             var dataPointsEnumerator = enumerable.GetEnumerator();
             Window slidingWindow = WindowTemplate.GetCopy();
@@ -68,47 +67,47 @@ namespace FKala.Core.KalaQl
             bool scrolledForward = false;
             bool isFirstAfterMoveNext = true;
             int seenPoints = 0;
-            DataPoint previous = null;
+            DataPoint? previous = null;
             while (dataPointsEnumerator.MoveNext())
             {
 
                 seenPoints++;
-                var c = dataPointsEnumerator.Current;
+                var currentInputDatePoint = dataPointsEnumerator.Current;
                 //Console.WriteLine($"Aggregate {c} from {input.Name} to {Name} ##### {previous}");
-                previous = c;
+                previous = currentInputDatePoint;
                 if (isFirstAfterMoveNext)
                 {
-                    slidingWindow.Init(c.Time < startTime ? c.Time : startTime, context.AlignTzTimeZoneId);
+                    slidingWindow.Init(currentInputDatePoint.Time < input.Query_StartTime ? currentInputDatePoint.Time : input.Query_StartTime, context.AlignTzTimeZoneId);
                     currentAggregator = new StreamingAggregator(AggregateFunc, slidingWindow);
                     isFirstAfterMoveNext = false;
                 }
 
 
-                if (slidingWindow.IsInWindow(c.Time))
+                if (slidingWindow.IsInWindow(currentInputDatePoint.Time))
                 {
-                    currentAggregator!.AddValue(c.Time, c.Value);
+                    currentAggregator!.AddValue(currentInputDatePoint.Time, currentInputDatePoint.Value);
                     scrolledForward = true;
                 }
-                else if (slidingWindow.DateTimeIsBeforeWindow(c.Time))
+                else if (slidingWindow.DateTimeIsBeforeWindow(currentInputDatePoint.Time))
                 {
                     if (!scrolledForward)
                     {
-                        while (slidingWindow.DateTimeIsBeforeWindow(c.Time))
+                        while (slidingWindow.DateTimeIsBeforeWindow(currentInputDatePoint.Time))
                         {
                             slidingWindow.Next();
                         }
-                        currentAggregator!.AddValue(c.Time, c.Value);
+                        currentAggregator!.AddValue(currentInputDatePoint.Time, currentInputDatePoint.Value);
                         scrolledForward = true;
 
                     }
                     else
                     {
-                        throw new Exception($"Bug 1, Datenpunkt übersehen einzusortieren (nach {seenPoints}) {this.Name}  {c.Time.ToString("s")} in {slidingWindow.StartTime.ToString("s")}-{slidingWindow.EndTime.ToString("s")} PREVIOUS {previous}");
+                        throw new Exception($"Bug 1, Datenpunkt übersehen einzusortieren (nach {seenPoints}) {this.Name}  {currentInputDatePoint.Time.ToString("s")} in {slidingWindow.StartTime.ToString("s")}-{slidingWindow.EndTime.ToString("s")} PREVIOUS {previous}");
                     }
                 }
-                else if (slidingWindow.DateTimeIsAfterWindow(c.Time))
+                else if (slidingWindow.DateTimeIsAfterWindow(currentInputDatePoint.Time))
                 {
-                    while (slidingWindow.DateTimeIsAfterWindow(c.Time))
+                    while (slidingWindow.DateTimeIsAfterWindow(currentInputDatePoint.Time))
                     {
                         var currentDataPoint = slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValue());
                         if (EmptyWindows || currentDataPoint.Value != null) yield return currentDataPoint;
@@ -116,13 +115,13 @@ namespace FKala.Core.KalaQl
                         slidingWindow.Next();
 
                         currentAggregator.Reset(currentAggregator.LastAggregatedValue);
-                        if (slidingWindow.IsInWindow(c.Time))
+                        if (slidingWindow.IsInWindow(currentInputDatePoint.Time))
                         {
-                            currentAggregator.AddValue(c.Time, c.Value);
+                            currentAggregator.AddValue(currentInputDatePoint.Time, currentInputDatePoint.Value);
                         }
                     }
                 }
-                Pools.DataPoint.Return(c);
+                Pools.DataPoint.Return(currentInputDatePoint);
             }
             // add final interval
             var finalContentDataPoint = slidingWindow.GetDataPoint(currentAggregator.GetAggregatedValue());
@@ -130,8 +129,7 @@ namespace FKala.Core.KalaQl
             
             if (EmptyWindows)
             {
-                //TODO
-                while (slidingWindow.EndTime < endTime)
+                while (slidingWindow.EndTime < input.Query_EndTime)
                 {
                     slidingWindow.Next();
                     currentAggregator.Reset(currentAggregator.LastAggregatedValue);

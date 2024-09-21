@@ -43,7 +43,7 @@ namespace FKala.Unittests
             var testResult = query.Execute(dl);
             testResult.Errors.ForEach(er => Console.WriteLine(er));
             testResult.Errors.Should().BeEmpty();
-            var firstEntry = ((dynamic)testResult.ResultTable);
+            var firstEntry = ((dynamic?)testResult.ResultTable);
             Console.WriteLine(KalaJson.Serialize(firstEntry));
 
         }

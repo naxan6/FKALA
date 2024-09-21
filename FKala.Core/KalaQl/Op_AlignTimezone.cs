@@ -7,7 +7,7 @@ namespace FKala.Core.KalaQl
         // see https://nodatime.org/TimeZones
         public string TzId { get; }        
 
-        public Op_AlignTimezone(string line, string timezone) : base(line)
+        public Op_AlignTimezone(string? line, string timezone) : base(line)
         {
 
             this.TzId = timezone;            

@@ -26,8 +26,8 @@ namespace FKala.Core.KalaQl
             Interpreter = new Interpreter();
             Interpreter.SetDefaultNumberType(DefaultNumberType.Decimal);
 
-            var unknownIdInfo = Interpreter.DetectIdentifiers(Expresso);
-            var parameters = unknownIdInfo.UnknownIdentifiers
+            UnknownIdInfo = Interpreter.DetectIdentifiers(Expresso);
+            var parameters = UnknownIdInfo.UnknownIdentifiers
                 .Order()
                 .Select(identifier => new Parameter(identifier, typeof(DataPoint)));
 
@@ -42,17 +42,17 @@ namespace FKala.Core.KalaQl
 
         public override void Execute(KalaQlContext context)
         {
-            UnknownIdInfo = Interpreter.DetectIdentifiers(Expresso);
+            var datenquellen = context.IntermediateDatasources.Where(im => UnknownIdInfo.UnknownIdentifiers.Contains(im.Name));
 
             context.IntermediateDatasources.Add(
                 new ResultPromise()
                 {
                     Name = this.Name,
                     Creator = this,
+                    Query_StartTime = datenquellen.Min(d => d.Query_StartTime),
+                    Query_EndTime = datenquellen.Min(d => d.Query_EndTime),
                     ResultsetFactory = () =>
                     {
-                        
-                        var datenquellen = context.IntermediateDatasources.Where(im => UnknownIdInfo.UnknownIdentifiers.Contains(im.Name));
                         var result = ExecuteInternal(context, datenquellen);
                         return result;
                     }

@@ -106,5 +106,50 @@ namespace FKala.Unittests
             Assert.AreEqual(new DateTime(2024, 03, 14, 23, 00, 00), lastEntry.time);
             Assert.AreEqual(0.875275374797767m, lastEntry.m1);
         }
+
+        [TestMethod]
+        public void KalaQuery_LAP_1()
+        {
+            // Prepare
+            var kq = KalaQuery.Start().FromQuery(@"
+                Load m1: m1 2024-03-01T00:00:00Z 2024-03-15T00:00:00Z Hourly_First
+                Aggr a1: m1 08:00:00 Avg EmptyWindows
+                Publ ""a1"" Table
+            ");
+            // Act
+            var result = kq.Execute(DataFaker.TestDataLayer);
+
+
+            // Assert
+            Console.WriteLine(KalaJson.Serialize(result));
+            result.Errors.Should().BeEmpty();
+
+            var resultset = result.ResultTable;
+            resultset.Should().NotBeNull();
+            resultset!.Count().Should().Be(42);
+        }
+
+        [TestMethod]
+        public void KalaQuery_LAAP_1()
+        {
+            // Prepare
+            var kq = KalaQuery.Start().FromQuery(@"
+                Load m1: m1 2024-03-01T00:00:00Z 2024-03-15T00:00:00Z Hourly_First
+                Aggr a1: m1 08:00:00 Avg EmptyWindows                       
+                Aggr a2: a1 Aligned_1Day Avg EmptyWindows
+                Publ ""a2"" Table
+            ");
+            // Act
+            var result = kq.Execute(DataFaker.TestDataLayer);
+
+
+            // Assert
+            Console.WriteLine(KalaJson.Serialize(result));
+            result.Errors.Should().BeEmpty();
+
+            var resultset = result.ResultTable;
+            resultset.Should().NotBeNull();
+            resultset!.Count().Should().Be(14);
+        }
     }
 }
