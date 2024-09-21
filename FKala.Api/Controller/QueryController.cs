@@ -64,7 +64,7 @@ namespace FKala.Api.Controller
 
                 var result = q.Execute(this.DataLayer);
 
-
+                
                 if (result?.Errors.Count() != 0)
                 {
                     int i = 0;
@@ -72,8 +72,9 @@ namespace FKala.Api.Controller
                     {
                         i++;
                         ModelState.AddModelError($"Error {i}", e);
+                        Logger.LogError($"Error {i}: " + e);
                     });
-                    return Ok(ModelState);
+                    return Ok(result.Errors);
                 }
                 else if (result?.ResultSets != null)
                 {
@@ -88,13 +89,14 @@ namespace FKala.Api.Controller
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Exception");
-                ModelState.AddModelError("ex", ex.Message);
-                ModelState.AddModelError("stack", $"{ex.StackTrace}");
+                List<string> exres = new List<string>();
+                exres.Add("ex: " + ex.Message);
+                exres.Add("stack: " + $"{ex.StackTrace}");
                 Exception? ie = ex.InnerException;
                 while (ie != null)
                 {
-                    ModelState.AddModelError("ex", ex.Message);
-                    ModelState.AddModelError("stack", $"{ex.StackTrace}");
+                    exres.Add("iex " + ex.Message);
+                    exres.Add("iexstack: " + $"{ex.StackTrace}");
                     ie = ex.InnerException;
                 }
 
