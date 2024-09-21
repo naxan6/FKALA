@@ -67,7 +67,13 @@ namespace FKala.Api.Controller
 
                 if (result?.Errors.Count() != 0)
                 {
-                    return BadRequest(result!.Errors);
+                    int i = 0;
+                    result!.Errors.ForEach(e =>
+                    {
+                        i++;
+                        ModelState.AddModelError($"Error {i}", e);
+                    });
+                    return BadRequest(ModelState);
                 }
                 else if (result?.ResultSets != null)
                 {
@@ -82,7 +88,17 @@ namespace FKala.Api.Controller
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Exception");
-                return BadRequest(ex);
+                ModelState.AddModelError("ex", ex.Message);
+                ModelState.AddModelError("stack", ex.StackTrace);
+                Exception ie = ex.InnerException;
+                while (ie != null)
+                {
+                    ModelState.AddModelError("ex", ex.Message);
+                    ModelState.AddModelError("stack", ex.StackTrace);
+                    ie = ex.InnerException;
+                }
+
+                return BadRequest(ModelState);
             }
         }
 
