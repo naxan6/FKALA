@@ -89,12 +89,12 @@ namespace FKala.Api.Controller
             {
                 Logger.LogError(ex, "Exception");
                 ModelState.AddModelError("ex", ex.Message);
-                ModelState.AddModelError("stack", ex.StackTrace);
-                Exception ie = ex.InnerException;
+                ModelState.AddModelError("stack", $"{ex.StackTrace}");
+                Exception? ie = ex.InnerException;
                 while (ie != null)
                 {
                     ModelState.AddModelError("ex", ex.Message);
-                    ModelState.AddModelError("stack", ex.StackTrace);
+                    ModelState.AddModelError("stack", $"{ex.StackTrace}");
                     ie = ex.InnerException;
                 }
 
