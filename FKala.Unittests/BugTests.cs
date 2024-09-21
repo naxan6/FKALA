@@ -48,22 +48,22 @@ Publ ""SOC, SOH"" Table");
         }
 
         [TestMethod]
-        public void BugTest_StartsAtDateTimeMinValue()
+        public void BugTest_EmptySensorDir_CausesSartAtDateTimeMinValue()
         {
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
             sw.Start();
-            using var dl = new DataLayer_Readable_Caching_V1(StoragePath);
+            using var dl = new DataLayer_Readable_Caching_V1(@".\Testdata\Empty\");
 
             var q = KalaQuery.Start()
-                .FromQuery(@"Var $FROM ""2020-09-20T19:09:46.645Z""
+                .FromQuery(@"Var $FROM ""2024-09-20T19:09:46.645Z""
 Var $TO ""2024-09-21T19:09:46.645Z""
-Var $CACHE Auto(60000)_WAvg_RefreshIncremental
+Var $CACHE Auto(3600000)_WAvg_RefreshIncremental
 Var $AGG ""WAvg EmptyWindows""
-Var $INTERVAL 60000
+Var $INTERVAL 3600000
 
-Load rVar1: jsts$Heizung$int1 $FROM $TO $CACHE
-Load rVar2: jsts$Heizung_Alt$int1 $FROM $TO $CACHE
+Load rVar1: emptySensor $FROM $TO $CACHE
+Load rVar2: emptySensor2 $FROM $TO $CACHE
 Aggr aVar1: rVar1 $INTERVAL $AGG
 Aggr aVar2: rVar2 $INTERVAL $AGG
 Publ aVar1,aVar2 Table");
@@ -78,7 +78,7 @@ Publ aVar1,aVar2 Table");
             Console.WriteLine(KalaJson.Serialize(result.ResultTable));// JSON serialize
             Console.WriteLine(KalaJson.Serialize(result.Errors));// JSON serialize
             result.Errors.Should().BeEmpty();
-            result.ResultTable.Should().HaveCount(288);
+            result.ResultTable.Should().HaveCount(24);
         }
 
         

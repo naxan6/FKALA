@@ -39,7 +39,11 @@ namespace FKala.Core.KalaQl
             else if (PublishMode == PublishMode.CombinedResultset)
             {
                 var synced = DatasetsCombiner2.CombineSynchronizedResults(resultsets);
-
+                Dictionary<string, bool> receivedDatapoint = new Dictionary<string, bool>();
+                foreach (var key in NamesToPublish)
+                {
+                    receivedDatapoint.Add(key, false);
+                }
                 List<ExpandoObject> resultRows = new List<ExpandoObject>();
                 int count = 0;
                 foreach (var syncedResult in synced)
@@ -50,6 +54,7 @@ namespace FKala.Core.KalaQl
                     };
                     dynamic row = new ExpandoObject();
                     var expandoDict = (IDictionary<string, object?>)row;
+                    
                     
                     foreach (var item in syncedResult)
                     {
@@ -64,6 +69,16 @@ namespace FKala.Core.KalaQl
                         }
                         Pools.DataPoint.Return(item.DataPoint);
                     }
+                    foreach (var key in NamesToPublish)
+                    {
+                        if (!receivedDatapoint[key])
+                        {
+                            expandoDict[key] = null;
+                            receivedDatapoint[key] = false;
+                        }
+                        
+                    }
+
                     resultRows.Add(row);
                     
                 }

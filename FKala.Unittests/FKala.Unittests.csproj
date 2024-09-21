@@ -22,6 +22,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="TestData\Empty\data\.gitignore">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestData\Empty\data\emptySensor2\.gitignore">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestData\Empty\data\emptySensor\.gitignore">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="TestData\UTC_CET_CEST\data\UTC_CET_CEST_Load\2024\03\UTC_CET_CEST_Load#2024-03-29.dat">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
