@@ -67,6 +67,10 @@ namespace FKala.Core.KalaQl
                         {
                             expandoDict[item.Result.Name] = item.DataPoint.ValueText;
                         }
+                        if (expandoDict[item.Result.Name] != null)
+                        {
+                            receivedDatapoint[item.Result.Name] = true;
+                        }
                         Pools.DataPoint.Return(item.DataPoint);
                     }
                     foreach (var key in NamesToPublish)
