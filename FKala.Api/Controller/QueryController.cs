@@ -73,7 +73,7 @@ namespace FKala.Api.Controller
                         i++;
                         ModelState.AddModelError($"Error {i}", e);
                     });
-                    return BadRequest(ModelState);
+                    return Ok(ModelState);
                 }
                 else if (result?.ResultSets != null)
                 {
@@ -98,7 +98,7 @@ namespace FKala.Api.Controller
                     ie = ex.InnerException;
                 }
 
-                return BadRequest(ModelState);
+                return Ok(ModelState);
             }
         }
 

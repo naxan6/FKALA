@@ -104,7 +104,7 @@ namespace FKala.Core.KalaQl
                     }
                     else
                     {
-                        throw new Exception($"Bug 1, Datenpunkt übersehen einzusortieren (nach {seenPoints}) {this.Name}  {currentInputDatePoint.Time.ToString("s")} in {slidingWindow.StartTime.ToString("s")}-{slidingWindow.EndTime.ToString("s")} PREVIOUS {previous}");
+                        throw new Exception($"Bug 1, Datenpunkt übersehen einzusortieren (nach {seenPoints}) ### Aggr {this.Name} ### DP: {currentInputDatePoint} ### in {slidingWindow.StartTime.ToString("s")}-{slidingWindow.EndTime.ToString("s")} PREVIOUS {previous}");
                     }
                 }
                 else if (slidingWindow.DateTimeIsAfterWindow(currentInputDatePoint.Time))
