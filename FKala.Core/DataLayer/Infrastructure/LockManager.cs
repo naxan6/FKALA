@@ -28,6 +28,15 @@ namespace FKala.Core.DataLayer.Infrastructure
             return new Releaser(() => ReleaseLock(key));
         }
 
+        public bool IsLocked(string key)
+        {
+            // Erstellen eines SemaphoreSlim für den Schlüssel, wenn noch nicht vorhanden
+            var semaphore = _locks.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
+
+            // Warte auf den Lock
+            return semaphore.Wait(0);
+        }
+
         /// <summary>
         /// Gibt den Lock für den angegebenen Schlüssel frei.
         /// </summary>

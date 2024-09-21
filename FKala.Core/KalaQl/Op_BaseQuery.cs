@@ -43,12 +43,10 @@ namespace FKala.Core.KalaQl
             // bei ForceRebuild auch ohne Ausgabe etc. den Rebuild durchführen, ..was erst geschieht beim Materialisieren                        
             //if (CacheResolution.ForceRebuild) result = result.ToList();
             
-            context.IntermediateResults.Add(
+            context.IntermediateDatasources.Add(
                 new Result()
                 {
                     Name = this.Name,
-                    StartTime = StartTime,
-                    EndTime = EndTime,
                     Creator = this,
                     ResultsetFactory = () =>
                     {

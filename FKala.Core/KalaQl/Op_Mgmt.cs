@@ -36,7 +36,7 @@ namespace FKala.Core.KalaQl
                     var q = new KalaQuery()
                         .Add(new Op_BaseQuery("SortRawFiles", "toSort", measurement, DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefined.NoCache, false, true))
                         .Add(new Op_Publish("SortRawFiles", new List<string>() { "toSort" }, PublishMode.MultipleResultsets));
-                    var localresult = q.Execute(context.DataLayer).ResultSets!.First().ResultsetFactory();
+                    var localresult = q.Execute(context.DataLayer).ResultSets!.First().Resultset;
 
                     foreach ( var r in localresult) // iterate to load everything
                     {

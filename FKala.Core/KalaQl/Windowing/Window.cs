@@ -6,18 +6,18 @@ namespace FKala.Core.KalaQl.Windowing
 {
     public class Window
     {
-        public static Window Aligned_1Minute { get { return new Window() { Mode = WindowMode.Aligned1Minute, Interval = new TimeSpan(0, 0, 1, 0) }; } }
-        public static Window Aligned_5Minutes { get { return new Window() { Mode = WindowMode.Aligned5Minutes, Interval = new TimeSpan(0, 0, 5, 0) }; } }
-        public static Window Aligned_15Minutes { get { return new Window() { Mode = WindowMode.Aligned15Minutes, Interval = new TimeSpan(0, 0, 15, 0) }; } }
-        public static Window Aligned_1Hour { get { return new Window() { Mode = WindowMode.AlignedHour, Interval = new TimeSpan(0, 1, 0, 0) }; } }
-        public static Window Aligned_1Day { get { return new Window() { Mode = WindowMode.AlignedDay, Interval = new TimeSpan(1, 0, 0, 0) }; } }
-        public static Window Aligned_1Week { get { return new Window() { Mode = WindowMode.AlignedWeek, Interval = new TimeSpan(7, 0, 0, 0) }; } }
-        public static Window Aligned_1Month { get { return new Window() { Mode = WindowMode.AlignedMonth, Interval = TimeSpan.MaxValue }; } }
-        public static Window Aligned_1YearStartAtHalf { get { return new Window() { Mode = WindowMode.AlignedYearStartAtHalf, Interval = TimeSpan.MaxValue }; } }
-        public static Window Aligned_1Year { get { return new Window() { Mode = WindowMode.AlignedYear, Interval = TimeSpan.MaxValue }; } }
-        public static Window Unaligned_1Month { get { return new Window() { Mode = WindowMode.UnalignedMonth, Interval = TimeSpan.MaxValue }; } }
-        public static Window Unaligned_1Year { get { return new Window() { Mode = WindowMode.UnalignedYear, Interval = TimeSpan.MaxValue }; } }
-        public static Window Infinite { get { return new Window() { Mode = WindowMode.FixedIntervall, Interval = TimeSpan.MaxValue }; } }
+        public static Window Aligned_1Minute { get { return new Window(WindowMode.Aligned1Minute, new TimeSpan(0, 0, 1, 0)); } }
+        public static Window Aligned_5Minutes { get { return new Window(WindowMode.Aligned5Minutes, new TimeSpan(0, 0, 5, 0)); } }
+        public static Window Aligned_15Minutes { get { return new Window(WindowMode.Aligned15Minutes, new TimeSpan(0, 0, 15, 0)); } }
+        public static Window Aligned_1Hour { get { return new Window(WindowMode.AlignedHour, new TimeSpan(0, 1, 0, 0)); } }
+        public static Window Aligned_1Day { get { return new Window(WindowMode.AlignedDay, new TimeSpan(1, 0, 0, 0)); } }
+        public static Window Aligned_1Week { get { return new Window(WindowMode.AlignedWeek, new TimeSpan(7, 0, 0, 0)); } }
+        public static Window Aligned_1Month { get { return new Window(WindowMode.AlignedMonth, TimeSpan.MaxValue); } }
+        public static Window Aligned_1YearStartAtHalf { get { return new Window(WindowMode.AlignedYearStartAtHalf, TimeSpan.MaxValue); } }
+        public static Window Aligned_1Year { get { return new Window(WindowMode.AlignedYear, TimeSpan.MaxValue); } }
+        public static Window Unaligned_1Month { get { return new Window(WindowMode.UnalignedMonth, TimeSpan.MaxValue); } }
+        public static Window Unaligned_1Year { get { return new Window(WindowMode.UnalignedYear, TimeSpan.MaxValue); } }
+        public static Window Infinite { get { return new Window(WindowMode.FixedIntervall, TimeSpan.MaxValue); } }
 
         public DateTime StartTime { get; private set; }
         public DateTime EndTime { get; private set; }
@@ -25,10 +25,6 @@ namespace FKala.Core.KalaQl.Windowing
 
         public TimeSpan Interval = TimeSpan.MaxValue;
         public WindowMode Mode;
-
-        public Window()
-        {
-        }
 
         public Window(WindowMode Mode)
         {
@@ -156,7 +152,7 @@ namespace FKala.Core.KalaQl.Windowing
                         {
                             var NewEndtime = ModifyAlignedToTimezone(this.StartTime, this.TzTimezoneId ?? "UTC", (LocalDateTime alignedDate) =>
                             {
-                                return alignedDate 
+                                return alignedDate
                                     + Period.FromDays(Interval.Days)
                                     + Period.FromHours(Interval.Hours)
                                     + Period.FromMinutes(Interval.Minutes)
@@ -236,6 +232,11 @@ namespace FKala.Core.KalaQl.Windowing
             dp.Time = this.StartTime;
             dp.Value = value;
             return dp;
+        }
+
+        public Window GetCopy()
+        {
+            return new Window(Mode, Interval);
         }
     }
 }

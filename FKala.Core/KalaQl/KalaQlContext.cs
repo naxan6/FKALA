@@ -11,7 +11,7 @@ namespace FKala.Core.KalaQl
     public class KalaQlContext
     {
         public IDataLayer DataLayer { get; private set; }
-        public List<Result> IntermediateResults { get; set; } = new List<Result>();
+        public List<Result> IntermediateDatasources { get; set; } = new List<Result>();
         public KalaResult Result { get; set; }
         public string? AlignTzTimeZoneId { get; set; }
 

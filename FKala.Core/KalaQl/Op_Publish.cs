@@ -18,12 +18,12 @@ namespace FKala.Core.KalaQl
 
         public override bool CanExecute(KalaQlContext context)
         {
-            return NamesToPublish.All(name => context.IntermediateResults.Any(x => x.Name == name));
+            return NamesToPublish.All(name => context.IntermediateDatasources.Any(x => x.Name == name));
         }
 
         public override void Execute(KalaQlContext context)
         {
-            var resultsets = context.IntermediateResults
+            var resultsets = context.IntermediateDatasources
                         .Where(x => NamesToPublish.Any(ntp => ntp == x.Name))
                         .OrderBy(n => NamesToPublish.IndexOf(n.Name)) // Ausgabereihenfolge so sortieren wie vorgegeben
                         .ToList();
@@ -31,8 +31,8 @@ namespace FKala.Core.KalaQl
             if (PublishMode == PublishMode.MultipleResultsets)
             {
                 context.Result = new KalaResult()
-                {                    
-                    ResultSets = resultsets
+                {
+                    ResultSets = resultsets.Select(r => r.ToResult_Materialized()).ToList()
                 };
                 hasExecuted = true;
             }

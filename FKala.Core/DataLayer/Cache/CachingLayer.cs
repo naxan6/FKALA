@@ -40,29 +40,34 @@ namespace FKala.Core.DataLayer.Cache
                 var cacheFilePath = Path.Combine(measurementCachePath, cachefile);
 
                 // synchronize Cache-Updates
-                using (var lockHandle = _lockManager.AcquireLock(cacheFilePath))
-                {
 
-                    if (!File.Exists(cacheFilePath) || cacheResolution.ForceRebuild)
+                if (!File.Exists(cacheFilePath) || cacheResolution.ForceRebuild)
+                {
+                    using (var lockHandle = _lockManager.AcquireLock(cacheFilePath))
                     {
                         Console.WriteLine($"Building Cache: {Path.GetFileName(cacheFilePath)} {cacheResolution}");
                         cache.GenerateWholeYearCache(measurement, year, cacheFilePath, cacheResolution.AggregateFunction, cacheResolution.ForceRebuild);
                     }
-                    else
+                }
+                else
+                {
+                    if (cacheResolution.IncrementalRefresh && year == years.Max())
                     {
-                        if (cacheResolution.IncrementalRefresh && year == years.Max())
+                        using (var lockHandle = _lockManager.AcquireLock(cacheFilePath))
                         {
                             Console.WriteLine($"Incremental Update requested: {Path.GetFileName(cacheFilePath)}");
                             IncrementalUpdateCache(measurement, cacheResolution, cacheFilePath);
                         }
                     }
-                    Console.WriteLine($"Loading from Cache: {cachefile}");
-                    var yearEnumerable = cache.LoadCache(startTime, endTime, year, cacheFilePath);
-                    foreach (var item in yearEnumerable)
-                    {
-                        yield return item;
-                    }
                 }
+
+                Console.WriteLine($"Loading from Cache: {cachefile}");
+                var yearEnumerable = cache.LoadCache(startTime, endTime, year, cacheFilePath);
+                foreach (var item in yearEnumerable)
+                {
+                    yield return item;
+                }
+
             }
         }
 

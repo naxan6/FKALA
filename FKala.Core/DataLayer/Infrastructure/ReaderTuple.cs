@@ -3,7 +3,7 @@
 
     public class ReaderTuple
     {
-        public DateTime PathDate;
+        public DateTime FileDate;
         public required string FilePath;
         public StreamReader? StreamReader;
         public bool MarkedAsSorted;

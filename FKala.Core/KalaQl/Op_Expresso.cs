@@ -1,10 +1,12 @@
 ﻿using DynamicExpresso;
+using FKala.Core.DataLayer.Infrastructure;
 using FKala.Core.Interfaces;
 using FKala.Core.KalaQl;
 using FKala.Core.KalaQl.Windowing;
 using FKala.Core.Logic;
 using FKala.Core.Model;
 using Newtonsoft.Json.Linq;
+using System;
 
 namespace FKala.Core.KalaQl
 {
@@ -35,25 +37,22 @@ namespace FKala.Core.KalaQl
         public override bool CanExecute(KalaQlContext context)
         {
             var IdInfo = Interpreter.DetectIdentifiers(Expresso);
-            return IdInfo.UnknownIdentifiers.All(id => context.IntermediateResults.Any(res => res.Name == id));
+            return IdInfo.UnknownIdentifiers.All(id => context.IntermediateDatasources.Any(res => res.Name == id));
         }
 
         public override void Execute(KalaQlContext context)
         {
-            var unknownIdInfo = Interpreter.DetectIdentifiers(Expresso);
-            var datenquellen = context.IntermediateResults.Where(im => unknownIdInfo.UnknownIdentifiers.Contains(im.Name));
-            var firstStartTime = datenquellen.Min(d => d.StartTime);
-            var lastEndTime = datenquellen.Max(d => d.EndTime);
+            
 
-            context.IntermediateResults.Add(
+            context.IntermediateDatasources.Add(
                 new Result()
                 {
                     Name = this.Name,
-                    StartTime = firstStartTime,
-                    EndTime = lastEndTime,
                     Creator = this,
                     ResultsetFactory = () =>
                     {
+                        var unknownIdInfo = Interpreter.DetectIdentifiers(Expresso);
+                        var datenquellen = context.IntermediateDatasources.Where(im => unknownIdInfo.UnknownIdentifiers.Contains(im.Name));
                         var result = ExecuteInternal(context, datenquellen);
                         return result;
                     }
@@ -62,21 +61,28 @@ namespace FKala.Core.KalaQl
             this.hasExecuted = true;
 
         }
-
+        DateTime firstStartTime;
         public IEnumerable<DataPoint> ExecuteInternal(KalaQlContext context, IEnumerable<Result> datenquellen)
         {
             var combined = new List<(DateTime Timestamp, int ListIndex, Result Item)>();
-
-            foreach (var synchronizedItems in DatasetsCombiner2.CombineSynchronizedResults(datenquellen.ToList()))
+            bool isFirstStartTime = true;
+            foreach (var timeSynchronizedItems in DatasetsCombiner2.CombineSynchronizedResults(datenquellen.ToList()))
             {
-                var paramValues = synchronizedItems.Select(si => new Parameter(si.Result.Name, si.DataPoint));
+                if (isFirstStartTime)
+                {
+                    firstStartTime = timeSynchronizedItems.First().DataPoint.Time;
+                }
+                var paramValues = timeSynchronizedItems.Select(si => new Parameter(si.Result.Name, si.DataPoint));
 
                 decimal? expressoResultValue = (decimal?)Lambda.Invoke(paramValues);
-                var currentDataPoint = new DataPoint()
+
+                var currentDataPoint = Pools.DataPoint.Get();
+                currentDataPoint.Time = timeSynchronizedItems.First().DataPoint.Time;
+                currentDataPoint.Value = expressoResultValue;
+                foreach (var item in timeSynchronizedItems)
                 {
-                    Time = synchronizedItems.First().DataPoint.Time,
-                    Value = expressoResultValue
-                };
+                    Pools.DataPoint.Return(item.DataPoint);
+                }
                 yield return currentDataPoint;
             }
         }

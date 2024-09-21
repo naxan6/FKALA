@@ -1,4 +1,5 @@
-﻿using FKala.Core.Interfaces;
+﻿using FKala.Core.DataLayer.Infrastructure;
+using FKala.Core.Interfaces;
 using FKala.Core.KalaQl;
 using FKala.Core.KalaQl.Windowing;
 using FKala.Core.Model;
@@ -30,7 +31,7 @@ namespace FKala.Core.DataLayer.Cache
             {
                 throw new Exception("could not aquire aggregate for caching");
             }
-            var rs = aggResult!.ResultSets.First().ResultsetFactory();
+            var rs = aggResult!.ResultSets.First().Resultset;
             return rs;
         }
 
@@ -44,11 +45,10 @@ namespace FKala.Core.DataLayer.Cache
             span = span.Slice(9);
             var value = decimal.Parse(span, CultureInfo.InvariantCulture);
 
-            return new DataPoint
-            {
-                Time = dateTime,
-                Value = value
-            };
+            var dp = Pools.DataPoint.Get();
+            dp.Time = dateTime;
+            dp.Value = value;
+            return dp;
         }
 
         public override DateTime ShouldUpdateFromWhere(int cacheYear,  DataPoint? newestInCache, DataPoint? newestInRaw)

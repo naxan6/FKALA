@@ -98,7 +98,7 @@ namespace FKala.Core.DataLayers
                 {
                     try
                     {
-                        ret.Add(fileDateTime, new ReaderTuple() { PathDate = fileDateTime, FilePath = candidate, MarkedAsSorted = markedAsSorted });
+                        ret.Add(fileDateTime, new ReaderTuple() { FileDate = fileDateTime, FilePath = candidate, MarkedAsSorted = markedAsSorted });
                     }
                     catch (ArgumentException)
                     {
@@ -152,7 +152,8 @@ namespace FKala.Core.DataLayers
                 dataPoints.Sort((a, b) => a.Time.CompareTo(b.Time));
 
                 // persist sorted (if activated)
-                if (IsActiveAutoSortRawFiles)
+                // and only if it's at least older than 1-2 days (pathdate is start of day at midnight!)
+                if (IsActiveAutoSortRawFiles && readerTuple.FileDate < DateTime.Now.AddDays(-2))
                 {
                     WriteSortedFile(readerTuple.FilePath, dataPoints);
                     persistenceIsSorted = true;
@@ -161,7 +162,7 @@ namespace FKala.Core.DataLayers
 
             // mark as sorted (if it already was or is now) -
             // and only if it's at least older than 1-2 days (pathdate is start of day at midnight!)
-            if (persistenceIsSorted && readerTuple.PathDate < DateTime.Now.AddDays(-1))
+            if (persistenceIsSorted && readerTuple.FileDate < DateTime.Now.AddDays(-2))
             {
                 MarkFileAsSorted(readerTuple.FilePath);
             }

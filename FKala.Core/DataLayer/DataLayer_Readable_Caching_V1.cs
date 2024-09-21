@@ -151,22 +151,15 @@ namespace FKala.Core
 
             var filePath = Path.Combine(directoryPath, sb.ToString());
             stringBuilderPool.Return(sb);
-            //WriterSvc.DoWrite(filePath, (writer) =>
-            //{
-            //    // Format the line to write
-            //    writer.Append(datetimeHHmmssfffffff);
-            //    writer.Append(" ");
-            //    writer.Append(valueString);
-            //    writer.AppendNewline();
-            //});
-            var writer = WriterSvc.GetWriter("filePath");
-            lock (writer.LOCK)
+            WriterSvc.DoWrite(filePath, (writer) =>
             {
+                // Format the line to write
                 writer.Append(datetimeHHmmssfffffff);
                 writer.Append(" ");
                 writer.Append(valueString);
                 writer.AppendNewline();
-            }
+            });
+
 
         }
 

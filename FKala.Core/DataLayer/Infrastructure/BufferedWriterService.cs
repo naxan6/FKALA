@@ -75,7 +75,10 @@ namespace FKala.Core.DataLayer.Infrastructure
                 }
                 lock (writer!.LOCK)
                 {
-                    writeAction(writer);
+                    lock (filePath)
+                    {
+                        writeAction(writer);
+                    }
                 }
             }
         }

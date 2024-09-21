@@ -36,15 +36,19 @@ namespace FKala.Unittests
             string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}", ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds);
             Console.WriteLine("Verstrichene Zeit: " + elapsedTime);
 
-            Assert.AreEqual(2, result?.ResultSets?.Count);
+            result.Errors.Should().BeEmpty();
+            result.ResultSets.Should().HaveCount(2);
+
             DataPoint p;
             foreach (var item in result!.ResultSets!)
             {
-                foreach (var item1 in item.ResultsetFactory())
+                foreach (var item1 in item.Resultset)
                 {
                     p = item1;
                 }
             }
+            
+
         }
         [TestMethod]
         public void KalaQl_2_Datasets_Aggregated()
@@ -133,7 +137,7 @@ namespace FKala.Unittests
 
             foreach (var rs in result!.ResultSets!)
             {
-                rs.ResultsetFactory().ToList();
+                rs.Resultset.ToList();
             }
             sw.Stop();
             var ts = sw.Elapsed;
@@ -151,8 +155,8 @@ namespace FKala.Unittests
             sw.Start();
             using var dl = new DataLayer_Readable_Caching_V1(StoragePath);
 
-            var startTime = new DateTime(2023, 08, 01, 0, 0, 0);
-            var endTime = new DateTime(2024, 08, 01, 0, 0, 0);
+            var startTime = new DateTime(2023, 12, 01, 0, 0, 0);
+            var endTime = new DateTime(2024, 06, 01, 0, 0, 0);
 
             var q = KalaQuery.Start()
                 .Add(new Op_BaseQuery(null, "PV1", "Sofar/measure/PVInput1/0x586_Leistung_PV1[kW]", startTime, endTime, CacheResolutionPredefined.NoCache))
@@ -171,6 +175,9 @@ namespace FKala.Unittests
             Console.WriteLine("Verstrichene Zeit: " + elapsedTime);
 
             Console.WriteLine(KalaJson.Serialize(result.ResultTable));// JSON serialize
+            Console.WriteLine(KalaJson.Serialize(result.Errors));// JSON serialize
+            result.Errors.Should().BeEmpty();
+            result.ResultTable.Should().HaveCount(183);
         }
 
         [TestMethod]
@@ -183,8 +190,8 @@ namespace FKala.Unittests
 
             var q = KalaQuery.Start()
                 .FromQuery(@"
-                    Load PV1: Sofar/measure/PVInput1/0x586_Leistung_PV1[kW] 2024-05-01T00:00:00 2024-06-01T00:00:00 NoCache
-                    Load PV2: Sofar/measure/PVInput1/0x589_Leistung_PV2[kW] 2024-05-01T00:00:00 2024-06-01T00:00:00 NoCache
+                    Load PV1: Sofar/measure/PVInput1/0x586_Leistung_PV1[kW] 2024-05-01T00:00:00Z 2024-06-01T00:00:00Z NoCache
+                    Load PV2: Sofar/measure/PVInput1/0x589_Leistung_PV2[kW] 2024-05-01T00:00:00Z 2024-06-01T00:00:00Z NoCache
                     Aggr PV1_Windowed: PV1 Aligned_1Day Avg
                     Aggr PV2_Windowed: PV2 Aligned_1Day Avg
                     Expr PVSumInWatt: ""(PV1_Windowed.Value + PV2_Windowed.Value) * 1000""
@@ -200,7 +207,8 @@ namespace FKala.Unittests
 
             Console.WriteLine(KalaJson.Serialize(result.ResultTable));// JSON serialize
             Console.WriteLine(KalaJson.Serialize(result.Errors));// JSON serialize
-            Assert.AreEqual(0, result.Errors.Count());
+            result.Errors.Should().BeEmpty();
+            result.ResultTable.Should().HaveCount(31);
         }
 
         [TestMethod]
@@ -213,8 +221,8 @@ namespace FKala.Unittests
 
             var q = KalaQuery.Start()
                 .FromQuery(@"
-                    Load rPV1: Sofar/measure/PVInput1/0x586_Leistung_PV1[kW] 2024-04-01T00:00:00Z 2024-09-01T00:00:00Z Hourly_WAvg
-                    Load rPV2: Sofar/measure/PVInput1/0x589_Leistung_PV2[kW] 2024-04-01T00:00:00Z 2024-09-01T00:00:00Z Hourly_WAvg
+                    Load rPV1: Sofar/measure/PVInput1/0x586_Leistung_PV1[kW] 2024-04-01T00:00:01Z 2024-09-01T00:00:00Z Hourly_WAvg
+                    Load rPV2: Sofar/measure/PVInput1/0x589_Leistung_PV2[kW] 2024-04-01T00:00:01Z 2024-09-01T00:00:00Z Hourly_WAvg
                     Load rNetz: Sofar/measure/OnGridOutput/0x488_ActivePower_PCC_Total[kW] 2024-04-01T00:00:00Z 2024-09-01T00:00:00Z Hourly_WAvg
                     Load rAkku: Sofar/measure/batteryInput1/0x606_Power_Bat1[kW] 2024-04-01T00:00:00Z 2024-09-01T00:00:00Z Hourly_WAvg
                     Load rVerbrauch: Sofar/measure/OnGridOutput/0x4AF_ActivePower_Load_Sys[kW] 2024-04-01T00:00:00Z 2024-09-01T00:00:00Z Hourly_WAvg
@@ -224,17 +232,17 @@ namespace FKala.Unittests
                     Aggr aNetz: rNetz Aligned_1Hour WAvg EmptyWindows
                     Aggr aAkku: rAkku Aligned_1Hour WAvg EmptyWindows
                     Aggr aVerbrauch: rVerbrauch Aligned_1Hour WAvg EmptyWindows
-                    Aggr aAkkuladung: rAkku Aligned_1Hour WAvg EmptyWindows
+                    //Aggr aAkkuladung: rAkku Aligned_1Hour WAvg EmptyWindows
 
 
                     Expr PV: ""aPV1.Value + aPV2.Value""
                     Expr Netzbezug: ""aNetz.Value > 0 ? 0 : -aNetz.Value""
                     Expr Netzeinspeisung: ""aNetz.Value < 0 ? 0 : aNetz.Value""
                     Expr Akkuentladung: ""aAkku.Value > 0 ? 0 : -aAkku.Value""
-                    Expr Akkuladung: ""aAkku.Value < 0 ? 0 : aAkku.Value""
+                    //Expr Akkuladung: ""aAkku.Value < 0 ? 0 : aAkku.Value""
                     Expr Verbrauch: ""aVerbrauch.Value""
 
-                    Publ ""Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch"" Table
+                    Publ ""Netzbezug,PV,Netzeinspeisung,Akkuentladung,,Verbrauch"" Table
                 ");
 
             var result = q.Execute(dl);

@@ -286,7 +286,7 @@ namespace FKala.Core.KalaQl
                         timespan = TimeSpan.Parse(v);
                     }
 
-                    return new Window() { Mode = WindowMode.FixedIntervall, Interval = timespan };
+                    return new Window(WindowMode.FixedIntervall, timespan);
 
             }
         }

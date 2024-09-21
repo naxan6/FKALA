@@ -10,7 +10,7 @@ namespace FKala.Core.KalaQl
 {
     public class KalaResult
     {
-        public List<Result>? ResultSets { get; set; }
+        public List<Result_Materialized>? ResultSets { get; set; }
         public List<ExpandoObject>? ResultTable { get; set; }
         public List<string>? MeasureList { get; internal set; }
         public List<string> Errors { get; internal set; } = new List<string>();
