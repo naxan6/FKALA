@@ -33,11 +33,14 @@ namespace FKala.Core.DataLayer.Infrastructure
                 dp.Time = dateTime;
                 var success = decimal.TryParse(valueRaw, CultureInfo.InvariantCulture, out value);
 
-                dp.Value = value;
-                if (!success)
+                
+                if (success)
+                {
+                    dp.Value = value;
+                }
+                else
                 {
                     dp.ValueText = valueRaw.ToString();
-
                 }
 
                 return dp;
