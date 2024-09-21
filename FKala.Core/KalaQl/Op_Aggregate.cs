@@ -62,7 +62,9 @@ namespace FKala.Core.KalaQl
             var enumerable = input.ResultsetFactory();
             var dataPointsEnumerator = enumerable.GetEnumerator();
             Window slidingWindow = WindowTemplate.GetCopy();
-            //hint: this StreamingAggregator instance is only unused input is empty
+
+            //hint: this slidingWindows AND StreamingAggregator instances are only used if input is empty
+            slidingWindow.Init(input.Query_StartTime, context.AlignTzTimeZoneId);
             StreamingAggregator currentAggregator = new StreamingAggregator(AggregateFunc, slidingWindow); 
             bool scrolledForward = false;
             bool isFirstAfterMoveNext = true;
