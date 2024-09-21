@@ -67,6 +67,9 @@ public class MqttWorker : IHostedService, IDisposable
             mqttClient.UseDisconnectedHandler(e =>
             {
                 Console.WriteLine("Disconnected from MQTT broker.");
+                System.Threading.Thread.Sleep(1000);
+                Console.WriteLine("Trying to reconnect");
+                mqttClient.ReconnectAsync(cancellationToken);
             });
 
             mqttClient.UseApplicationMessageReceivedHandler(e =>
