@@ -45,7 +45,7 @@ namespace FKala.Core.KalaQl
             UnknownIdInfo = Interpreter.DetectIdentifiers(Expresso);
 
             context.IntermediateDatasources.Add(
-                new Result()
+                new ResultPromise()
                 {
                     Name = this.Name,
                     Creator = this,
@@ -62,9 +62,9 @@ namespace FKala.Core.KalaQl
 
         }
         DateTime firstStartTime;
-        public IEnumerable<DataPoint> ExecuteInternal(KalaQlContext context, IEnumerable<Result> datenquellen)
+        public IEnumerable<DataPoint> ExecuteInternal(KalaQlContext context, IEnumerable<ResultPromise> datenquellen)
         {
-            var combined = new List<(DateTime Timestamp, int ListIndex, Result Item)>();
+            var combined = new List<(DateTime Timestamp, int ListIndex, ResultPromise Item)>();
             bool isFirstStartTime = true;
             foreach (var timeSynchronizedItems in DatasetsCombiner2.CombineSynchronizedResults(datenquellen.ToList()))
             {

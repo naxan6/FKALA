@@ -37,24 +37,29 @@ namespace FKala.Core.KalaQl
             // und gleichzeitiger Ausgabe aller dieser Serien im Publish
             // sich die Zugriffe auf den Enumerable überschneiden und das ganze dann buggt
             // (noch nicht final geklärt, z.B. siehe BUGTEST_KalaQl_2_Datasets_Aggregated_Expresso). 
-            context.IntermediateDatasources.Add(
-                new Result()
+
+            var outgoingResult =
+                new ResultPromise()
                 {
                     Name = this.Name,
                     Creator = this,
                     ResultsetFactory = () =>
                     {
                         var input = context.IntermediateDatasources.First(x => x.Name == InputDataSetName);
-
-                        var result = InternalExecute(context, input);
-                        return result;
+                        var resultset = InternalExecute(context, input);
+                        return resultset;
                     }
-                });
+                };
+
+            context.IntermediateDatasources.Add(outgoingResult);
             this.hasExecuted = true;
         }
 
-        private IEnumerable<DataPoint> InternalExecute(KalaQlContext context, Result input)
+        private IEnumerable<DataPoint> InternalExecute(KalaQlContext context, ResultPromise input)
         {
+            var startTime = input.Query_StartTime;
+            var endTime = input.Query_EndTime;
+
             var enumerable = input.ResultsetFactory();
             var dataPointsEnumerator = enumerable.GetEnumerator();
             Window slidingWindow = WindowTemplate.GetCopy();
@@ -72,7 +77,7 @@ namespace FKala.Core.KalaQl
                 previous = c;
                 if (isFirstAfterMoveNext)
                 {
-                    slidingWindow.Init(c.Time, context.AlignTzTimeZoneId);
+                    slidingWindow.Init(c.Time < startTime ? c.Time : startTime, context.AlignTzTimeZoneId);
                     currentAggregator = new StreamingAggregator(AggregateFunc, slidingWindow);
                     isFirstAfterMoveNext = false;
                 }
@@ -122,17 +127,17 @@ namespace FKala.Core.KalaQl
             var finalContentDataPoint = slidingWindow.GetDataPoint(currentAggregator.GetAggregatedValue());
             if (EmptyWindows || finalContentDataPoint.Value != null) yield return finalContentDataPoint;
 
-            //if (EmptyWindows)
-            //{
-            //    //TODO
-            //    while (slidingWindow.EndTime < new DateTime(2022,11,30,0,0,0))
-            //    {
-            //        slidingWindow.Next();
-            //        currentAggregator.Reset(currentAggregator.LastAggregatedValue);
-            //        var closingDataPoint = slidingWindow.GetDataPoint(currentAggregator.GetAggregatedValue());
-            //        if (EmptyWindows || closingDataPoint.Value != null) yield return closingDataPoint;
-            //    }
-            //}
+            if (EmptyWindows)
+            {
+                //TODO
+                while (slidingWindow.EndTime < endTime)
+                {
+                    slidingWindow.Next();
+                    currentAggregator.Reset(currentAggregator.LastAggregatedValue);
+                    var closingDataPoint = slidingWindow.GetDataPoint(currentAggregator.GetAggregatedValue());
+                    if (EmptyWindows || closingDataPoint.Value != null) yield return closingDataPoint;
+                }
+            }
         }
     }
 }

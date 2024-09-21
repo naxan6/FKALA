@@ -44,9 +44,11 @@ namespace FKala.Core.KalaQl
             //if (CacheResolution.ForceRebuild) result = result.ToList();
             
             context.IntermediateDatasources.Add(
-                new Result()
+                new ResultPromise()
                 {
                     Name = this.Name,
+                    Query_StartTime = StartTime,
+                    Query_EndTime = EndTime,
                     Creator = this,
                     ResultsetFactory = () =>
                     {

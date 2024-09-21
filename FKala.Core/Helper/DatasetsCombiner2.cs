@@ -14,11 +14,11 @@ namespace FKala.Core.Logic
     {
         private class ResultEnumerator
         {
-            public required Result Result;
+            public required ResultPromise Result;
             public required IEnumerator<DataPoint> Enumerator;
         }
 
-        public static IEnumerable<IGrouping<DateTime, (Result Result, DataPoint DataPoint)>> CombineSynchronizedResults(List<Result> results)
+        public static IEnumerable<IGrouping<DateTime, (ResultPromise Result, DataPoint DataPoint)>> CombineSynchronizedResults(List<ResultPromise> results)
         {
 
             // Start Iterators
@@ -49,7 +49,7 @@ namespace FKala.Core.Logic
                 consumedEnumerators.Clear();
 
                 var minTime = enumerators.Min(e => e.Enumerator.Current.Time);
-                List<(Result result, DataPoint datapoint)> timeMatches = new List<(Result result, DataPoint datapoint)>();
+                List<(ResultPromise result, DataPoint datapoint)> timeMatches = new List<(ResultPromise result, DataPoint datapoint)>();
                 foreach (var enumerator in enumerators)
                 {
                     if (minTime == enumerator.Enumerator.Current.Time)
@@ -59,7 +59,7 @@ namespace FKala.Core.Logic
                     }
                 }
 
-                yield return new Grouping<DateTime, (Result result, DataPoint DataPoint)>(minTime, timeMatches);
+                yield return new Grouping<DateTime, (ResultPromise result, DataPoint DataPoint)>(minTime, timeMatches);
             }
         }
 
