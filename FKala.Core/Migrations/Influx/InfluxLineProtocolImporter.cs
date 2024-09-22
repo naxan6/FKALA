@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using FKala.Core.Interfaces;
 using NodaTime.Calendars;
 using System.Reflection.Metadata.Ecma335;
+using FKala.Core.Migrations.Influx;
 
 namespace FKala.Core.Migration
 {
@@ -48,12 +49,12 @@ namespace FKala.Core.Migration
                 ImportLine(line);
                 decimal percent = 1.0m * sr.BaseStream.Position / gesamt;
                 tenthmillipercent = (int)(100000.0m * sr.BaseStream.Position / gesamt);
-                if (previousPercent + 0.1M < percent)
+                if (previousPercent + 0.001M < percent)
                 {
-                    previousPercent = percent;                    
+                    previousPercent = percent;
                     var msg = $"Progress {100.0m * percent}% for Import {filePath}";
                     Console.WriteLine(msg);
-                    
+
                     var elapsed = DateTime.Now.Ticks - start.Ticks;
                     var eta = (elapsed / percent) - elapsed;
                     var etaTs = new TimeSpan((long)eta);
@@ -69,7 +70,7 @@ namespace FKala.Core.Migration
             }
         }
 
-        public void ImportLine(string line)
+        public void ImportLineOld(string line)
         {
             line = line.Replace("\\ ", "_");
             var match = LineProtocolRegex.Match(line);
@@ -120,14 +121,15 @@ namespace FKala.Core.Migration
 
                 if (fieldValue.EndsWith('i'))
                 {
-                    fieldValue = fieldValue.Substring(fieldValue.Length - 1);   
+                    fieldValue = fieldValue.Substring(fieldValue.Length - 1);
                 }
                 string kalaLineProtValue;
                 if (!decimal.TryParse(fieldValue, NumberStyles.Any, ci, out var parsedValue))
                 {
                     kalaLineProtValue = parsedValue.ToString(ci);
                     //throw new FormatException($"Ungültiger Feldwert: {fieldValue}");
-                } else
+                }
+                else
                 {
                     kalaLineProtValue = fieldValue.Replace('\n', '|');
                 }
@@ -145,7 +147,55 @@ namespace FKala.Core.Migration
 
                 _dataLayer.Insert(sb.ToString());
             }
+        }
 
+        InfluxLineParser ilp = new InfluxLineParser();
+
+        public void ImportLine(string line)
+        {
+            ilp.Read(line);
+
+            string measurement = ilp.measurement!;
+            var tags = ilp.tags;
+            var fields = ilp.fields;
+            var time = ilp.time;
+
+            var topicPair = tags.Where(t => t.Item1 == "topic");
+            
+
+            foreach (var field in fields)
+            {
+                var fieldName = field.Item1;
+                var fieldValue = field.Item2;
+
+                if (fieldValue.EndsWith('i'))
+                {
+                    fieldValue = fieldValue.Substring(fieldValue.Length - 1);
+                }
+                string kalaLineProtValue;
+                if (!decimal.TryParse(fieldValue, NumberStyles.Any, ci, out var parsedValue))
+                {
+                    kalaLineProtValue = parsedValue.ToString(ci);
+                }
+                else
+                {
+                    kalaLineProtValue = fieldValue;
+                }
+
+                var newMeasurement = (topicPair.Any()) ? measurement : topicPair.First().Item2;
+                var fieldExt = fieldName == "value" ? "" : $"_{fieldName}";
+
+                sb.Clear();
+                sb.Append(newMeasurement);
+                sb.Append(fieldExt);
+                sb.Append(' ');
+                sb.Append(time!.Value.ToString("yyyy-MM-ddTHH:mm:ss.fffffff"));
+                sb.Append(' ');
+                sb.Append(kalaLineProtValue);
+                //var rawData = $"{newMeasurement}{fieldExt} {parsedTimestamp:yyyy-MM-ddTHH:mm:ss.fffffff} {parsedValue.ToString(ci)}";
+
+                _dataLayer.Insert(sb.ToString());
+            }
         }
     }
 }
