@@ -73,8 +73,20 @@ namespace FKala.Core.DataLayer.Infrastructure
                     }
                     catch (Exception)
                     {
-                        Console.WriteLine("Error at BufferedWriter with path <{filePath}>");
-                        throw;
+                        var dir = Path.GetDirectoryName(filePath);
+                        if (!Directory.Exists(dir))
+                        {
+                            Directory.CreateDirectory(dir);
+                        }
+                        try
+                        {
+                            writer = new BufferedWriter(filePath);
+                        }
+                        catch (Exception)
+                        {
+                            Console.WriteLine("Error at BufferedWriter with path <{filePath}>");
+                            throw;
+                        }
                     }
                     _bufferedWriters[filePath] = writer;
                 }

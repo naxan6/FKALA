@@ -23,7 +23,7 @@ namespace FKala.Core
         public CachingLayer CachingLayer { get; }
         public BufferedWriterService WriterSvc { get; } = new BufferedWriterService();
 
-        ConcurrentBag<string> CreatedDirectories = new ConcurrentBag<string>();
+        ConcurrentDictionary<string, byte> CreatedDirectories = new ConcurrentDictionary<string, byte>();
         DefaultObjectPool<StringBuilder> stringBuilderPool = new DefaultObjectPool<StringBuilder>(new StringBuilderPooledObjectPolicy());
 
         public DataLayer_Readable_Caching_V1(string storagePath)
@@ -136,10 +136,10 @@ namespace FKala.Core
             // Create the directory path
             var directoryPath = Path.Combine(DataDirectory, measurement, datetime.Slice(0, 4).ToString(), datetime.Slice(5, 2).ToString());
 
-            if (!CreatedDirectories.Contains(directoryPath))
+            if (!CreatedDirectories.ContainsKey(directoryPath))
             {
                 Directory.CreateDirectory(directoryPath);
-                CreatedDirectories.Add(directoryPath);
+                CreatedDirectories.AddOrUpdate(directoryPath, 0, (string key, byte old) => { return 0; });
             }
 
             // Create the file path
