@@ -118,8 +118,8 @@ namespace FKala.Core.KalaQl
                     {
                         var retRow = new Dictionary<string, object?>
                         {
-                            { "measurement", $"{measurement}" },
                             { "status", $"error" },
+                            { "measurement", $"{measurement}" },                            
                             { "progress", $"({progress}% {count}/{total})" },
                             { "msg", $"{err}" }
                             
@@ -136,8 +136,8 @@ namespace FKala.Core.KalaQl
                     {
                         var retRow = new Dictionary<string, object?>
                         {
-                            { "measurement", $"{measurement}" },
                             { "status", $"error" },
+                            { "measurement", $"{measurement}" },                            
                             { "progress", $"({progress}% {count}/{total})" },
                             { "msg", $"{err}" }
                         };
@@ -150,16 +150,13 @@ namespace FKala.Core.KalaQl
                 {
                     var retRow = new Dictionary<string, object?>
                         {
-                            { "measurement", $"{measurement}" },
                             { "status", $"Ok" },
+                            { "measurement", $"{measurement}" },                            
                             { "progress", $"({progress}% {count}/{total})" },
                             { "msg", $"({progress}% {count}/{total}) All files OK for measurement: {measurement}" }
                         };
                     yield return retRow;
                 }
-
-
-
                 
                 Console.WriteLine($"Checked measurement {measurement}.");
 
