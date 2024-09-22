@@ -33,21 +33,30 @@ namespace FKala.Core.Migration
             var gesamt = sr.BaseStream.Length;
             string? line;
             int tenthmillipercent;
-            int previousTenthmillipercent = 0;
+            decimal previousTenthmillipercent = 0;
             DateTime start = DateTime.Now;
+            var preRow = new Dictionary<string, object?>
+                        {
+                            { "progress", $"0.000%" },
+                            { "eta", $"-" },
+                            { "msg", "Started InfluxImporter" }
+                        };
+            yield return preRow;
+
             while ((line = sr.ReadLine()) != null)
             {
                 ImportLine(line);
+                decimal percent = 1.0m * sr.BaseStream.Position / gesamt;
                 tenthmillipercent = (int)(100000.0m * sr.BaseStream.Position / gesamt);
-                if (previousTenthmillipercent + 10000 < tenthmillipercent)
+                if (previousTenthmillipercent + 0.01M < tenthmillipercent)
                 {
                     previousTenthmillipercent = tenthmillipercent;
-                    var msg = $"Progress {1.0m * tenthmillipercent / 1000}% for Import {filePath}";
+                    var msg = $"Progress {100.0m * percent}% for Import {filePath}";
                     Console.WriteLine(msg);
-                    DateTime now = DateTime.Now;
-                    var elapsed = now.Ticks - start.Ticks;
-                    var eta = 1.0m / (tenthmillipercent / 1000) * elapsed;
-                    var etaTs = new TimeSpan(elapsed);
+                    
+                    var elapsed = DateTime.Now.Ticks - start.Ticks;
+                    var eta = (elapsed / percent) - elapsed;
+                    var etaTs = new TimeSpan((long)eta);
                     var retRow = new Dictionary<string, object?>
                         {
                             { "progress", $"{(1.0m * tenthmillipercent / 1000).ToString("F3")}%" },

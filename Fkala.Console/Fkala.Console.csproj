@@ -13,7 +13,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FKala.Core\FKala.Core.csproj" />
-    <ProjectReference Include="..\FKala.Migrate\FKala.Migrate.csproj" />
     <ProjectReference Include="..\FKala.Unittests\FKala.Unittests.csproj" />
   </ItemGroup>
 

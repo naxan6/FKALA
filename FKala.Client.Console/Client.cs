@@ -4,85 +4,64 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 
 namespace FKala.Client.Cmd
 {
     public class Client
     {
-        public async static Task Main(string[] args)
+        public async static Task Main(string[] args)    
         {
+
+            Client kalaClient = new Client();
             // Parse die Argumente und führe die entsprechende Logik aus
             await Parser.Default.ParseArguments<QuerySyncOpts, QueryAsyncOpts>(args)
                 .MapResult(
-                    (QuerySyncOpts opts) => QuerySync(opts),
-                    (QueryAsyncOpts opts) => QueryAsync(opts),
+                    (QuerySyncOpts opts) => kalaClient.QueryAsync(opts.Url, opts.Input, "Query", opts.Debug),
+                    (QueryAsyncOpts opts) => kalaClient.QueryAsync(opts.Url, opts.Input, "StreamQuery", opts.Debug),
                     errs => Task.FromResult(0)
                 );
 
             //.WithParsedAsync<QuerySync>(opts => QuerySync(opts));
         }
 
-        private static async Task QuerySync(QuerySyncOpts opts)
+        private async Task QueryAsync(string baseUrl, string input, string endpoint, bool debug = false)
         {
             try
             {
                 using (HttpClient client = new HttpClient())
                 {
-                    // Erstelle den Inhalt der POST-Anfrage
-                    var content = new StringContent(opts.Input);
+                    // timeout to 180 minutes
+                    client.Timeout = TimeSpan.FromMinutes(180);
 
-                    Uri baseUri = new Uri(opts.Url, UriKind.Absolute);
-                    Uri uri = new Uri(baseUri, "Query");
+                    // create POST-body
+                    var content = new StringContent(input);
 
-                    // Sende die POST-Anfrage
-                    using (HttpResponseMessage response = await client.PostAsync(uri, content))
+                    Uri baseUri = new Uri(baseUrl, UriKind.Absolute);
+                    Uri uri = new Uri(baseUri, endpoint);
+                    if (debug) Console.WriteLine($"Sending to : {uri}");
+                    if (debug) Console.WriteLine($"Sending command : {input}");
+                    // send request
+
+                    var request = new HttpRequestMessage(HttpMethod.Post, uri);
+                    request.Content = content;
+
+                    using (HttpResponseMessage response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead))
                     {
+                        if (debug) Console.WriteLine($"Status Code: {response.StatusCode}");
                         response.EnsureSuccessStatusCode();
-                        // Lese die Antwort als Stream und gib sie direkt in die Konsole aus
+                        if (debug) Console.WriteLine("Antwort empfangen, lese Daten...");
+                        // read response and post to console
                         using (var stream = await response.Content.ReadAsStreamAsync())
                         using (var reader = new StreamReader(stream))
                         {
-                            char[] buffer = new char[8192];
+                            char[] buffer = new char[1024];
                             int bytesRead;
                             while ((bytesRead = await reader.ReadAsync(buffer, 0, buffer.Length)) > 0)
                             {
-                                Console.Write(buffer, 0, bytesRead);
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Fehler: {ex.Message}");
-            }
-        }
-
-        private static async Task QueryAsync(QueryAsyncOpts opts)
-        {
-            try
-            {
-                using (HttpClient client = new HttpClient())
-                {
-                    // Erstelle den Inhalt der POST-Anfrage
-                    var content = new StringContent(opts.Input);
-
-                    Uri baseUri = new Uri(opts.Url, UriKind.Absolute);
-                    Uri uri = new Uri(baseUri, "StreamQuery");
-
-                    // Sende die POST-Anfrage
-                    using (HttpResponseMessage response = await client.PostAsync(uri, content))
-                    {
-                        response.EnsureSuccessStatusCode();
-                        // Lese die Antwort als Stream und gib sie direkt in die Konsole aus
-                        using (var stream = await response.Content.ReadAsStreamAsync())
-                        using (var reader = new StreamReader(stream))
-                        {
-                            char[] buffer = new char[8192];
-                            int bytesRead;
-                            while ((bytesRead = await reader.ReadAsync(buffer, 0, buffer.Length)) > 0)
-                            {
-                                Console.Write(buffer, 0, bytesRead);
+                                string result = new string(buffer, 0, bytesRead);
+                                result = result.Replace("}", "}\n");
+                                Console.Write(result);
                             }
                         }
                     }

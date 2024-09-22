@@ -26,6 +26,26 @@ namespace FKala.Migrate.MariaDb
             using var connection = new MySqlConnection(ConnectionString);
             connection.Open();
 
+            var preRow = new Dictionary<string, object?>
+                        {
+                            { "progress", $"0.000%" },
+                            { "eta", $"-" },
+                            { "msg", "Started MariaDbImporter" }
+                        };
+            yield return preRow;
+
+            using var countCommand = new MySqlCommand(@"SELECT table_rows FROM information_schema.tables WHERE TABLE_NAME = 'event' AND table_schema = 'jsts'", connection);            
+            var total = (ulong) countCommand.ExecuteScalar();
+
+            var preRow2 = new Dictionary<string, object?>
+                        {
+                            { "progress", $"0.000%" },
+                            { "eta", $"-" },
+                            { "total", total },
+                            { "msg", "Started MariaDbImporter" }
+                        };
+            yield return preRow2;
+
             using var command = new MySqlCommand(@"
 SELECT   
     e.id,
@@ -49,8 +69,10 @@ order by e.id asc;
             using var reader = await command.ExecuteReaderAsync();
 
             long i = 1;
+            long inserts = 0;
             string kalalinedata = string.Empty;
             EventRow row;
+            DateTime start = DateTime.Now;
             while (await reader.ReadAsync())
             {
                 row = await ReadRowAsync(reader);
@@ -59,53 +81,70 @@ order by e.id asc;
                 {
                     kalalinedata = $"jsts/{row.sensorName.Replace(' ', '_')}/int1 {DateTimeOffset.FromUnixTimeSeconds(row.timestamp / 1000).AddTicks((row.timestamp % 1000) * 10000).ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {row.intValue1}";
                     DataLayer.Insert(kalalinedata);
+                    inserts++;
                 }
                 if (row.intValue2 != null)
                 {
                     kalalinedata = $"jsts/{row.sensorName.Replace(' ', '_')}/int2 {DateTimeOffset.FromUnixTimeSeconds(row.timestamp / 1000).AddTicks((row.timestamp % 1000) * 10000).ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {row.intValue2}";
                     DataLayer.Insert(kalalinedata);
+                    inserts++;
                 }
                 if (row.timeValue1 != null)
                 {
                     kalalinedata = $"jsts/{row.sensorName.Replace(' ', '_')}/timeValue1 {DateTimeOffset.FromUnixTimeSeconds(row.timestamp / 1000).AddTicks((row.timestamp % 1000) * 10000).ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {row.timeValue1}";
                     DataLayer.Insert(kalalinedata);
+                    inserts++;
                 }
                 if (row.timeValue2 != null)
                 {
                     kalalinedata = $"jsts/{row.sensorName.Replace(' ', '_')}/timeValue2 {DateTimeOffset.FromUnixTimeSeconds(row.timestamp / 1000).AddTicks((row.timestamp % 1000) * 10000).ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {row.timeValue2}";
                     DataLayer.Insert(kalalinedata);
+                    inserts++;
                 }
                 if (row.doubleValue1 != null)
                 {
                     kalalinedata = $"jsts/{row.sensorName.Replace(' ', '_')}/doubleValue1 {DateTimeOffset.FromUnixTimeSeconds(row.timestamp / 1000).AddTicks((row.timestamp % 1000) * 10000).ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {row.doubleValue1.Value.ToString(CultureInfo.InvariantCulture)}";
                     DataLayer.Insert(kalalinedata);
+                    inserts++;
                 }
                 if (row.doubleValue2 != null)
                 {
                     kalalinedata = $"jsts/{row.sensorName.Replace(' ', '_')}/doubleValue2 {DateTimeOffset.FromUnixTimeSeconds(row.timestamp / 1000).AddTicks((row.timestamp % 1000) * 10000).ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {row.doubleValue2.Value.ToString(CultureInfo.InvariantCulture)}";
                     DataLayer.Insert(kalalinedata);
+                    inserts++;
                 }
                 if (row.stringValue1 != null)
                 {
                     kalalinedata = $"jsts/{row.sensorName.Replace(' ', '_')}/stringValue1 {DateTimeOffset.FromUnixTimeSeconds(row.timestamp / 1000).AddTicks((row.timestamp % 1000) * 10000).ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {row.stringValue1}";
                     DataLayer.Insert(kalalinedata);
+                    inserts++;
                 }
                 if (row.stringValue2 != null)
                 {
                     kalalinedata = $"jsts/{row.sensorName.Replace(' ', '_')}/stringValue2 {DateTimeOffset.FromUnixTimeSeconds(row.timestamp / 1000).AddTicks((row.timestamp % 1000) * 10000).ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {row.stringValue2}";
                     DataLayer.Insert(kalalinedata);
+                    inserts++;
                 }
 
 
                 if (i % 100000 == 0)
                 {
+                    var percent = 1.0M * i / total;
+                    var elapsed = DateTime.Now.Ticks - start.Ticks;
+                    var eta = (elapsed / percent) - elapsed;
+                    var etaTs = (eta < long.MaxValue) ? new TimeSpan((long)eta) : (TimeSpan?)null;
                     Console.WriteLine($"ID: {row.id}, Count: {i} ### {kalalinedata}");
-                    var msg = $"Progress is {i} Lines for TstsfeImport";
+                    var msg = $"";
                     Console.WriteLine(msg);
+
                     var retRow = new Dictionary<string, object?>
                         {
-                            { "count", $"{i}" },
-                            { "curretn dataset", $"{row.id}" },
+                            { "done", $"{i}" },
+                            { "total", total },
+                            { "current dataset", $"{row.id}" },
+                            { "percent", $"{100.0M * percent}" },
+                            { "eta", $"{etaTs}" },
+                            { "inserts", $"{inserts}" },
                             { "msg", msg }
 
                         };

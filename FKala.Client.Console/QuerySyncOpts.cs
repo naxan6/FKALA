@@ -16,5 +16,8 @@ namespace FKala.Client.Cmd
 
         [Option('i', "input", Required = true, HelpText = "Der Eingabe-String, der verarbeitet werden soll.")]
         public string Input { get; set; }
+
+        [Option('d', "debug", Required = false, Default =false, HelpText = "Debug.")]
+        public bool Debug { get; set; }
     }
 }
