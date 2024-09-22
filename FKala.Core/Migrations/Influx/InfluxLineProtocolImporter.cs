@@ -160,7 +160,7 @@ namespace FKala.Core.Migration
             var fields = ilp.fields;
             var time = ilp.time;
 
-            var topicPair = tags.Where(t => t.Item1 == "topic");
+            var topicPair = tags.Where(t => t.Item1 == "topic").ToList();
             
 
             foreach (var field in fields)
@@ -182,7 +182,7 @@ namespace FKala.Core.Migration
                     kalaLineProtValue = fieldValue;
                 }
 
-                var newMeasurement = (topicPair.Any()) ? measurement : topicPair.First().Item2;
+                var newMeasurement = (!topicPair.Any()) ? measurement : topicPair.First().Item2;
                 var fieldExt = fieldName == "value" ? "" : $"_{fieldName}";
 
                 sb.Clear();
