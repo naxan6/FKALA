@@ -33,7 +33,7 @@ namespace FKala.Core.Migration
             var gesamt = sr.BaseStream.Length;
             string? line;
             int tenthmillipercent;
-            decimal previousTenthmillipercent = 0;
+            decimal previousPercent = 0;
             DateTime start = DateTime.Now;
             var preRow = new Dictionary<string, object?>
                         {
@@ -48,9 +48,9 @@ namespace FKala.Core.Migration
                 ImportLine(line);
                 decimal percent = 1.0m * sr.BaseStream.Position / gesamt;
                 tenthmillipercent = (int)(100000.0m * sr.BaseStream.Position / gesamt);
-                if (percent + 0.1M < percent)
+                if (previousPercent + 0.1M < percent)
                 {
-                    previousTenthmillipercent = tenthmillipercent;
+                    previousPercent = percent;                    
                     var msg = $"Progress {100.0m * percent}% for Import {filePath}";
                     Console.WriteLine(msg);
                     
