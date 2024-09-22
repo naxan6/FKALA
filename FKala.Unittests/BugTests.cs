@@ -112,7 +112,7 @@ Publ aVar1 Table");
             Console.WriteLine(KalaJson.Serialize(result.Errors));// JSON serialize
             result.Errors.Should().HaveCount(2);
             result.Errors.Last().Should().ContainAll([
-                "System.Exception: Marked sorted but unsorted at File "],
+                "FKala.Core.DataLayers.UnexpectedlyUnsortedException: Marked sorted but unsorted at File "],
                 ", Line 9904 True ## 09:23:11.9220000 15728\r\n", "invalid data should throw error message");
 
         }

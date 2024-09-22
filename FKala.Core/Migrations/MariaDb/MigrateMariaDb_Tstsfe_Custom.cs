@@ -35,7 +35,7 @@ namespace FKala.Migrate.MariaDb
             yield return preRow;
 
             using var countCommand = new MySqlCommand(@"SELECT table_rows FROM information_schema.tables WHERE TABLE_NAME = 'event' AND table_schema = 'jsts'", connection);            
-            var total = (ulong) countCommand.ExecuteScalar();
+            var total = (ulong) countCommand.ExecuteScalar()!;
 
             var preRow2 = new Dictionary<string, object?>
                         {
