@@ -1,5 +1,6 @@
 ﻿using FKala.Core.DataLayer.Infrastructure;
 using FKala.Core.Interfaces;
+using FKala.Core.KalaQl;
 using FKala.Core.KalaQl.Windowing;
 using FKala.Core.Logic;
 using FKala.Core.Model;
@@ -25,7 +26,7 @@ namespace FKala.Core.DataLayer.Cache
         //Resolution.Minutely Window.Aligned_1Minute PrepareMinutelyData ReadMinutelyLine "MM-ddTHH:mm"
 
 
-        public IEnumerable<DataPoint> LoadDataFromCache(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution)
+        public IEnumerable<DataPoint> LoadDataFromCache(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, KalaQl.KalaQlContext context)
         {
             var measurementPath = PathSanitizer.SanitizePath(measurement);
             ICache cache = GetCacheImplementation(cacheResolution);
@@ -67,7 +68,7 @@ namespace FKala.Core.DataLayer.Cache
                                 if (!cacheAlreadyInWork)
                                 {
                                     Console.WriteLine($"Incremental Update requested: {cache.CacheSubdir}/{Path.GetFileName(cacheFilePath)}");
-                                    IncrementalUpdateCache(measurement, cacheResolution, cacheFilePath);
+                                    IncrementalUpdateCache(measurement, cacheResolution, cacheFilePath, context);
                                 }
                             }
                         }
@@ -108,11 +109,11 @@ namespace FKala.Core.DataLayer.Cache
         }
 
 
-        public void IncrementalUpdateCache(string measurement, CacheResolution cacheResolution, string cacheFilePath)
+        public void IncrementalUpdateCache(string measurement, CacheResolution cacheResolution, string cacheFilePath, KalaQlContext context)
         {
             ICache cache = GetCacheImplementation(cacheResolution);
             var sanitizedMeasurement = PathSanitizer.SanitizePath(measurement);
-            var rebuildFromDateTime = ShouldUpdateFromWhere(sanitizedMeasurement, cacheResolution.Resolution, cacheResolution.AggregateFunction, cache);
+            var rebuildFromDateTime = ShouldUpdateFromWhere(sanitizedMeasurement, cacheResolution.Resolution, cacheResolution.AggregateFunction, cache, context);
             if (rebuildFromDateTime != DateTime.MaxValue)
             {
                 string newestCacheFile = GetNewestCacheFilepath(sanitizedMeasurement, cache, cacheResolution.AggregateFunction);
@@ -128,12 +129,12 @@ namespace FKala.Core.DataLayer.Cache
             }
         }
 
-        public DateTime ShouldUpdateFromWhere(string sanitizedMeasurement, Resolution resolution, AggregateFunction aggregateFunction, ICache cache)
+        public DateTime ShouldUpdateFromWhere(string sanitizedMeasurement, Resolution resolution, AggregateFunction aggregateFunction, ICache cache, KalaQlContext context)
         {
             string newest = GetNewestCacheFilepath(sanitizedMeasurement, cache, aggregateFunction);
             var parts = newest.Split('_');
             var cacheYear = int.Parse(parts[parts.Length - 2]);
-            var newestInRaw = DataLayer.LoadNewestDatapoint(sanitizedMeasurement);
+            var newestInRaw = DataLayer.LoadNewestDatapoint(sanitizedMeasurement, context);
             var newestInCache = cache.LoadNewestDatapoint(newest);
             return cache.ShouldUpdateFromWhere(cacheYear, newestInCache.First(), newestInRaw.First());
         }

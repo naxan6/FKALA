@@ -5,18 +5,25 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Runtime;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
+using Microsoft.Extensions.Logging.Abstractions;
+using FKala.Core.DataLayer.Infrastructure;
+using Microsoft.AspNetCore.Http.HttpResults;
+using System.Diagnostics.Metrics;
+using System;
+using NodaTime.Calendars;
 
 namespace FKala.Api.Controller
 {
 
     [ApiController]
     [Route("api/[controller]")]
-    public class QueryController : ControllerBase
+    public class StreamQueryController : ControllerBase
     {
         public IDataLayer DataLayer { get; }
         public ILogger<QueryController> Logger { get; }
 
-        public QueryController(IDataLayer dataLayer, ILogger<QueryController> logger)
+        public StreamQueryController(IDataLayer dataLayer, ILogger<QueryController> logger)
         {
             this.DataLayer = dataLayer;
             this.Logger = logger;
@@ -24,11 +31,11 @@ namespace FKala.Api.Controller
 
         // GET api/string
         [HttpGet]
-        public IActionResult QueryGet([FromQuery] string input)
+        public IAsyncEnumerable<Dictionary<string, object?>> QueryGet([FromQuery] string input)
         {
             if (string.IsNullOrEmpty(input))
             {
-                return BadRequest("Input string is required.");
+                throw new Exception("Input string is required.");
             }
 
             // Verarbeite den String hier nach Bedarf
@@ -41,25 +48,29 @@ namespace FKala.Api.Controller
         [HttpPost]
         [Consumes("text/plain")]
         //[SwaggerRequestBody("Weather forecast data", Required = true)]
-        public IActionResult QueryPost([FromBody] string input)
+        public async IAsyncEnumerable<Dictionary<string, object?>>  QueryPost([FromBody] string input)
         {
             if (string.IsNullOrEmpty(input))
             {
-                return BadRequest("Input string is required.");
+                throw new Exception("Input string is required.");
             }
 
             // Verarbeite den String hier nach Bedarf
             var inputmultiline = ProcessString(input);
 
-            return DoQuery(inputmultiline);
+            await foreach (var retRowDict in DoQuery(inputmultiline))
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(1));
+                yield return retRowDict;
+            }
 
         }
 
-        private IActionResult DoQuery(string query)
+        private IAsyncEnumerable<Dictionary<string, object?>> DoQuery(string query)
         {
             try
             {
-                var q = KalaQuery.Start()
+                var q = KalaQuery.Start(true)
                     .FromQuery(query);
 
                 var result = q.Execute(this.DataLayer);
@@ -74,21 +85,25 @@ namespace FKala.Api.Controller
                         ModelState.AddModelError($"Error {i}", e);
                         Logger.LogError($"Error {i}: " + e);
                     });
-                    return Ok(result.Errors);
+                    throw new Exception(string.Join(", " + result.Errors));
                 }
                 else if (result?.MeasureList != null)
                 {
-                    return Ok(result.MeasureList);
+                    throw new Exception("MeasureList streaming is not supported. Use Query endpoint.");
                 }
                 else if (result?.ResultSets != null)
                 {
-                    return Ok(result.ResultSets);
+                    throw new Exception("Resultset streaming is not supported. Use Table.");
+                }
+                else if (result?.StreamResult != null)
+                {
+                    return result.StreamResult;
                 }
                 else if (result?.ResultTable != null)
                 {
-                    return Ok(result.ResultTable);
+                    return result.ResultTable.AsAsyncEnumerable();
                 }
-                return NoContent();
+                return new List<Dictionary<string, object?>>().AsAsyncEnumerable();
             }
             catch (Exception ex)
             {
@@ -103,8 +118,18 @@ namespace FKala.Api.Controller
                     exres.Add("iexstack: " + $"{ex.StackTrace}");
                     ie = ex.InnerException;
                 }
+                var retRow = new Dictionary<string, object?>
+                        {
+                            { "query", $"{query}" },
+                            { "status", $"exception" },
+                            { "msg", $"{String.Join(", ", exres)}" }
 
-                return Ok(ModelState);
+                        };
+                var ret = new List<Dictionary<string, object?>>
+                {
+                    retRow
+                };
+                return ret.AsAsyncEnumerable();
             }
         }
 

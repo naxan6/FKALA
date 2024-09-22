@@ -1,5 +1,6 @@
 ﻿using FKala.Core.DataLayer.Infrastructure;
 using FKala.Core.Interfaces;
+using FKala.Core.KalaQl;
 using FKala.Core.Model;
 using System;
 using System.Collections.Generic;
@@ -36,21 +37,19 @@ namespace FKala.Core.DataLayers
         private SortedDictionary<DateTime, ReaderTuple> TimeSortedStreamReader;
         private DateTime StartTime;
         private DateTime EndTime;
+
+        public KalaQlContext Context { get; }
+
         private bool IsActiveAutoSortRawFiles;
         private IDataLayer? DataLayer;
 
-        private StorageAccess(string measurementPath, string measurementPathPart, DateTime startTime, DateTime endTime)
+        public StorageAccess(string measurementPath, string measurementPathPart, DateTime startTime, DateTime endTime, KalaQl.KalaQlContext context)
         {
             this.StartTime = startTime;
             this.EndTime = endTime;
+            this.Context = context;
             this.TimeSortedStreamReader = GetFilePaths(measurementPath, measurementPathPart, startTime, endTime);
-        }
-
-        public static StorageAccess Init(string measurementPath, string measurementPathPart, DateTime startTime, DateTime endTime)
-        {
-            var ret = new StorageAccess(measurementPath, measurementPathPart, startTime, endTime);
-            return ret;
-        }
+        }  
 
         public StorageAccess OpenStreamReaders()
         {
@@ -102,7 +101,8 @@ namespace FKala.Core.DataLayers
                     }
                     catch (ArgumentException)
                     {
-                        Console.WriteLine($"BUG in raw data: multiple files for date {fileDateTime.ToString("s")} : {candidate}. Skipping file.");
+                        var msg = $"BUG in raw data: multiple files for date {fileDateTime.ToString("s")} : {candidate}. Skipping file.";
+                        Context.AddError(msg);                        
                     }
                 }
             }
@@ -134,7 +134,7 @@ namespace FKala.Core.DataLayers
                 }
                 else
                 {
-                    foreach (var dp in InternalStreamDataPoints(srTuple, fileyear, filemonth, fileday))
+                    foreach (var dp in InternalStreamDataPoints(srTuple, fileyear, filemonth, fileday, true))
                     {
                         yield return dp;
                     }
@@ -144,7 +144,7 @@ namespace FKala.Core.DataLayers
 
         private IEnumerable<DataPoint> InternalStreamDataPointsSort(ReaderTuple readerTuple, int fileyear, int filemonth, int fileday)
         {
-            var dataPoints = InternalStreamDataPoints(readerTuple, fileyear, filemonth, fileday).ToList();
+            var dataPoints = InternalStreamDataPoints(readerTuple, fileyear, filemonth, fileday, false).ToList();
             bool persistenceIsSorted = IsSorted(dataPoints);
             // if not sorted, sort it
             if (!persistenceIsSorted)
@@ -230,15 +230,16 @@ namespace FKala.Core.DataLayers
             return true;
         }
 
-        private IEnumerable<DataPoint> InternalStreamDataPoints(ReaderTuple sr, int fileyear, int filemonth, int fileday)
+        private IEnumerable<DataPoint> InternalStreamDataPoints(ReaderTuple sr, int fileyear, int filemonth, int fileday, bool checkUnsorted)
         {
             int lineIdx = 0;
             DataPoint? retPrev = null;
             string? dataline;
+
             while ((dataline = sr.StreamReader!.ReadLine()) != null)
             {
                 lineIdx++;
-                var ret = DatFileParser.ParseLine(fileyear, filemonth, fileday, dataline, sr.FilePath);
+                var ret = DatFileParser.ParseLine(fileyear, filemonth, fileday, dataline, sr.FilePath, lineIdx, Context);
                 ret.Source = $"{sr.FilePath}, Line {lineIdx} {sr.MarkedAsSorted}";
 
 
@@ -247,15 +248,19 @@ namespace FKala.Core.DataLayers
                     retPrev = ret;
                     continue;
                 }
-
+                
                 if (retPrev.Time == ret.Time) // combine, if same time and consume both
-                {
+                {                    
                     retPrev.Value = retPrev.Value ?? ret.Value;
                     retPrev.ValueText = retPrev.ValueText ?? ret.ValueText;
                     yield return retPrev;
 
                     retPrev = null;
                     continue;
+                } 
+                else if (retPrev.Time >= ret.Time && checkUnsorted) 
+                { 
+                    throw new UnexpectedlyUnsortedException($"Marked sorted but unsorted at File {ret.Source} ## {dataline}");                     
                 }
 
                 if (retPrev.Time >= StartTime && retPrev.Time < EndTime) // send if DataPoint is in window

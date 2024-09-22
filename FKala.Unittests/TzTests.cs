@@ -72,18 +72,19 @@ namespace FKala.Unittests
 
             var testResult = query.Execute(dl);
             testResult.Errors.ForEach(er => Console.WriteLine(er));
-            testResult.Errors.Should().BeEmpty(); 
-            var _1stEntry = ((dynamic)testResult.ResultTable![0]);
-            var _2ndEntry = ((dynamic)testResult.ResultTable![1]);
-            //var _3rdEntry = ((dynamic)testResult.ResultTable![2]);
-            //var _4thEntry = ((dynamic)testResult.ResultTable![3]);
+            testResult.Errors.Should().BeEmpty();
+            var en = testResult.ResultTable!.GetEnumerator();
+            en.MoveNext();
+            var _1stEntry = en.Current;
+            en.MoveNext();
+            var _2ndEntry = en.Current;
             Console.WriteLine(KalaJson.Serialize(testResult.ResultTable));
             using (new AssertionScope())
             {
-                ((DateTime)_1stEntry.time).Should().Be(new DateTime(2024, 03, 28, 23, 0, 0));
-                ((decimal?)_1stEntry.EndOfLocalDaily).Should().Be(29.05M);
-                ((DateTime)_2ndEntry.time).Should().Be(new DateTime(2024, 03, 29, 23, 0, 0));
-                ((decimal?)_2ndEntry.EndOfLocalDaily).Should().Be(16.44M);
+                ((DateTime)_1stEntry["time"]!).Should().Be(new DateTime(2024, 03, 28, 23, 0, 0));
+                ((decimal?)_1stEntry["EndOfLocalDaily"]).Should().Be(29.05M);
+                ((DateTime)_2ndEntry["time"]!).Should().Be(new DateTime(2024, 03, 29, 23, 0, 0));
+                ((decimal?)_2ndEntry["EndOfLocalDaily"]).Should().Be(16.44M);
 
 
             }
@@ -114,24 +115,24 @@ namespace FKala.Unittests
             var testResult = query.Execute(dl);
             testResult.Errors.ForEach(er => Console.WriteLine(er));
             testResult.Errors.Should().BeEmpty();
-            var _1stEntry = ((dynamic)testResult.ResultTable![0]);
-            var _2ndEntry = ((dynamic)testResult.ResultTable![1]);
-            var _3rdEntry = ((dynamic)testResult.ResultTable![2]);
-            //var _4thEntry = ((dynamic)testResult.ResultTable![3]);
+            var en = testResult.ResultTable!.GetEnumerator();
+            en.MoveNext();
+            var _1stEntry = en.Current;
+            en.MoveNext();
+            var _2ndEntry = en.Current;
+            en.MoveNext();
+            var _3rdEntry = en.Current;
             Console.WriteLine(KalaJson.Serialize(testResult.ResultTable));
             using (new AssertionScope())
             {
-                ((DateTime)_1stEntry.time).Should().Be(new DateTime(2024, 03, 28, 23, 0, 0));
-                ((decimal?)_1stEntry.EndOfLocalDaily).Should().Be(29.05M);
-                ((DateTime)_2ndEntry.time).Should().Be(new DateTime(2024, 03, 29, 23, 0, 0));
-                ((decimal?)_2ndEntry.EndOfLocalDaily).Should().Be(16.44M);
-                ((DateTime)_3rdEntry.time).Should().Be(new DateTime(2024, 03, 30, 23, 0, 0));
-                ((decimal?)_3rdEntry.EndOfLocalDaily).Should().Be(15.84M);
-                ((DateTime)_3rdEntry.time).Should().Be(new DateTime(2024, 03, 30, 23, 0, 0));
-                ((decimal?)_3rdEntry.EndOfLocalDaily).Should().Be(15.84M);
-                //((DateTime)_3rdEntry.time).Should().Be(new DateTime(2024, 03, 31, 22, 0, 0));
-                //((decimal?)_3rdEntry.EndOfLocalDaily).Should().Be(15.84M);
-
+                ((DateTime)_1stEntry["time"]!).Should().Be(new DateTime(2024, 03, 28, 23, 0, 0));
+                ((decimal?)_1stEntry["EndOfLocalDaily"]!).Should().Be(29.05M);
+                ((DateTime)_2ndEntry["time"]!).Should().Be(new DateTime(2024, 03, 29, 23, 0, 0));
+                ((decimal?)_2ndEntry["EndOfLocalDaily"]!).Should().Be(16.44M);
+                ((DateTime)_3rdEntry["time"]!).Should().Be(new DateTime(2024, 03, 30, 23, 0, 0));
+                ((decimal?)_3rdEntry["EndOfLocalDaily"]!).Should().Be(15.84M);
+                ((DateTime)_3rdEntry["time"]!).Should().Be(new DateTime(2024, 03, 30, 23, 0, 0));
+                ((decimal?)_3rdEntry["EndOfLocalDaily"]!).Should().Be(15.84M);
             }
         }
     }

@@ -2,6 +2,7 @@
 using FKala.Core.DataLayer.Infrastructure;
 using FKala.Core.DataLayers;
 using FKala.Core.Interfaces;
+using FKala.Core.KalaQl;
 using FKala.Core.Logic;
 using FKala.Core.Model;
 using Microsoft.Extensions.ObjectPool;
@@ -35,19 +36,19 @@ namespace FKala.Core
             
         }
 
-        public IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly, bool doSortRawFiles)
+        public IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly, bool doSortRawFiles, KalaQlContext context)
         {
             if (newestOnly)
             {
-                return this.LoadNewestDatapoint(measurement);
+                return this.LoadNewestDatapoint(measurement, context);
             }
             else if (cacheResolution.Resolution != Resolution.Full)
             {
-                return CachingLayer.LoadDataFromCache(measurement, startTime, endTime, cacheResolution);
+                return CachingLayer.LoadDataFromCache(measurement, startTime, endTime, cacheResolution, context);
             }
             else
             {
-                return LoadFullResolution(measurement, startTime, endTime, doSortRawFiles);
+                return LoadFullResolution(measurement, startTime, endTime, doSortRawFiles, context);
             }
         }
 
@@ -61,7 +62,7 @@ namespace FKala.Core
         }
 
 
-        public IEnumerable<DataPoint> LoadNewestDatapoint(string measurement)
+        public IEnumerable<DataPoint> LoadNewestDatapoint(string measurement, KalaQlContext context)
         {
             var measurementSubPath = PathSanitizer.SanitizePath(measurement);
             var measurementPath = Path.Combine(DataDirectory, measurementSubPath);
@@ -84,7 +85,7 @@ namespace FKala.Core
                         int fileyear = int.Parse(dateSpan.Slice(0, 4));
                         int filemonth = int.Parse(dateSpan.Slice(5, 2));
                         int fileday = int.Parse(dateSpan.Slice(8, 2));
-                        var dp = DatFileParser.ParseLine(fileyear, filemonth, fileday, lastLine, file);
+                        var dp = DatFileParser.ParseLine(fileyear, filemonth, fileday, lastLine, file, -1, context);
                         yield return dp;
                         yield break;
                     }
@@ -92,12 +93,12 @@ namespace FKala.Core
             }
         }
 
-        private IEnumerable<DataPoint> LoadFullResolution(string measurement, DateTime startTime, DateTime endTime, bool doSortRawFiles)
+        private IEnumerable<DataPoint> LoadFullResolution(string measurement, DateTime startTime, DateTime endTime, bool doSortRawFiles, KalaQlContext context)
         {
             var measurementPathPart = PathSanitizer.SanitizePath(measurement);
             var measurementPath = Path.Combine(DataDirectory, measurementPathPart);
 
-            using (var sa = StorageAccess.Init(measurementPath, measurementPathPart, startTime, endTime))
+            using (var sa = new StorageAccess(measurementPath, measurementPathPart, startTime, endTime, context))
             {
                 if (doSortRawFiles) { sa.ActiveAutoSortRawFiles(this); }
                 foreach (var dp in sa.OpenStreamReaders().StreamDataPoints()) {                    

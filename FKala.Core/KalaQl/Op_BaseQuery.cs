@@ -52,7 +52,7 @@ namespace FKala.Core.KalaQl
                     Creator = this,
                     ResultsetFactory = () =>
                     {
-                        var result = context.DataLayer.LoadData(this.Measurement, this.StartTime, this.EndTime, CacheResolution, NewestOnly, DoSortRawFiles);
+                        var result = context.DataLayer.LoadData(this.Measurement, this.StartTime, this.EndTime, CacheResolution, NewestOnly, DoSortRawFiles, context);
                         return result;
                     }
                 });

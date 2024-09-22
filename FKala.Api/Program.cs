@@ -34,6 +34,13 @@ if (builder.Configuration.GetSection(MqttSettings.ConfigurationSection).Exists()
     builder.Services.AddHostedService<MqttWorker>();
 }
 
+builder.Services.AddCors(o => o.AddPolicy("AllowAll", builder =>
+{
+    builder.AllowAnyOrigin()
+           .AllowAnyMethod()
+           .AllowAnyHeader();
+}));
+
 
 var app = builder.Build();
 
@@ -43,7 +50,7 @@ app.UseSwaggerUI();
 
 app.UseDeveloperExceptionPage();
 app.UseRouting();
-
+app.UseCors("AllowAll");
 
 #pragma warning disable ASP0014 // Suggest using top level route registrations
 app.UseEndpoints(endpoints =>

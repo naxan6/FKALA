@@ -11,11 +11,11 @@ namespace FKala.Core.Interfaces
 {
     public interface IDataLayer
     {
-        IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool NewestOnly, bool doSortRawFiles);
+        IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool NewestOnly, bool doSortRawFiles, KalaQl.KalaQlContext context);
         void Insert(string kalaLinedata, bool locking = true);
         List<int> LoadAvailableYears(string measurement);
         List<string> LoadMeasurementList();
-        IEnumerable<DataPoint?> LoadNewestDatapoint(string measurement);
+        IEnumerable<DataPoint?> LoadNewestDatapoint(string measurement, KalaQl.KalaQlContext context);
         BufferedWriterService WriterSvc { get; }
     }
 }

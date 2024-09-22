@@ -32,7 +32,7 @@ namespace FKala.Unittests
         public void DataLayer_LoadData_CheckBorders()
         {
             // Act
-            var resultset = DataFaker.TestDataLayer.LoadData("m1", new DateTime(2024, 03, 01), new DateTime(2024, 03, 15), CacheResolutionPredefined.NoCache, false, false);
+            var resultset = DataFaker.TestDataLayer.LoadData("m1", new DateTime(2024, 03, 01), new DateTime(2024, 03, 15), CacheResolutionPredefined.NoCache, false, false, new KalaQlContext(DataFaker.TestDataLayer));
 
 
 
@@ -47,7 +47,7 @@ namespace FKala.Unittests
             }
 
             // Assert 2
-            var resultsetAll = DataFaker.TestDataLayer.LoadData("m1", new DateTime(0001, 01, 01), new DateTime(9999, 12, 31), CacheResolutionPredefined.NoCache, false, false);
+            var resultsetAll = DataFaker.TestDataLayer.LoadData("m1", new DateTime(0001, 01, 01), new DateTime(9999, 12, 31), CacheResolutionPredefined.NoCache, false, false, new KalaQlContext(DataFaker.TestDataLayer));
             using (new AssertionScope())
             {
                 resultsetAll.First().Time.Should().Be(new DateTime(2024, 01, 01, 0, 0, 10));
@@ -73,14 +73,15 @@ namespace FKala.Unittests
             Console.WriteLine(KalaJson.Serialize(result));
             result.Errors.Should().BeEmpty();
             result?.ResultTable?.Should().NotBeNull();
-            var resultset = result!.ResultTable;
-            resultset!.Count.Should().Be(1);
+            var resultsetEnum = result!.ResultTable;
+            var resultSet = resultsetEnum!.ToList();
+            resultSet!.Count().Should().Be(1);
             
-            var firstEntry = ((dynamic)resultset.First());
+            var firstEntry = resultSet.First();
             using (new AssertionScope())
             {
-                ((DateTime)firstEntry.time).Should().Be(new DateTime(2024, 04, 30, 23, 59, 58));
-                ((decimal)firstEntry.m1).Should().Be(0.669364353022242M);
+                ((DateTime)firstEntry["time"]!).Should().Be(new DateTime(2024, 04, 30, 23, 59, 58));
+                ((decimal)firstEntry["m1"]!).Should().Be(0.669364353022242M);
             }
         }
 
@@ -107,12 +108,12 @@ namespace FKala.Unittests
                 result?.ResultTable?.Should().NotBeNull();
                 var resultset = result!.ResultTable!;
                 resultset!.Count().Should().Be(336);
-                var firstEntry = ((dynamic)resultset!.First());
-                ((DateTime)firstEntry.time).Should().Be(new DateTime(2024, 03, 01, 00, 00, 00));
-                ((decimal)firstEntry.m1).Should().Be(0.429102592370055M);
-                var lastEntry = ((dynamic)resultset!.Last());
-                ((DateTime)lastEntry.time).Should().Be(new DateTime(2024, 03, 14, 23, 00, 00));
-                ((decimal)lastEntry.m1).Should().Be(0.486422908718895M);
+                var firstEntry = resultset!.First();
+                ((DateTime)firstEntry["time"]!).Should().Be(new DateTime(2024, 03, 01, 00, 00, 00));
+                ((decimal)firstEntry["m1"]!).Should().Be(0.429102592370055M);
+                var lastEntry = resultset!.Last();
+                ((DateTime)lastEntry["time"]!).Should().Be(new DateTime(2024, 03, 14, 23, 00, 00));
+                ((decimal)lastEntry["m1"]!).Should().Be(0.486422908718895M);
             }
         }
     }

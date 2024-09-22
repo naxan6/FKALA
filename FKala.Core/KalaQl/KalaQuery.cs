@@ -2,6 +2,7 @@
 using FKala.Core.KalaQl.Windowing;
 using FKala.Core.Model;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
 namespace FKala.Core.KalaQl
@@ -13,9 +14,13 @@ namespace FKala.Core.KalaQl
 
         List<Op_Var> opvars = new List<Op_Var>();
 
-        public static KalaQuery Start()
+        public bool Streaming { get; private set; }
+
+        public static KalaQuery Start(bool streaming = false)
         {
-            return new KalaQuery();
+            var ret = new KalaQuery();
+            ret.Streaming = streaming;
+            return ret;
         }
         public KalaQuery Add(Op_Base operation)
         {
@@ -26,6 +31,7 @@ namespace FKala.Core.KalaQl
         public KalaResult Execute(IDataLayer dataLayer)
         {
             var context = new KalaQlContext(dataLayer);
+            context.Streaming = Streaming;
             while (true)
             {
                 var nextop = ops.FirstOrDefault(op => op.CanExecute(context) && !op.HasExecuted(context));
@@ -58,6 +64,8 @@ namespace FKala.Core.KalaQl
                     }
                 }
             }
+            context.Result.Errors.InsertRange(0, context.Warnings);
+            context.Result.Errors.InsertRange(0, context.Errors);
             return context.Result;
         }
 
@@ -150,6 +158,11 @@ namespace FKala.Core.KalaQl
             {
                 return MgmtAction.SortRawFiles;
             }
+            else if (v.ToUpper() == "FSCHK")
+            {
+                return MgmtAction.FsChk;
+            }
+            
             throw new Exception($"MgmtAction {v} ist ungültig");
         }
 

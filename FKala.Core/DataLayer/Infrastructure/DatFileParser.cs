@@ -12,7 +12,7 @@ namespace FKala.Core.DataLayer.Infrastructure
 {
     public static class DatFileParser
     {
-        public static DataPoint ParseLine(int fileyear, int filemonth, int fileday, string? line, string filepath)
+        public static DataPoint ParseLine(int fileyear, int filemonth, int fileday, string? line, string filepath, int lineIdx, KalaQl.KalaQlContext context)
         {
             try
             {
@@ -47,7 +47,9 @@ namespace FKala.Core.DataLayer.Infrastructure
             }
             catch (Exception)
             {
-                Console.WriteLine($"Error while parsing line {line} in {filepath}");
+                string msg = $"Error while parsing line {lineIdx} # {line} # in {filepath}";
+                context.AddError(msg);
+                
                 throw;
             }
         }

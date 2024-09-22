@@ -33,7 +33,7 @@ namespace FKala.Unittests
         public void DataLayer_LoadData_CheckBorders()
         {
             // Act
-            var resultset = DataFaker.TestDataLayer.LoadData("m1", new DateTime(2024, 03, 01), new DateTime(2024, 03, 15), CacheResolutionPredefined.NoCache, false, false);
+            var resultset = DataFaker.TestDataLayer.LoadData("m1", new DateTime(2024, 03, 01), new DateTime(2024, 03, 15), CacheResolutionPredefined.NoCache, false, false, new KalaQlContext(DataFaker.TestDataLayer));
 
             resultset = resultset.ToList(); // persist result
 
@@ -46,7 +46,7 @@ namespace FKala.Unittests
             Assert.AreEqual(0.457086396616458m, resultset.Last().Value);
 
             // Assert 2
-            var resultsetAll = DataFaker.TestDataLayer.LoadData("m1", new DateTime(0001, 01, 01), new DateTime(9999, 12, 31), CacheResolutionPredefined.NoCache, false, false);
+            var resultsetAll = DataFaker.TestDataLayer.LoadData("m1", new DateTime(0001, 01, 01), new DateTime(9999, 12, 31), CacheResolutionPredefined.NoCache, false, false, new KalaQlContext(DataFaker.TestDataLayer));
             resultsetAll = resultsetAll.ToList();
             Assert.AreEqual(new DateTime(2024, 01, 01, 0, 0, 13), resultsetAll.First().Time);
             Assert.AreEqual(0.248668584157093m, resultsetAll.First().Value);
@@ -74,9 +74,9 @@ namespace FKala.Unittests
             resultset.Should().NotBeNull();
             resultset!.Count().Should().Be(1);
             
-            var firstEntry = ((dynamic)resultset!.First());
-            Assert.AreEqual(new DateTime(2024, 04, 30, 23, 59, 59), firstEntry.time);
-            Assert.AreEqual(0.646428865681602m, firstEntry.m1);
+            var firstEntry = resultset!.First();
+            Assert.AreEqual(new DateTime(2024, 04, 30, 23, 59, 59), firstEntry["time"]);
+            Assert.AreEqual(0.646428865681602m, firstEntry["m1"]);
         }
 
         [TestMethod]
@@ -99,12 +99,12 @@ namespace FKala.Unittests
             resultset.Should().NotBeNull();
             resultset!.Count().Should().Be(336);
                         
-            var firstEntry = ((dynamic)resultset!.First());
-            Assert.AreEqual(new DateTime(2024, 03, 01, 00, 00, 00), firstEntry.time);
-            Assert.AreEqual(0.564860636165766m, firstEntry.m1);
-            var lastEntry = ((dynamic)resultset!.Last());
-            Assert.AreEqual(new DateTime(2024, 03, 14, 23, 00, 00), lastEntry.time);
-            Assert.AreEqual(0.875275374797767m, lastEntry.m1);
+            var firstEntry = resultset!.First();
+            Assert.AreEqual(new DateTime(2024, 03, 01, 00, 00, 00), firstEntry["time"]);
+            Assert.AreEqual(0.564860636165766m, firstEntry["m1"]);
+            var lastEntry = resultset!.Last();
+            Assert.AreEqual(new DateTime(2024, 03, 14, 23, 00, 00), lastEntry["time"]);
+            Assert.AreEqual(0.875275374797767m, lastEntry["m1"]);
         }
 
         [TestMethod]

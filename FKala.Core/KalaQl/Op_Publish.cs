@@ -1,7 +1,6 @@
 ﻿using FKala.Core.DataLayer.Infrastructure;
 using FKala.Core.Interfaces;
 using FKala.Core.Logic;
-using System.Dynamic;
 
 namespace FKala.Core.KalaQl
 {
@@ -21,6 +20,58 @@ namespace FKala.Core.KalaQl
             return NamesToPublish.All(name => context.IntermediateDatasources.Any(x => x.Name == name));
         }
 
+        public async IAsyncEnumerable<Dictionary<string, object?>> ExecuteStreaming(KalaQlContext context)
+        {
+            var resultsets = context.IntermediateDatasources
+            .Where(x => NamesToPublish.Any(ntp => ntp == x.Name))
+            .OrderBy(n => NamesToPublish.IndexOf(n.Name)) // Ausgabereihenfolge so sortieren wie vorgegeben
+            .ToList();
+
+            var synced = DatasetsCombiner2.CombineSynchronizedResults(resultsets);
+            Dictionary<string, bool> receivedDatapoint = new Dictionary<string, bool>();
+            foreach (var key in NamesToPublish)
+            {
+                receivedDatapoint.Add(key, false);
+            }            
+            int count = 0;
+            await foreach (var syncedResult in synced.AsAsyncEnumerable())
+            {
+                if (count++ >= 50000) // limit result to 50000 datapoints
+                {
+                    break;
+                };
+                Dictionary<string, object?> row = new Dictionary<string, object?>();
+
+                foreach (var item in syncedResult)
+                {
+                    row["time"] = item.DataPoint.Time;
+                    if (item.DataPoint.Value.HasValue)
+                    {
+                        row[item.Result.Name] = item.DataPoint.Value;
+                    }
+                    else
+                    {
+                        row[item.Result.Name] = item.DataPoint.ValueText;
+                    }
+                    if (row[item.Result.Name] != null)
+                    {
+                        receivedDatapoint[item.Result.Name] = true;
+                    }
+                    Pools.DataPoint.Return(item.DataPoint);
+                }
+                foreach (var key in NamesToPublish)
+                {
+                    if (!receivedDatapoint[key])
+                    {
+                        row[key] = null;
+                        receivedDatapoint[key] = false;
+                    }
+
+                }
+                yield return row;
+            }
+            hasExecuted = true;
+        }
         public override void Execute(KalaQlContext context)
         {
             var resultsets = context.IntermediateDatasources
@@ -36,6 +87,16 @@ namespace FKala.Core.KalaQl
                 };
                 hasExecuted = true;
             }
+            else if (PublishMode == PublishMode.CombinedResultset && context.Streaming)
+            {
+                context.Result = new KalaResult()
+                {
+                    StreamResult = ExecuteStreaming(context)
+                };
+                hasExecuted = true;
+                
+            }
+                
             else if (PublishMode == PublishMode.CombinedResultset)
             {
                 var synced = DatasetsCombiner2.CombineSynchronizedResults(resultsets);
@@ -44,7 +105,7 @@ namespace FKala.Core.KalaQl
                 {
                     receivedDatapoint.Add(key, false);
                 }
-                List<ExpandoObject> resultRows = new List<ExpandoObject>();
+                List<Dictionary<string, object?>> resultRows = new List<Dictionary<string, object?>>();
                 int count = 0;
                 foreach (var syncedResult in synced)
                 {
@@ -52,22 +113,20 @@ namespace FKala.Core.KalaQl
                     {
                         break;
                     };
-                    dynamic row = new ExpandoObject();
-                    var expandoDict = (IDictionary<string, object?>)row;
-                    
+                    Dictionary<string, object?> row = new Dictionary<string, object?>();
                     
                     foreach (var item in syncedResult)
                     {
-                        expandoDict["time"] = item.DataPoint.Time;
+                        row["time"] = item.DataPoint.Time;
                         if (item.DataPoint.Value.HasValue)
                         {
-                            expandoDict[item.Result.Name] = item.DataPoint.Value;
+                            row[item.Result.Name] = item.DataPoint.Value;
                         }
                         else
                         {
-                            expandoDict[item.Result.Name] = item.DataPoint.ValueText;
+                            row[item.Result.Name] = item.DataPoint.ValueText;
                         }
-                        if (expandoDict[item.Result.Name] != null)
+                        if (row[item.Result.Name] != null)
                         {
                             receivedDatapoint[item.Result.Name] = true;
                         }
@@ -77,7 +136,7 @@ namespace FKala.Core.KalaQl
                     {
                         if (!receivedDatapoint[key])
                         {
-                            expandoDict[key] = null;
+                            row[key] = null;
                             receivedDatapoint[key] = false;
                         }
                         

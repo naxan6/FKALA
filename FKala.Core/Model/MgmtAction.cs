@@ -3,6 +3,7 @@
     public enum MgmtAction
     {
         LoadMeasures,
-        SortRawFiles
+        SortRawFiles,
+        FsChk
     }
 }

@@ -22,6 +22,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="TestData\defectdata\data\doubledata\2024\09\doubledata#2024-09-13.dat">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="TestData\Empty\data\.gitignore">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
