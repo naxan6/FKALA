@@ -71,6 +71,7 @@ namespace FKala.Core.Migration
 
         public void ImportLine(string line)
         {
+            line = line.Replace("\\ ", "_");
             var match = LineProtocolRegex.Match(line);
             if (!match.Success)
             {
@@ -117,9 +118,18 @@ namespace FKala.Core.Migration
 
                 var fieldExt = fieldName == "value" ? "" : $"_{fieldName}";
 
+                if (fieldValue.EndsWith('i'))
+                {
+                    fieldValue = fieldValue.Substring(fieldValue.Length - 1);   
+                }
+                string kalaLineProtValue;
                 if (!decimal.TryParse(fieldValue, NumberStyles.Any, ci, out var parsedValue))
                 {
-                    throw new FormatException($"Ungültiger Feldwert: {fieldValue}");
+                    kalaLineProtValue = parsedValue.ToString(ci);
+                    //throw new FormatException($"Ungültiger Feldwert: {fieldValue}");
+                } else
+                {
+                    kalaLineProtValue = fieldValue.Replace('\n', '|');
                 }
 
                 var newMeasurement = string.IsNullOrEmpty(topic) ? measurement : topic;
@@ -130,7 +140,7 @@ namespace FKala.Core.Migration
                 sb.Append(' ');
                 sb.Append(parsedTimestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffffff"));
                 sb.Append(' ');
-                sb.Append(parsedValue.ToString(ci));
+                sb.Append(kalaLineProtValue);
                 //var rawData = $"{newMeasurement}{fieldExt} {parsedTimestamp:yyyy-MM-ddTHH:mm:ss.fffffff} {parsedValue.ToString(ci)}";
 
                 _dataLayer.Insert(sb.ToString());

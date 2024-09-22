@@ -49,7 +49,7 @@ namespace FKala.Client.Cmd
                     using (HttpResponseMessage response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead))
                     {
                         if (debug) Console.WriteLine($"Status Code: {response.StatusCode}");
-                        response.EnsureSuccessStatusCode();
+                        //response.EnsureSuccessStatusCode();
                         if (debug) Console.WriteLine("Antwort empfangen, lese Daten...");
                         // read response and post to console
                         using (var stream = await response.Content.ReadAsStreamAsync())
