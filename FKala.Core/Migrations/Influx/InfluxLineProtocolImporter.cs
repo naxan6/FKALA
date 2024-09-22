@@ -32,17 +32,26 @@ namespace FKala.Core.Migration
             StreamReader sr = new StreamReader(filePath, Encoding.UTF8, false, new FileStreamOptions() { BufferSize = 262144, Access = FileAccess.Read, Mode = FileMode.Open, Share = FileShare.Read });
             var gesamt = sr.BaseStream.Length;
             string? line;
-            decimal percent;
-            while ((line = sr.ReadLine()) != null) {
+            int tenthmillipercent;
+            int previousTenthmillipercent = 0;
+            DateTime start = DateTime.Now;
+            while ((line = sr.ReadLine()) != null)
+            {
                 ImportLine(line);
-                percent = 1.0m * sr.BaseStream.Position / gesamt;
-                if (percent * 100 % 1 == 0)
+                tenthmillipercent = (int)(100000.0m * sr.BaseStream.Position / gesamt);
+                if (previousTenthmillipercent + 10000 < tenthmillipercent)
                 {
-                    var msg = $"Progress {percent}% for Import {filePath}";
+                    previousTenthmillipercent = tenthmillipercent;
+                    var msg = $"Progress {1.0m * tenthmillipercent / 1000}% for Import {filePath}";
                     Console.WriteLine(msg);
+                    DateTime now = DateTime.Now;
+                    var elapsed = now.Ticks - start.Ticks;
+                    var eta = 1.0m / (tenthmillipercent / 1000) * elapsed;
+                    var etaTs = new TimeSpan(elapsed);
                     var retRow = new Dictionary<string, object?>
                         {
-                            { "progress", $"{percent.ToString("F2")}%" },
+                            { "progress", $"{(1.0m * tenthmillipercent / 1000).ToString("F3")}%" },
+                            { "eta", $"{etaTs.ToString()}" },
                             { "msg", msg }
 
                         };

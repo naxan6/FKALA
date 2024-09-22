@@ -138,7 +138,8 @@ namespace FKala.Api.Controller
             // Beispielhafte Verarbeitung des Strings
             // Hier könntest du den String weiterverarbeiten
             // Zum Beispiel Zeilen zählen, Zeilen umbrechen, etc.
-            return input.Replace("\\n", "\n");
+            //return input.Replace("\\n", "\n");
+            return input;
         }
     }
 }

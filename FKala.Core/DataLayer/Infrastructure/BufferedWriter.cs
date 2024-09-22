@@ -6,8 +6,7 @@ namespace FKala.Core.DataLayer.Infrastructure
 {
     public class BufferedWriter : IDisposable, IBufferedWriter
     {
-        private readonly string _filePath;        
-        private readonly object _lock = new object();
+        private readonly string _filePath;
         private FileStream _fileStream;
         private StreamWriter _streamWriter;
 

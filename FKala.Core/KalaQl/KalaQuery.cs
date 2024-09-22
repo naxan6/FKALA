@@ -71,7 +71,9 @@ namespace FKala.Core.KalaQl
 
         public KalaQuery FromQuery(string queryText)
         {
-            string[] lines = queryText.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+            queryText = Regex.Unescape(queryText);
+            string[] lines = queryText.Split("\n", StringSplitOptions.RemoveEmptyEntries);
+            //string[] lines = queryText.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
 
             foreach (var line in lines)
             {

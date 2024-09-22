@@ -13,6 +13,8 @@ namespace FKala.Core.DataLayer.Infrastructure
         private readonly ConcurrentDictionary<string, IBufferedWriter> _bufferedWriters = new ConcurrentDictionary<string, IBufferedWriter>();
         Task BufferedWriterFlushTask;
 
+        LockManager lockManager = new LockManager();
+
         public BufferedWriterService()
         {
             BufferedWriterFlushTask = Task.Run(() => FlushBuffersPeriodically());
@@ -31,10 +33,13 @@ namespace FKala.Core.DataLayer.Infrastructure
         {
             foreach (var writer in _bufferedWriters)
             {
-                lock (writer.Key)
+                using (var lockHandle = lockManager.AcquireLock(writer.Key))
                 {
-                    writer.Value.Dispose();
-                    _bufferedWriters.Remove(writer.Key, out var removed);
+                    lock (writer.Value.LOCK)
+                    {
+                        _bufferedWriters.Remove(writer.Key, out var removed);
+                        removed!.Dispose();
+                    }
                 }
             }
         }
@@ -46,19 +51,19 @@ namespace FKala.Core.DataLayer.Infrastructure
                 writer.Dispose();
             }
         }
-        
+
         public void CreateWriteDispose(string filePath, bool append, Action<IBufferedWriter> writeAction)
         {
-            lock (filePath)
-            {                
+            using (lockManager.AcquireLock(filePath))
+            {
                 using var writer = new BufferedWriter(filePath, append);
-                writeAction(writer);                
+                writeAction(writer);
             }
         }
 
         public void DoWrite(string filePath, Action<IBufferedWriter> writeAction)
         {
-            lock (filePath)
+            using (lockManager.AcquireLock(filePath))
             {
                 if (!_bufferedWriters.TryGetValue(filePath, out IBufferedWriter? writer))
                 {
@@ -75,34 +80,9 @@ namespace FKala.Core.DataLayer.Infrastructure
                 }
                 lock (writer!.LOCK)
                 {
-                    lock (filePath)
-                    {
-                        writeAction(writer);
-                    }
+                    writeAction(writer);
                 }
             }
         }
-
-        public IBufferedWriter GetWriter(string filePath)
-        {
-            lock (filePath)
-            {
-                if (!_bufferedWriters.TryGetValue(filePath, out IBufferedWriter? writer))
-                {
-                    try
-                    {
-                        writer = new BufferedWriter(filePath);
-                    }
-                    catch (Exception)
-                    {
-                        Console.WriteLine("Error at BufferedWriter with path <{filePath}>");
-                        throw;
-                    }
-                    _bufferedWriters[filePath] = writer;
-                }
-                return writer;
-            }
-        }
-
     }
 }
