@@ -48,7 +48,7 @@ namespace FKala.Core.Migration
                 ImportLine(line);
                 decimal percent = 1.0m * sr.BaseStream.Position / gesamt;
                 tenthmillipercent = (int)(100000.0m * sr.BaseStream.Position / gesamt);
-                if (previousTenthmillipercent + 0.1M < tenthmillipercent)
+                if (percent + 0.1M < percent)
                 {
                     previousTenthmillipercent = tenthmillipercent;
                     var msg = $"Progress {100.0m * percent}% for Import {filePath}";
