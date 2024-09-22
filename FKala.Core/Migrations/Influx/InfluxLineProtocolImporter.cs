@@ -160,29 +160,26 @@ namespace FKala.Core.Migration
             var fields = ilp.fields;
             var time = ilp.time;
 
-            var topicPair = tags.Where(t => t.Item1 == "topic").ToList();
-            
-
             foreach (var field in fields)
             {
-                var fieldName = field.Item1;
-                var fieldValue = field.Item2;
+                var fieldName = field.Key;
+                var fieldValue = field.Value;
 
                 if (fieldValue.EndsWith('i'))
                 {
                     fieldValue = fieldValue.Substring(fieldValue.Length - 1);
                 }
                 string kalaLineProtValue;
-                if (!decimal.TryParse(fieldValue, NumberStyles.Any, ci, out var parsedValue))
-                {
-                    kalaLineProtValue = parsedValue.ToString(ci);
-                }
-                else
-                {
+                //if (!decimal.TryParse(fieldValue, NumberStyles.Any, ci, out var parsedValue))
+                //{
+                //    kalaLineProtValue = parsedValue.ToString(ci);
+                //}
+                //else
+                //{
                     kalaLineProtValue = fieldValue;
-                }
+                //}
 
-                var newMeasurement = (!topicPair.Any()) ? measurement : topicPair.First().Item2;
+                var newMeasurement = tags.ContainsKey("topic") ? tags["topic"] : measurement;
                 var fieldExt = fieldName == "value" ? "" : $"_{fieldName}";
 
                 sb.Clear();

@@ -9,8 +9,8 @@ namespace FKala.Core.Migrations.Influx
     public class InfluxLineParser
     {
         public string? measurement = null;
-        public List<(string, string)> tags = new List<(string, string)>();
-        public List<(string, string)> fields = new List<(string, string)>();
+        public Dictionary<string, string> tags = new Dictionary<string, string>();
+        public Dictionary<string, string> fields = new Dictionary<string, string>();
         public DateTime? time = null;
 
         private List<char> sb = new List<char>();
@@ -83,7 +83,7 @@ namespace FKala.Core.Migrations.Influx
                 if (',' == c)
                 {
                     var pair = new string(sb.ToArray()).Trim().Split("=");
-                    this.tags.Add(new(pair[0], pair[1]));
+                    this.tags.Add(pair[0], pair[1]);
                     EatNonsense(ce);
                     sb.Clear();
                     continue;
@@ -91,7 +91,7 @@ namespace FKala.Core.Migrations.Influx
                 if (' ' == c)
                 {
                     var pair = new string(sb.ToArray()).Trim().Split("=");
-                    this.tags.Add(new(pair[0], pair[1]));
+                    this.tags.Add(pair[0], pair[1]);
                     EatNonsense(ce);
                     sb.Clear();
                     return;
@@ -136,7 +136,7 @@ namespace FKala.Core.Migrations.Influx
                 if (',' == c)
                 {
                     var pair = new string(sb.ToArray()).Trim().Split("=");
-                    this.tags.Add(new(pair[0], pair[1]));
+                    this.tags.Add(pair[0], pair[1]);
                     EatNonsense(ce);
                     sb.Clear();
                     continue;
@@ -144,7 +144,7 @@ namespace FKala.Core.Migrations.Influx
                 if (' ' == c)
                 {
                     var pair = new string(sb.ToArray()).Trim().Split("=");
-                    this.fields.Add(new(pair[0], pair[1]));
+                    this.fields.Add(pair[0], pair[1]);
                     EatNonsense(ce);
                     sb.Clear();
                     return;
