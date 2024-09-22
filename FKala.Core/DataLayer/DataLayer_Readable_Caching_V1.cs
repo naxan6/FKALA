@@ -113,7 +113,7 @@ namespace FKala.Core
         /// </summary>
         /// <param name="rawData"></param>
         /// <param name="locking"></param>
-        public void Insert(string rawData, bool locking = true)
+        public void Insert(string rawData)
         {
 
             // Parse the raw data

@@ -266,10 +266,12 @@ Publ ""Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch"" Table
 
 
 
-static async void MigrateJsts(IDataLayer dl)
+static void MigrateJsts(IDataLayer dl)
 {
     var connString = "Server=XXX;Port=XXX;User ID=XXX;Password=XXX;Database=XXX";
     var maria = new MigrateMariaDb_Tstsfe_Custom(connString, dl);
-    await maria.Migrate();
+    var ret = maria.Migrate();
+    var enumerable = ret.ToBlockingEnumerable();
+    Console.WriteLine(KalaJson.Serialize(enumerable));
 }
 #pragma warning restore CS8321 // Die lokale Funktion ist deklariert, wird aber nie verwendet.

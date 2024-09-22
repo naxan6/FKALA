@@ -4,6 +4,8 @@
     {
         LoadMeasures,
         SortRawFiles,
-        FsChk
+        FsChk,
+        ImportInflux,
+        ImportMariaDbTstsfe
     }
 }

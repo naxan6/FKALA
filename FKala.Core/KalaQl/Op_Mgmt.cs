@@ -1,18 +1,21 @@
-﻿using FKala.Core.Model;
+﻿using FKala.Core.DataLayer.Infrastructure;
 using FKala.Core.Interfaces;
-using System.Dynamic;
-using FKala.Core.DataLayer.Infrastructure;
+using FKala.Core.Migration;
+using FKala.Core.Model;
+using FKala.Migrate.MariaDb;
 
 namespace FKala.Core.KalaQl
 {
     public class Op_Mgmt : Op_Base, IKalaQlOperation
     {
         public MgmtAction MgmtAction { get; }
+        public string Params;
 
-        public Op_Mgmt(string line, MgmtAction mgmtAction) : base(line)
+        public Op_Mgmt(string line, MgmtAction mgmtAction, string parameters) : base(line)
         {
 
             this.MgmtAction = mgmtAction;
+            this.Params = parameters;
         }
 
         public override bool CanExecute(KalaQlContext context)
@@ -56,52 +59,20 @@ namespace FKala.Core.KalaQl
                 context.Result = new KalaResult();
                 context.Result.StreamResult = FsChk(context);
                 this.hasExecuted = true;
-                //var measurements = context.DataLayer.LoadMeasurementList();
-                //List<string> chkResults = new List<string>();
-                //List<string> AllErrors = new List<string>();
-                //foreach (var measurement in measurements)
-                //{
-                //    try
-                //    {
-                //        var q = new KalaQuery()
-                //            .Add(new Op_BaseQuery("SortRawFiles", "toSort", measurement, DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefined.NoCache, false, false))
-                //            .Add(new Op_Publish("SortRawFiles", new List<string>() { "toSort" }, PublishMode.MultipleResultsets));
-                //        var result = q.Execute(context.DataLayer);
-                //        var localresult = result.ResultSets!.First().Resultset;
-                //        foreach (var r in localresult) // iterate to load everything
-                //        {
-                //            var t = r.Time;
-                //            Pools.DataPoint.Return(r);
-                //        }
-
-                //        if (result.Errors.Any())
-                //        {
-                //            AllErrors.AddRange(context.Result.Errors.Select(e => $"{measurement}: {e}"));                            
-                //        }
-                //        else
-                //        {
-                //            chkResults.Add($"All files OK for measurement: {measurement}");
-                //        }
-                //    }
-                //    catch (Exception ex)
-                //    {
-                //        AllErrors.AddRange(context.Result.Errors.Select(e => $"{measurement}: {ex}"));
-                //    }
-
-                //    Console.WriteLine($"Checked measurement {measurement}.");
-                //}
-                //context.Result = new KalaResult();
-                //context.Result.StreamResult = chkResults.Select(t =>
-                //{
-                //    var retRow = new Dictionary<string, object?>();
-                //    retRow.Add("info", t);
-                //    return retRow;
-                //}
-                //).AsAsyncEnumerable();
-                //context.Result.Errors = AllErrors;
-                //this.hasExecuted = true;
-
-
+            }
+            else if (MgmtAction == MgmtAction.ImportInflux)
+            {
+                var importer = new InfluxLineProtocolImporter(context.DataLayer);
+                context.Result = new KalaResult();
+                context.Result.StreamResult = importer.Import(Params);
+                this.hasExecuted = true;
+            }
+            else if (MgmtAction == MgmtAction.ImportMariaDbTstsfe)
+            {
+                var importer = new MigrateMariaDb_Tstsfe_Custom(Params, context.DataLayer);
+                context.Result = new KalaResult();
+                context.Result.StreamResult = importer.Migrate();
+                this.hasExecuted = true;
             }
         }
 

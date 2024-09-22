@@ -81,7 +81,7 @@ public class MqttWorker : IHostedService, IDisposable
                 if (!this.IsTopicBlacklisted(topic))
                 {
                     var fkalaData = $"{topic.Replace(' ', '_')} {DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {payload}";
-                    this.fkalaDataLayer.Insert(fkalaData, false);
+                    this.fkalaDataLayer.Insert(fkalaData);
                     // Console.WriteLine($"Received message from topic '{topic}': {payload}");
                 }
                     

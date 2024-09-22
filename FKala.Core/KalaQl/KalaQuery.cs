@@ -142,7 +142,7 @@ namespace FKala.Core.KalaQl
                 case "Publ":
                     return new Op_Publish(line, fields[1].Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(), ParsePublishMode(fields[2]));
                 case "Mgmt":
-                    return new Op_Mgmt(line, ParseMgmtAction(fields[1]));
+                    return new Op_Mgmt(line, ParseMgmtAction(fields[1]), fields.Count > 2 ? fields[2] : "");
                 default:
                     throw new Exception($"Unkown Verb <{verb}>");
             }
@@ -158,6 +158,14 @@ namespace FKala.Core.KalaQl
             {
                 return MgmtAction.SortRawFiles;
             }
+            else if (v.ToUpper() == "IMPORTINFLUX")
+            {
+                return MgmtAction.ImportInflux;
+            }
+            else if (v.ToUpper() == "IMPORTTSTSFE")
+            {
+                return MgmtAction.ImportMariaDbTstsfe;
+            }            
             else if (v.ToUpper() == "FSCHK")
             {
                 return MgmtAction.FsChk;
