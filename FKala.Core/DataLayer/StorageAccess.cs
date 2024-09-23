@@ -199,14 +199,12 @@ namespace FKala.Core.DataLayers
                             writer.Append(dp.Value.Value.ToString(CultureInfo.InvariantCulture));
                             writer.AppendNewline();
                         };
-                    }
-                    writer.Flush();
-                    writer.Close();
-                    File.Move(filePath, filePath + ".bak");
-                    File.Move(filePath + ".sorted", filePath);
-                    //File.Delete(filePath + ".sorted", filePath);
-                    Console.WriteLine($"Sorted rewrite of file {filePath}");
+                    }                    
                 });
+                File.Move(filePath, filePath + ".bak");
+                File.Move(filePath + ".sorted", filePath);
+                //File.Delete(filePath + ".sorted", filePath);
+                Console.WriteLine($"Sorted rewrite of file {filePath}");
             }
         }
 

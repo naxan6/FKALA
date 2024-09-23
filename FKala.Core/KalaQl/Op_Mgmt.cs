@@ -34,24 +34,8 @@ namespace FKala.Core.KalaQl
             }
             else if (MgmtAction == MgmtAction.SortRawFiles)
             {
-                var result = context.DataLayer.LoadMeasurementList();
-                foreach (var measurement in result)
-                {
-
-                    var q = new KalaQuery()
-                        .Add(new Op_BaseQuery("SortRawFiles", "toSort", measurement, DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefined.NoCache, false, true))
-                        .Add(new Op_Publish("SortRawFiles", new List<string>() { "toSort" }, PublishMode.MultipleResultsets));
-                    var localresult = q.Execute(context.DataLayer).ResultSets!.First().Resultset;
-
-                    foreach (var r in localresult) // iterate to load everything
-                    {
-                        var t = r.Time;
-                        Pools.DataPoint.Return(r);
-                    }
-                    Console.WriteLine($"Sorted measurement {measurement}.");
-                }
                 context.Result = new KalaResult();
-                context.Result.MeasureList = result;
+                context.Result.StreamResult = SortRawFiles(context);
                 this.hasExecuted = true;
             }
             else if (MgmtAction == MgmtAction.FsChk)
@@ -76,17 +60,38 @@ namespace FKala.Core.KalaQl
             }
         }
 
+        private async IAsyncEnumerable<Dictionary<string, object?>>? SortRawFiles(KalaQlContext context)
+        {
+            var result = context.DataLayer.LoadMeasurementList();
+            foreach (var measurement in result)
+            {
+
+                var q = new KalaQuery()
+                    .Add(new Op_BaseQuery("SortRawFiles", "toSort", measurement, DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefined.NoCache, false, true))
+                    .Add(new Op_Publish("SortRawFiles", new List<string>() { "toSort" }, PublishMode.MultipleResultsets));
+                var localresult = q.Execute(context.DataLayer).ResultSets!.First().Resultset;
+
+                foreach (var r in localresult) // iterate to load everything
+                {
+                    var t = r.Time;
+                    Pools.DataPoint.Return(r);
+                }
+                Console.WriteLine($"Sorted measurement {measurement}.");
+                yield return new Dictionary<string, object?>() { { "msg", $"Sorted measurement {measurement}." } };
+            }
+        }
+
 #pragma warning disable CS1998 // Bei der asynchronen Methode fehlen "await"-Operatoren. Die Methode wird synchron ausgeführt.
         public async IAsyncEnumerable<Dictionary<string, object?>> FsChk(KalaQlContext context)
 #pragma warning restore CS1998 // Bei der asynchronen Methode fehlen "await"-Operatoren. Die Methode wird synchron ausgeführt.
         {
             var measurements = context.DataLayer.LoadMeasurementList();
             List<string> chkResults = new List<string>();
-            
+
             var total = measurements.Count();
             int progress = 0;
             int count = 0;
-            foreach (var measurement in measurements)                
+            foreach (var measurement in measurements)
             {
                 List<string> measureErrors = new List<string>();
                 count++;
@@ -105,7 +110,6 @@ namespace FKala.Core.KalaQl
                         var t = r.Time;
                         Pools.DataPoint.Return(r);
                     }
-                    measureErrors.AddRange(result.Errors);
                 }
                 catch (Exception ex)
                 {
@@ -120,10 +124,10 @@ namespace FKala.Core.KalaQl
                         var retRow = new Dictionary<string, object?>
                         {
                             { "status", $"error" },
-                            { "measurement", $"{measurement}" },                            
+                            { "measurement", $"{measurement}" },
                             { "progress", $"({progress}% {count}/{total})" },
                             { "msg", $"{err}" }
-                            
+
                         };
                         yield return retRow;
                     }
@@ -138,27 +142,27 @@ namespace FKala.Core.KalaQl
                         var retRow = new Dictionary<string, object?>
                         {
                             { "status", $"error" },
-                            { "measurement", $"{measurement}" },                            
+                            { "measurement", $"{measurement}" },
                             { "progress", $"({progress}% {count}/{total})" },
                             { "msg", $"{err}" }
                         };
                         yield return retRow;
                     }
-                    
+
                 }
-                
+
                 if (!hasErrors)
                 {
                     var retRow = new Dictionary<string, object?>
                         {
                             { "status", $"Ok" },
-                            { "measurement", $"{measurement}" },                            
+                            { "measurement", $"{measurement}" },
                             { "progress", $"({progress}% {count}/{total})" },
                             { "msg", $"({progress}% {count}/{total}) All files OK for measurement: {measurement}" }
                         };
                     yield return retRow;
                 }
-                
+
                 Console.WriteLine($"Checked measurement {measurement}.");
 
             }
