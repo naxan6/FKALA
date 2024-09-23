@@ -28,6 +28,9 @@ namespace FKala.Core
 
         public DataLayer_Readable_Caching_V1(string storagePath)
         {
+            storagePath = storagePath.Replace('\\', Path.DirectorySeparatorChar)
+                                       .Replace('/', Path.DirectorySeparatorChar);
+
             this.DataDirectory = Path.Combine(storagePath, "data");
             Directory.CreateDirectory(this.DataDirectory);
 

@@ -8,7 +8,7 @@ using System.Security.Principal;
 
 namespace FKala.Unittests
 {
-    [TestClass]
+    //[TestClass]
     public class KalaQl
     {
         string StoragePath = "\\\\naxds2\\docker\\fkala";
@@ -29,7 +29,7 @@ namespace FKala.Unittests
                 .Add(new Op_BaseQuery(null, "PV2", "Sofar/measure/PVInput1/0x589_Leistung_PV2[kW]", startTime, endTime, CacheResolutionPredefined.NoCache))
                 .Add(new Op_Publish(null, new List<string>() { "PV1", "PV2" }, PublishMode.MultipleResultsets));
 
-            var result = q.Execute(dl);            
+            var result = q.Execute(dl);
 
             sw.Stop();
             var ts = sw.Elapsed;
@@ -47,7 +47,7 @@ namespace FKala.Unittests
                     p = item1;
                 }
             }
-            
+
 
         }
         [TestMethod]
@@ -255,6 +255,36 @@ namespace FKala.Unittests
             Console.WriteLine(KalaJson.Serialize(result.ResultTable));// JSON serialize
         }
 
+
+        [TestMethod]
+        public void BugTest_Datenpunktüberseheneinzusortieren_v1()
+        {
+            string StoragePath = "\\\\naxds2\\docker\\fkala";
+            System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+
+            sw.Start();
+            using var dl = new DataLayer_Readable_Caching_V1(StoragePath);
+
+            var q = KalaQuery.Start()
+                .FromQuery(@"
+Load rSOC: Sofar/measure/batteryInput1/0x608_SOC_Bat1[%] ""2024-09-20T22:00:00.000Z"" ""2024-09-21T21:59:59.999Z"" Auto(300000)_WAvg_REFRESHINCREMENTAL
+Load rSOH: Sofar/measure/batteryInput1/0x609_SOH_Bat1[%] ""2024-09-20T22:00:00.000Z"" ""2024-09-21T21:59:59.999Z"" Auto(300000)_WAvg_REFRESHINCREMENTAL
+Aggr SOC: rSOC 300000 WAvg EmptyWindows
+Aggr SOH: rSOH 300000 WAvg EmptyWindows
+Publ ""SOC, SOH"" Table");
+
+            var result = q.Execute(dl);
+
+            sw.Stop();
+            var ts = sw.Elapsed;
+            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}", ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds);
+            Console.WriteLine("Verstrichene Zeit: " + elapsedTime);
+
+            Console.WriteLine(KalaJson.Serialize(result.ResultTable));// JSON serialize
+            Console.WriteLine(KalaJson.Serialize(result.Errors));// JSON serialize
+            result.Errors.Should().BeEmpty();
+            result.ResultTable.Should().HaveCount(288);
+        }
 
 
     }

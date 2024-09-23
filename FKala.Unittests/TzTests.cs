@@ -31,7 +31,7 @@ namespace FKala.Unittests
         [TestMethod]
         public void Test_CESTCET_Pre()
         {
-            DataLayer_Readable_Caching_V1 dl = new DataLayer_Readable_Caching_V1(@".\Testdata\UTC_CET_CEST\");
+            DataLayer_Readable_Caching_V1 dl = new DataLayer_Readable_Caching_V1(@"./Testdata/UTC_CET_CEST/");
 
             var query = KalaQuery.Start()
                 .Add(new Op_BaseQuery(null, "overDst", "UTC_CET_CEST_Load",
@@ -140,31 +140,6 @@ namespace FKala.Unittests
                 ((decimal?)_3rdEntry["EndOfLocalDaily"]!).Should().Be(15.84M);
                 ((DateTime)_3rdEntry["time"]!).Should().Be(new DateTime(2024, 03, 30, 23, 0, 0));
                 ((decimal?)_3rdEntry["EndOfLocalDaily"]!).Should().Be(15.84M);
-            }
-        }
-
-
-       
-
-        [TestMethod]
-        public void InfluxLineProtocolParser()
-        {
-            var test = @"teslamate,car=Model3_2022,topic=teslamate/cars/3/active_route_destination active_route_destination=""Gemeinde Rohrbach in Oberösterreich"" 1722595052416000000";            
-            InfluxLineParser ilp = new InfluxLineParser();
-            ilp.Read(test);
-            
-            Console.WriteLine(KalaJson.Serialize(ilp));
-        }
-
-        [TestMethod]
-        public async Task InfluxLineProtocolImporter()
-        {
-            DataLayer_Readable_Caching_V1 dl = new DataLayer_Readable_Caching_V1(@"C:\fkala\DataStore");
-            InfluxLineProtocolImporter ip = new InfluxLineProtocolImporter(dl);
-            var outpout = ip.Import(@"\\naxds2\docker\fkala\import\2024-09-22_nxTesla.lp");
-            foreach (var kvp in outpout.ToBlockingEnumerable())
-            {
-                Console.WriteLine(KalaJson.Serialize(kvp));
             }
         }
     }
