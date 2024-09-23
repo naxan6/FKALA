@@ -105,6 +105,7 @@ namespace FKala.Core.KalaQl
                         var t = r.Time;
                         Pools.DataPoint.Return(r);
                     }
+                    measureErrors.AddRange(result.Errors);
                 }
                 catch (Exception ex)
                 {

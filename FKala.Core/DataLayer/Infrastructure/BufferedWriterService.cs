@@ -56,8 +56,13 @@ namespace FKala.Core.DataLayer.Infrastructure
         {
             using (lockManager.AcquireLock(filePath))
             {
-                using var writer = new BufferedWriter(filePath, append);
-                writeAction(writer);
+                using (var writer = new BufferedWriter(filePath, append))
+                {
+                    writeAction(writer);
+
+                    writer.Flush();
+                    writer.Close();
+                }
             }
         }
 
