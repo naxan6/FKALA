@@ -14,6 +14,8 @@ namespace FKala.Core.DataLayer.Infrastructure
 
         public object LOCK { get { return LOCKI; } }
 
+        public bool disposed { get; private set; }
+
         public BufferedWriter(string filePath, bool append = true)
         {
             var fileMode = FileMode.Append;
@@ -44,15 +46,22 @@ namespace FKala.Core.DataLayer.Infrastructure
         {
             lock (LOCK)
             {
-                _streamWriter.Flush();
+                if (!disposed)
+                {
+                    _streamWriter.Flush();
+                }
             }
         }
 
         public void Dispose()
         {
-            Flush();
-            _streamWriter?.Dispose();
-            _fileStream?.Dispose();
+            if (!disposed)
+            {
+                disposed = true;
+                Flush();
+                _streamWriter?.Dispose();
+                _fileStream?.Dispose();
+            }
         }
 
         public void Close()
