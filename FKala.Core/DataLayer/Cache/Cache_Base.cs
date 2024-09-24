@@ -45,16 +45,16 @@ namespace FKala.Core.DataLayer.Cache
             }
 
             IEnumerable<DataPoint> rs = GetAggregateForCaching(measurement, new DateTime(year, 1, 1, 0, 0, 0, DateTimeKind.Utc), new DateTime(year + 1, 1, 1, 0, 0, 0, DateTimeKind.Utc), aggrFunc);
-            WriteCacheFile(cacheFilePath, rs);
+            WriteCacheFile(cacheFilePath, rs, false);
         }
 
-        private void WriteCacheFile(string cacheFilePath, IEnumerable<DataPoint> rs)
+        private void WriteCacheFile(string cacheFilePath, IEnumerable<DataPoint> rs, bool append)
         {
             if (rs.Any())
             {
                 var timeFormat = GetTimeFormat();
                 var writerSvc = DataLayer.WriterSvc;
-                writerSvc.CreateWriteDispose(cacheFilePath, false, (writer) =>
+                writerSvc.CreateWriteDispose(cacheFilePath, append, (writer) =>
                 {
                     foreach (var dp in rs)
                     {
@@ -107,7 +107,7 @@ namespace FKala.Core.DataLayer.Cache
 
             //var newFileContent = validCacheEntries.Concat(updateData);
 
-            WriteCacheFile(newestCacheFile, updateData);
+            WriteCacheFile(newestCacheFile, updateData, true);
 
 
             //var tempFile = Path.GetTempFileName();
