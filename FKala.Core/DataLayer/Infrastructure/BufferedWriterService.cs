@@ -32,15 +32,20 @@ namespace FKala.Core.DataLayer.Infrastructure
         public void ForceFlushWriters()
         {
             foreach (var writer in _bufferedWriters)
+                ForceFlushWriter(writer.Key);
+        }
+
+        public void ForceFlushWriter(string filepath)
+        {
+            using (var lockHandle = lockManager.AcquireLock(filepath))
             {
-                using (var lockHandle = lockManager.AcquireLock(writer.Key))
+                if (!_bufferedWriters.ContainsKey(filepath))
                 {
-                    lock (writer.Value.LOCK)
-                    {
-                        _bufferedWriters.Remove(writer.Key, out var removed);
-                        removed!.Dispose();
-                    }
+                    return;
                 }
+
+                _bufferedWriters.Remove(filepath, out var removed);
+                removed!.Dispose();
             }
         }
 

@@ -11,6 +11,6 @@ namespace FKala.Core.Model
         Full,
         Hourly,
         Minutely,
-        FiveMinutely
+        FifteenMinutely
     }
 }

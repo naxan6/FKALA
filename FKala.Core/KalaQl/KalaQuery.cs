@@ -233,17 +233,17 @@ namespace FKala.Core.KalaQl
             else if (v.ToUpper().StartsWith("AUTO("))
             {
                 var parts = v.Split(['(', ')']);
-                if (long.Parse(parts[1]) <= 60 * 1000)
+                if (long.Parse(parts[1]) <= 2 * 1000)
                 {
                     return Resolution.Full;
                 }
-                else if (long.Parse(parts[1]) < 5 * 60 * 1000)
+                else if (long.Parse(parts[1]) < 30 * 60 * 1000)
                 {
                     return Resolution.Minutely;
                 }
-                else if (long.Parse(parts[1]) < 60 * 60 * 1000)
+                else if (long.Parse(parts[1]) < 120 * 60 * 1000)
                 {
-                    return Resolution.FiveMinutely;
+                    return Resolution.FifteenMinutely;
                 }
                 return Resolution.Hourly;
             }

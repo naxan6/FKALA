@@ -16,7 +16,6 @@ namespace FKala.Core.Interfaces
         IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool NewestOnly, bool doSortRawFiles, KalaQl.KalaQlContext context);
         void Insert(string kalaLinedata);
         void Insert(string kalaLinedata, string? source);
-        void InsertTo(string measurement, DataPoint dp);
         List<int> LoadAvailableYears(string measurement);
         List<string> LoadMeasurementList();
         IEnumerable<DataPoint?> LoadNewestDatapoint(string measurement, KalaQl.KalaQlContext context);
@@ -25,5 +24,7 @@ namespace FKala.Core.Interfaces
         IAsyncEnumerable<Dictionary<string, object>> MergeRawFilesFromMeasurementToMeasurement(string measurement, string targetmeasurement, KalaQlContext context);
         IAsyncEnumerable<Dictionary<string, object>> MoveMeasurement(string measurementOld, string measurementNew, KalaQlContext context);
         IAsyncEnumerable<Dictionary<string, object>> Cleanup(string measurement, KalaQlContext context, bool cleanSorted);
+        void Flush();
+        void Flush(string filePath);
     }
 }

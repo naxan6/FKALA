@@ -25,7 +25,7 @@ namespace FKala.Core.DataLayer.Infrastructure
             }
             _filePath = filePath;
             _fileStream = new FileStream(filePath, fileMode, FileAccess.Write, FileShare.Read);
-            _streamWriter = new StreamWriter(_fileStream, Encoding.UTF8, 16384);
+            _streamWriter = new StreamWriter(_fileStream, Encoding.UTF8, 262088);
         }
 
         public void Append(string text)

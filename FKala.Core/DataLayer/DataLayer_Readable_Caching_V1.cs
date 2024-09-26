@@ -114,12 +114,24 @@ namespace FKala.Core
         {
             var measurementPathPart = PathSanitizer.SanitizePath(measurement);
             var measurementPath = Path.Combine(DataDirectory, measurementPathPart);
-
+            var day = DateTime.MinValue.AddDays(1);
             using (var sa = StorageAccess.ForMerging(measurementPath, measurementPathPart, context))
             {
                 foreach (var dp in sa.OpenStreamReaders().StreamMergeDataPoints())
                 {
-                    InsertTo(targetmeasurement, dp);
+                    var filePath = GetInsertTargetFilepath(measurement, dp.Time.ToString("yyyy-MM-dd"));
+                    if (dp.Source != null && dp.Source.StartsWith(filePath + ","))
+                    {
+                        continue;
+                    }
+                    
+                    Insert($"{measurement} {dp.Time.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {(dp.Value.HasValue ? dp.Value : dp.ValueText)}", dp.Source, filePath);
+                    
+                    if (day < dp.Time)
+                    {
+                        day = dp.Time.AddDays(1);
+                        yield return new Dictionary<string, object>() { { "msg", $"rewrite of day {dp.Time.Date} done" } };
+                    }
                 }
             }
             yield return new Dictionary<string, object>() { { "msg", $"reinserted/merged {measurementPath} to {targetmeasurement}" } };
@@ -139,14 +151,14 @@ namespace FKala.Core
                     var filename = Path.GetFileName(rt.FilePath);
                     var measureInName = filename.Substring(0, filename.Length - "_yyyy-MM-dd.dat".Length);
 
-                    if (measure != measureInName || rt.FilePath[rt.FilePath.Length - 15] == '#')
+                    if (measure != measureInName || (rt.FilePath[rt.FilePath.Length - 15] == '#' && cleanSorted))
                     {
                         File.Delete(rt.FilePath);
                         yield return new Dictionary<string, object>() { { "msg", $"cleaned up {rt.FilePath}" } };
                     }
                 }
             }
-            
+            yield break;
         }
 
 
@@ -170,57 +182,22 @@ namespace FKala.Core
 
         public void Insert(string rawData)
         {
-            Insert(rawData, null);
+            Insert(rawData, "input");
         }
+
         /// <summary>
         /// Expects Data in the Form
         /// "<measurement> <timestamp:YYYY-MM-DDTHH:mm:ss.zzzzzzz <value>"
         /// </summary>
         /// <param name="rawData"></param>
         /// <param name="locking"></param>
-        public void Insert(string rawData, string? source = null)
+        public void Insert(string rawData, string source)
         {
+            string measurement, datetimeHHmmssfffffff, valueString;
+            ReadOnlySpan<char> datetime_yyyy_MM_dd;
+            ParseRawData(rawData, out measurement, out datetime_yyyy_MM_dd, out datetimeHHmmssfffffff, out valueString);
+            string filePath = GetInsertTargetFilepath(measurement, datetime_yyyy_MM_dd);
 
-            // Parse the raw data
-            ReadOnlySpan<char> span = rawData.AsSpan();
-
-            int index = span.IndexOf(' ');
-            var measurement = span.Slice(0, index).ToString();
-            measurement = PathSanitizer.SanitizePath(measurement);
-
-            span = span.Slice(index + 1);
-            index = 27; //Länge von yyyy-MM-ddTHH:mm:ss.fffffff hartkodiert statt Ende suchen
-            var datetime = span.Slice(0, index);
-            string datetimeHHmmssfffffff = datetime.Slice(11).ToString();
-
-            span = span.Slice(index + 1);
-            ReadOnlySpan<char> valueRaw = null;            
-            valueRaw = span.Slice(0);
-            var valueString = valueRaw.ToString().Replace('\n', '|');
-
-            // Create the directory path
-            var directoryPath = Path.Combine(DataDirectory, measurement, datetime.Slice(0, 4).ToString(), datetime.Slice(5, 2).ToString());
-
-            if (!CreatedDirectories.ContainsKey(directoryPath))
-            {
-                Directory.CreateDirectory(directoryPath);
-                CreatedDirectories.AddOrUpdate(directoryPath, 0, (string key, byte old) => { return 0; });
-            }
-
-            // Create the file path
-            StringBuilder sb = stringBuilderPool.Get();
-            sb.Clear();
-            sb.Append(measurement);
-            sb.Append('_'); //marks new as unsorted
-            sb.Append(datetime.Slice(0, 10)); //YYYY-MM-dd
-            sb.Append(".dat");
-            var filePath = Path.Combine(directoryPath, sb.ToString());           
-            stringBuilderPool.Return(sb);
-            
-            if (source != null && source.StartsWith(filePath + ","))
-            {
-                return;
-            }
             WriterSvc.DoWrite(filePath, (writer) =>
             {
                 // Format the line to write
@@ -231,12 +208,70 @@ namespace FKala.Core
             });
         }
 
-        public void InsertTo(string measurement, DataPoint dp)
+        /// <summary>
+        /// Expects Data in the Form
+        /// "<measurement> <timestamp:YYYY-MM-DDTHH:mm:ss.zzzzzzz <value>"
+        /// </summary>
+        /// <param name="rawData"></param>
+        /// <param name="locking"></param>
+        public void Insert(string rawData, string source, string filePath)
         {
-            Insert($"{measurement} {dp.Time.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {(dp.Value.HasValue ? dp.Value : dp.ValueText)}", dp.Source);
+            string measurement, datetimeHHmmssfffffff, valueString;
+            ReadOnlySpan<char> datetime;
+            ParseRawData(rawData, out measurement, out datetime, out datetimeHHmmssfffffff, out valueString);
+
+            WriterSvc.DoWrite(filePath, (writer) =>
+            {
+                // Format the line to write
+                writer.Append(datetimeHHmmssfffffff);
+                writer.Append(" ");
+                writer.Append(valueString);
+                writer.AppendNewline();
+            });
         }
 
+        private string GetInsertTargetFilepath(string measurement, ReadOnlySpan<char> datetime_yyyy_MM_dd)
+        {
+            // Create the directory path
+            var directoryPath = Path.Combine(DataDirectory, measurement, datetime_yyyy_MM_dd.Slice(0, 4).ToString(), datetime_yyyy_MM_dd.Slice(5, 2).ToString());
 
+            if (!CreatedDirectories.ContainsKey(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath);
+                CreatedDirectories.AddOrUpdate(directoryPath, 0, (string key, byte old) => { return 0; });
+            }
+
+            // Create the file path
+            var sb = stringBuilderPool.Get();
+            sb.Clear();
+            sb.Append(measurement);
+            sb.Append('_'); //marks new as unsorted
+            sb.Append(datetime_yyyy_MM_dd.Slice(0, 10)); //YYYY-MM-dd
+            sb.Append(".dat");
+            var filePath = Path.Combine(directoryPath, sb.ToString());
+            stringBuilderPool.Return(sb);
+            return filePath;
+        }
+
+        private static void ParseRawData(string rawData, out string measurement, out ReadOnlySpan<char> datetime, out string datetimeHHmmssfffffff, out string valueString)
+        {
+            // Parse the raw data
+            ReadOnlySpan<char> span = rawData.AsSpan();
+
+            int index = span.IndexOf(' ');
+            measurement = span.Slice(0, index).ToString();
+            measurement = PathSanitizer.SanitizePath(measurement);
+
+            span = span.Slice(index + 1);
+            index = 27; //Länge von yyyy-MM-ddTHH:mm:ss.fffffff hartkodiert statt Ende suchen
+            datetime = span.Slice(0, index);
+            datetimeHHmmssfffffff = datetime.Slice(11).ToString();
+            span = span.Slice(index + 1);
+            ReadOnlySpan<char> valueRaw = null;
+            valueRaw = span.Slice(0);
+            valueString = valueRaw.ToString().Replace('\n', '|');
+        }
+        
         public List<string> LoadMeasurementList()
         {
             var measurements = Directory.GetDirectories(DataDirectory);
@@ -246,6 +281,16 @@ namespace FKala.Core
         public void Dispose()
         {
             this.WriterSvc.Dispose();
+        }
+
+        public void Flush()
+        {
+            this.WriterSvc.ForceFlushWriters();
+        }
+
+        public void Flush(string filePath)
+        {
+            this.WriterSvc.ForceFlushWriter(filePath);
         }
     }
 }

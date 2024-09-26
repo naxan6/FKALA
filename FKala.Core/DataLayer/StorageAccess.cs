@@ -233,6 +233,7 @@ namespace FKala.Core.DataLayers
                 int fileday = streamreaderTuple.Key.Day;
                 foreach (var srTuple in streamreaderTuple)
                 {
+                    DataLayer.Flush(srTuple.FilePath);
                     foreach (var dp in InternalStreamDataPoints(srTuple, fileyear, filemonth, fileday, false))
                     {
                         yield return dp;

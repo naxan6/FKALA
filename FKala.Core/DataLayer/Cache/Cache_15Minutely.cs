@@ -7,14 +7,14 @@ using System.Globalization;
 
 namespace FKala.Core.DataLayer.Cache
 {
-    public class Cache_5Minutely : Cache_Base, ICache
+    public class Cache_15Minutely : Cache_Base, ICache
     {
-        public override string CacheSubdir { get { return "5Minutely"; } }
+        public override string CacheSubdir { get { return "15Minutely"; } }
         public override string GetTimeFormat()
         {
             return "MM-ddTHH:mm";
         }
-        public Cache_5Minutely(IDataLayer dataLayer) : base(dataLayer)
+        public Cache_15Minutely(IDataLayer dataLayer) : base(dataLayer)
         {
         }
 
@@ -23,8 +23,8 @@ namespace FKala.Core.DataLayer.Cache
             KalaResult aggResult = KalaQuery
                .Start()
                .Add(new Op_BaseQuery(null, "fullRes", measurement, start, end, CacheResolutionPredefined.NoCache))
-               .Add(new Op_Aggregate(null, "5minutely", "fullRes", Window.Aligned_5Minutes, aggrFunc, false, false))
-               .Add(new Op_Publish(null, new List<string>() { "5minutely" }, PublishMode.MultipleResultsets))
+               .Add(new Op_Aggregate(null, "15minutely", "fullRes", Window.Aligned_15Minutes, aggrFunc, false, false))
+               .Add(new Op_Publish(null, new List<string>() { "15minutely" }, PublishMode.MultipleResultsets))
                .Execute(DataLayer);
 
             if (aggResult?.ResultSets == null)
@@ -64,8 +64,8 @@ namespace FKala.Core.DataLayer.Cache
                 return DateTime.MaxValue;
             }
 
-            // then refresh the last 15 (3 windows) existent minutes in the cache
-            DateTime calculated = newestInCache.Time.Subtract(new TimeSpan(0, 15, 0));
+            // then refresh the last 30 (2 windows) existent minutes in the cache
+            DateTime calculated = newestInCache.Time.Subtract(new TimeSpan(0, 30, 0));
             DateTime maxValueInCacheFile = new DateTime(cacheYear, 12, 31, 0, 0, 0, DateTimeKind.Utc);
             return calculated < maxValueInCacheFile ? calculated : maxValueInCacheFile;
         }

@@ -3,6 +3,7 @@ using FKala.Core.Interfaces;
 using FKala.Core.Migration;
 using FKala.Core.Model;
 using FKala.Migrate.MariaDb;
+using System.Runtime.Intrinsics.Arm;
 
 namespace FKala.Core.KalaQl
 {
@@ -113,6 +114,7 @@ namespace FKala.Core.KalaQl
             {
                 yield return msg;
             }
+            context.DataLayer.Flush();
             var resultClean = context.DataLayer.Cleanup(measurement, context, true);
             await foreach (var msg in resultClean)
             {
@@ -123,6 +125,12 @@ namespace FKala.Core.KalaQl
             {
                 yield return msg;
             }
+            var resultCleanFinal = context.DataLayer.Cleanup(measurement, context, false);
+            await foreach (var msg in resultCleanFinal)
+            {
+                yield return msg;
+            }
+            yield break;
         }
 
         private async IAsyncEnumerable<Dictionary<string, object?>>? CleanupRawFiles(string measurement, KalaQlContext context)
@@ -170,9 +178,14 @@ namespace FKala.Core.KalaQl
                 .Add(new Op_Publish("SortRawFiles", new List<string>() { "toSort" }, PublishMode.MultipleResultsets));
             var localresult = q.Execute(context.DataLayer).ResultSets!.First().Resultset;
 
+            DateTime day = DateTime.MinValue;
             foreach (var r in localresult) // iterate to load everything
             {
-                var t = r.Time;
+                if (day < r.Time)
+                {
+                    yield return new Dictionary<string, object>() { { "msg", $"Sort of day {r.Time.Date} done" } };
+                    day = r.Time.AddDays(1);
+                }
                 Pools.DataPoint.Return(r);
             }
             Console.WriteLine($"Sorted measurement {measurement}.");

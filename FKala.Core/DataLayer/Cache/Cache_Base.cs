@@ -76,7 +76,7 @@ namespace FKala.Core.DataLayer.Cache
             if (!File.Exists(yearFilePath)) yield break;
             int fileyear = year;
             using var _fs = new FileStream(yearFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            using var sr = new StreamReader(_fs, Encoding.UTF8, false, 16384);
+            using var sr = new StreamReader(_fs, Encoding.UTF8, false, 262088);
             string? line;
             while ((line = sr.ReadLine()) != null)
             {
