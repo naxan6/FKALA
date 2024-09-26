@@ -32,7 +32,7 @@ namespace FKala.Core.KalaQl
                 context.Result.MeasureList = result;
                 this.hasExecuted = true;
             }
-            else if (MgmtAction == MgmtAction.SortRawFiles)
+            else if (MgmtAction == MgmtAction.SortAllRaw)
             {
                 context.Result = new KalaResult();
                 context.Result.StreamResult = SortRawFiles(context);
@@ -42,6 +42,53 @@ namespace FKala.Core.KalaQl
             {
                 context.Result = new KalaResult();
                 context.Result.StreamResult = FsChk(context);
+                this.hasExecuted = true;
+            }
+            else if (MgmtAction == MgmtAction.Copy)
+            {
+                Params = Params.Trim('"');
+                var paramParts = Params.Split(" ");
+                var sourceMeasurement = paramParts[0];
+                var targetMeasurement = paramParts[1];
+                context.Result = new KalaResult();
+                context.Result.StreamResult = Copy(sourceMeasurement, targetMeasurement, context);
+                this.hasExecuted = true;
+            }
+            else if (MgmtAction == MgmtAction.Rename)
+            {
+                Params = Params.Trim('"');
+                var paramParts = Params.Split(" ");
+                var sourceMeasurement = paramParts[0];
+                var targetMeasurement = paramParts[1];
+                context.Result = new KalaResult();
+                context.Result.StreamResult = Rename(sourceMeasurement, targetMeasurement, context);
+                this.hasExecuted = true;
+            }
+            else if (MgmtAction == MgmtAction.Sort)
+            {
+                Params = Params.Trim('"');
+                var paramParts = Params.Split(" ");
+                var measurement = paramParts[0];
+                context.Result = new KalaResult();
+                context.Result.StreamResult = SortRawFiles(measurement, context);
+                this.hasExecuted = true;
+            }
+            else if (MgmtAction == MgmtAction.Clean)
+            {
+                Params = Params.Trim('"');
+                var paramParts = Params.Split(" ");
+                var measurement = paramParts[0];
+                context.Result = new KalaResult();
+                context.Result.StreamResult = CleanupRawFiles(measurement, context);
+                this.hasExecuted = true;
+            }
+            else if (MgmtAction == MgmtAction.Merge)
+            {
+                Params = Params.Trim('"');
+                var paramParts = Params.Split(" ");
+                var measurement = paramParts[0];
+                context.Result = new KalaResult();
+                context.Result.StreamResult = Merge(measurement, context);
                 this.hasExecuted = true;
             }
             else if (MgmtAction == MgmtAction.ImportInflux)
@@ -59,26 +106,77 @@ namespace FKala.Core.KalaQl
                 this.hasExecuted = true;
             }
         }
+        private async IAsyncEnumerable<Dictionary<string, object?>>? Merge(string measurement, KalaQlContext context)
+        {
+            var result = context.DataLayer.MergeRawFilesFromMeasurementToMeasurement(measurement, measurement, context);
+            await foreach (var msg in result)
+            {
+                yield return msg;
+            }
+            var resultClean = context.DataLayer.Cleanup(measurement, context, true);
+            await foreach (var msg in resultClean)
+            {
+                yield return msg;
+            }
+            var resultSort = this.SortRawFiles(measurement, context);
+            await foreach (var msg in resultSort)
+            {
+                yield return msg;
+            }
+        }
 
-        private async IAsyncEnumerable<Dictionary<string, object?>>? SortRawFiles(KalaQlContext context)
+        private async IAsyncEnumerable<Dictionary<string, object?>>? CleanupRawFiles(string measurement, KalaQlContext context)
+        {
+            var result = context.DataLayer.Cleanup(measurement, context, false);
+            await foreach (var msg in result)
+            {
+                yield return msg;
+            }
+        }
+
+        private async IAsyncEnumerable<Dictionary<string, object?>>? Copy(string sourceMeasurement, string targetMeasurement, KalaQlContext context)
+        {
+            var result = context.DataLayer.MergeRawFilesFromMeasurementToMeasurement(sourceMeasurement, targetMeasurement, context);
+            await foreach (var msg in result)
+            {
+                yield return msg;
+            }            
+        }
+        private async IAsyncEnumerable<Dictionary<string, object?>>? Rename(string sourceMeasurement, string targetMeasurement, KalaQlContext context)
+        {
+            var result = context.DataLayer.MoveMeasurement(sourceMeasurement, targetMeasurement, context);
+            await foreach (var msg in result)
+            {
+                yield return msg;
+            }
+        }
+
+        private async IAsyncEnumerable<Dictionary<string, object?>> SortRawFiles(KalaQlContext context)
         {
             var result = context.DataLayer.LoadMeasurementList();
             foreach (var measurement in result)
             {
-
-                var q = new KalaQuery()
-                    .Add(new Op_BaseQuery("SortRawFiles", "toSort", measurement, DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefined.NoCache, false, true))
-                    .Add(new Op_Publish("SortRawFiles", new List<string>() { "toSort" }, PublishMode.MultipleResultsets));
-                var localresult = q.Execute(context.DataLayer).ResultSets!.First().Resultset;
-
-                foreach (var r in localresult) // iterate to load everything
+                await foreach (var msg in SortRawFiles(measurement, context))
                 {
-                    var t = r.Time;
-                    Pools.DataPoint.Return(r);
+                    yield return msg;
                 }
-                Console.WriteLine($"Sorted measurement {measurement}.");
-                yield return new Dictionary<string, object?>() { { "msg", $"Sorted measurement {measurement}." } };
             }
+        }
+
+        private async IAsyncEnumerable<Dictionary<string, object?>> SortRawFiles(string measurement, KalaQlContext context)
+        {
+            var q = new KalaQuery()
+                .Add(new Op_BaseQuery("SortRawFiles", "toSort", measurement, DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefined.NoCache, false, true))
+                .Add(new Op_Publish("SortRawFiles", new List<string>() { "toSort" }, PublishMode.MultipleResultsets));
+            var localresult = q.Execute(context.DataLayer).ResultSets!.First().Resultset;
+
+            foreach (var r in localresult) // iterate to load everything
+            {
+                var t = r.Time;
+                Pools.DataPoint.Return(r);
+            }
+            Console.WriteLine($"Sorted measurement {measurement}.");
+            yield return new Dictionary<string, object?>() { { "msg", $"Sorted measurement {measurement}." } };
         }
 
 #pragma warning disable CS1998 // Bei der asynchronen Methode fehlen "await"-Operatoren. Die Methode wird synchron ausgeführt.

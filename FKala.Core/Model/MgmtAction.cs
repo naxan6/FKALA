@@ -3,9 +3,14 @@
     public enum MgmtAction
     {
         LoadMeasures,
-        SortRawFiles,
+        SortAllRaw,
         FsChk,
         ImportInflux,
-        ImportMariaDbTstsfe
+        ImportMariaDbTstsfe,
+        Copy,
+        Sort,
+        Rename,
+        Clean,
+        Merge
     }
 }

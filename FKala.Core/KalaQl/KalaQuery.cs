@@ -144,7 +144,7 @@ namespace FKala.Core.KalaQl
                 case "Publ":
                     return new Op_Publish(line, fields[1].Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(), ParsePublishMode(fields[2]));
                 case "Mgmt":
-                    return new Op_Mgmt(line, ParseMgmtAction(fields[1]), fields.Count > 2 ? fields[2] : "");
+                    return new Op_Mgmt(line, ParseMgmtAction(fields[1]), fields.Count > 2 ? String.Join(" ", fields.Skip(2)) : "");
                 default:
                     throw new Exception($"Unkown Verb <{verb}>");
             }
@@ -158,7 +158,7 @@ namespace FKala.Core.KalaQl
             }
             else if (v.ToUpper() == "SORTRAWFILES")
             {
-                return MgmtAction.SortRawFiles;
+                return MgmtAction.SortAllRaw;
             }
             else if (v.ToUpper() == "IMPORTINFLUX")
             {
@@ -172,7 +172,27 @@ namespace FKala.Core.KalaQl
             {
                 return MgmtAction.FsChk;
             }
-            
+            else if (v.ToUpper() == "COPY")
+            {
+                return MgmtAction.Copy;
+            }
+            else if (v.ToUpper() == "RENAME")
+            {
+                return MgmtAction.Rename;
+            }
+            else if (v.ToUpper() == "SORT")
+            {
+                return MgmtAction.Sort;
+            }
+            else if (v.ToUpper() == "CLEAN")
+            {
+                return MgmtAction.Clean;
+            }
+            else if (v.ToUpper() == "MERGE")
+            {
+                return MgmtAction.Merge;
+            }
+
             throw new Exception($"MgmtAction {v} ist ungültig");
         }
 

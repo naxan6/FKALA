@@ -23,7 +23,7 @@ namespace FKala.Core.DataLayer.Infrastructure
                 int.TryParse(span.Slice(6, 2), out ss);
                 var dateTime = new DateTime(fileyear, filemonth, fileday, hh, mm, ss, DateTimeKind.Utc);
 
-                dateTime.AddTicks(int.Parse(span.Slice(9, 7)));
+                dateTime = dateTime.AddTicks(int.Parse(span.Slice(9, 7)));
                 span = span.Slice(17);
 
                 var valueRaw = span.Slice(0);

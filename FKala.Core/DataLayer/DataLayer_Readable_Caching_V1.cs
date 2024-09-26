@@ -9,6 +9,7 @@ using Microsoft.Extensions.ObjectPool;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.Intrinsics.Arm;
@@ -101,22 +102,83 @@ namespace FKala.Core
             var measurementPathPart = PathSanitizer.SanitizePath(measurement);
             var measurementPath = Path.Combine(DataDirectory, measurementPathPart);
 
-            using (var sa = new StorageAccess(measurementPath, measurementPathPart, startTime, endTime, context))
-            {
-                if (doSortRawFiles) { sa.ActiveAutoSortRawFiles(this); }
+            using (var sa = StorageAccess.ForRead(measurementPath, measurementPathPart, startTime, endTime, context, doSortRawFiles))
+            {                
                 foreach (var dp in sa.OpenStreamReaders().StreamDataPoints()) {                    
                     yield return dp;
                 }
             }
         }
-       
+
+        public async IAsyncEnumerable<Dictionary<string, object>> MergeRawFilesFromMeasurementToMeasurement(string measurement, string targetmeasurement, KalaQlContext context)
+        {
+            var measurementPathPart = PathSanitizer.SanitizePath(measurement);
+            var measurementPath = Path.Combine(DataDirectory, measurementPathPart);
+
+            using (var sa = StorageAccess.ForMerging(measurementPath, measurementPathPart, context))
+            {
+                foreach (var dp in sa.OpenStreamReaders().StreamMergeDataPoints())
+                {
+                    InsertTo(targetmeasurement, dp);
+                }
+            }
+            yield return new Dictionary<string, object>() { { "msg", $"reinserted/merged {measurementPath} to {targetmeasurement}" } };
+        }
+
+        public async IAsyncEnumerable<Dictionary<string, object>> Cleanup(string measurement, KalaQlContext context, bool cleanSorted = false)
+        {
+            var measurementPathPart = PathSanitizer.SanitizePath(measurement);
+            var measurementPath = Path.Combine(DataDirectory, measurementPathPart);
+
+            using (var sa = StorageAccess.ForCleanup(measurementPath, measurementPathPart, context))
+            {
+                var readers = sa.GetReaders();
+                foreach (var rt in readers)
+                {
+                    var measure = new DirectoryInfo(rt.FilePath).Parent!.Parent!.Parent!.Name;
+                    var filename = Path.GetFileName(rt.FilePath);
+                    var measureInName = filename.Substring(0, filename.Length - "_yyyy-MM-dd.dat".Length);
+
+                    if (measure != measureInName || rt.FilePath[rt.FilePath.Length - 15] == '#')
+                    {
+                        File.Delete(rt.FilePath);
+                        yield return new Dictionary<string, object>() { { "msg", $"cleaned up {rt.FilePath}" } };
+                    }
+                }
+            }
+            
+        }
+
+
+        public async IAsyncEnumerable<Dictionary<string, object>> MoveMeasurement (string measurementOld, string measurementNew, KalaQlContext context)
+        {
+            var measurementPathPartOld = PathSanitizer.SanitizePath(measurementOld);
+            var measurementPathOld = Path.Combine(DataDirectory, measurementPathPartOld);
+
+            var measurementPathPartNew = PathSanitizer.SanitizePath(measurementNew);
+            var measurementPathNew = Path.Combine(DataDirectory, measurementPathPartNew);
+            var measurementPathNewBak = Path.Combine(DataDirectory, measurementPathPartNew + $".bak_{ DateTime.Now.ToString("s") }");
+
+            if (Directory.Exists(measurementPathNew))
+            {
+                Directory.Move(measurementPathNew, measurementPathNewBak);
+            }
+
+            Directory.Move(measurementPathOld, measurementPathNew);
+            yield return new Dictionary<string, object>() { { "msg",  $"renamed {measurementPathOld} to {measurementPathNew} (backup in {measurementPathNewBak}" } };
+        }
+
+        public void Insert(string rawData)
+        {
+            Insert(rawData, null);
+        }
         /// <summary>
         /// Expects Data in the Form
         /// "<measurement> <timestamp:YYYY-MM-DDTHH:mm:ss.zzzzzzz <value>"
         /// </summary>
         /// <param name="rawData"></param>
         /// <param name="locking"></param>
-        public void Insert(string rawData)
+        public void Insert(string rawData, string? source = null)
         {
 
             // Parse the raw data
@@ -152,9 +214,13 @@ namespace FKala.Core
             sb.Append('_'); //marks new as unsorted
             sb.Append(datetime.Slice(0, 10)); //YYYY-MM-dd
             sb.Append(".dat");
-
-            var filePath = Path.Combine(directoryPath, sb.ToString());
+            var filePath = Path.Combine(directoryPath, sb.ToString());           
             stringBuilderPool.Return(sb);
+            
+            if (source != null && source.StartsWith(filePath + ","))
+            {
+                return;
+            }
             WriterSvc.DoWrite(filePath, (writer) =>
             {
                 // Format the line to write
@@ -163,9 +229,13 @@ namespace FKala.Core
                 writer.Append(valueString);
                 writer.AppendNewline();
             });
-
-
         }
+
+        public void InsertTo(string measurement, DataPoint dp)
+        {
+            Insert($"{measurement} {dp.Time.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {(dp.Value.HasValue ? dp.Value : dp.ValueText)}", dp.Source);
+        }
+
 
         public List<string> LoadMeasurementList()
         {

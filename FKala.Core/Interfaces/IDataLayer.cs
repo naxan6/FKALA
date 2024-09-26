@@ -4,8 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FKala.Core.DataLayer.Infrastructure;
+using FKala.Core.KalaQl;
 using FKala.Core.KalaQl.Windowing;
 using FKala.Core.Model;
+using static FKala.Core.DataLayer_Readable_Caching_V1;
 
 namespace FKala.Core.Interfaces
 {
@@ -13,9 +15,15 @@ namespace FKala.Core.Interfaces
     {
         IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool NewestOnly, bool doSortRawFiles, KalaQl.KalaQlContext context);
         void Insert(string kalaLinedata);
+        void Insert(string kalaLinedata, string? source);
+        void InsertTo(string measurement, DataPoint dp);
         List<int> LoadAvailableYears(string measurement);
         List<string> LoadMeasurementList();
         IEnumerable<DataPoint?> LoadNewestDatapoint(string measurement, KalaQl.KalaQlContext context);
         BufferedWriterService WriterSvc { get; }
+
+        IAsyncEnumerable<Dictionary<string, object>> MergeRawFilesFromMeasurementToMeasurement(string measurement, string targetmeasurement, KalaQlContext context);
+        IAsyncEnumerable<Dictionary<string, object>> MoveMeasurement(string measurementOld, string measurementNew, KalaQlContext context);
+        IAsyncEnumerable<Dictionary<string, object>> Cleanup(string measurement, KalaQlContext context, bool cleanSorted);
     }
 }
