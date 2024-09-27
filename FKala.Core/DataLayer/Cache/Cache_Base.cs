@@ -78,6 +78,7 @@ namespace FKala.Core.DataLayer.Cache
             using var _fs = new FileStream(yearFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             using var sr = new StreamReader(_fs, Encoding.UTF8, false, 262088);
             string? line;
+            NavigateTo(fileyear, sr, startTime);
             while ((line = sr.ReadLine()) != null)
             {
                 var datapoint = ReadLine(fileyear, line);
@@ -87,6 +88,47 @@ namespace FKala.Core.DataLayer.Cache
                     yield return datapoint;
                 }
                 //TODO für später: breaken, sobald endtime überschritten, nicht mehr komplett durchlaufen
+            }
+        }
+
+        private void NavigateTo(int fileyear, StreamReader sr, DateTime startTime)
+        {
+            long fullLength = sr.BaseStream.Length;
+            long position = fullLength / 2;
+            DateTime lineTime = DateTime.MinValue;
+            while (true)
+            {
+                sr.BaseStream.Position = position;
+                sr.DiscardBufferedData();
+                DataPoint? current = ReadNextLine(fileyear, sr);
+                if (current == null || (current.Time < startTime && current.Time.AddHours(1) > startTime))
+                {
+                    break;
+                } 
+                else
+                {
+                    if (current.Time < startTime) //position is too early in the file
+                    {
+                        position = (position + fullLength) / 2;
+                    } 
+                    else if (current.Time >= startTime) // position is to late in the file
+                    {
+                        position = position / 2;
+                    }
+                }
+            }
+        }
+
+        private DataPoint? ReadNextLine(int fileyear, StreamReader sr)
+        {
+            sr.ReadLine();
+            string? line;
+            if ((line = sr.ReadLine()) != null) {
+                return ReadLine(fileyear, line);
+            } 
+            else
+            {
+                return null;
             }
         }
 
