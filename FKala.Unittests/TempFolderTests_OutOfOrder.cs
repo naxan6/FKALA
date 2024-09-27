@@ -40,9 +40,9 @@ namespace FKala.Unittests
             Console.WriteLine(KalaJson.Serialize(resultset));
             using (new AssertionScope())
             {
-                resultset.First().Time.Should().Be(new DateTime(2024, 03, 01, 0, 0, 03));
+                resultset.First().Time.Should().Be(new DateTime(2024, 03, 01, 0, 0, 03).AddTicks(2370446));
                 resultset.First().Value.Should().Be(0.429102592370055M);
-                resultset.Last().Time.Should().Be(new DateTime(2024, 03, 14, 23, 59, 58));
+                resultset.Last().Time.Should().Be(new DateTime(2024, 03, 14, 23, 59, 58).AddTicks(4310596));
                 resultset.Last().Value.Should().Be(0.136571015760568M);
             }
 
@@ -50,9 +50,9 @@ namespace FKala.Unittests
             var resultsetAll = DataFaker.TestDataLayer.LoadData("m1", new DateTime(0001, 01, 01), new DateTime(9999, 12, 31), CacheResolutionPredefined.NoCache, false, false, new KalaQlContext(DataFaker.TestDataLayer));
             using (new AssertionScope())
             {
-                resultsetAll.First().Time.Should().Be(new DateTime(2024, 01, 01, 0, 0, 10));
+                resultsetAll.First().Time.Should().Be(new DateTime(2024, 01, 01, 0, 0, 10).AddTicks(0024500));
                 resultsetAll.First().Value.Should().Be(0.248668584157093M);
-                resultsetAll.Last().Time.Should().Be(new DateTime(2024, 04, 30, 23, 59, 58));
+                resultsetAll.Last().Time.Should().Be(new DateTime(2024, 04, 30, 23, 59, 58).AddTicks(2580834));
                 resultsetAll.Last().Value.Should().Be(0.669364353022242M);
             }            
         }
@@ -80,7 +80,7 @@ namespace FKala.Unittests
             var firstEntry = resultSet.First();
             using (new AssertionScope())
             {
-                ((DateTime)firstEntry["time"]!).Should().Be(new DateTime(2024, 04, 30, 23, 59, 58));
+                ((DateTime)firstEntry["time"]!).Should().Be(new DateTime(2024, 04, 30, 23, 59, 58).AddTicks(2580834));
                 ((decimal)firstEntry["m1"]!).Should().Be(0.669364353022242M);
             }
         }

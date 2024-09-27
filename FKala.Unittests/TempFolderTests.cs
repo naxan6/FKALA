@@ -38,19 +38,21 @@ namespace FKala.Unittests
             resultset = resultset.ToList(); // persist result
 
             // Assert 1
-            Console.WriteLine(KalaJson.Serialize(resultset));            
-            
-            Assert.AreEqual(new DateTime(2024, 03, 01, 0, 0, 2), resultset.First().Time);
+            Console.WriteLine(KalaJson.Serialize(resultset));
+
+            resultset.First().Time.Should().Be(new DateTime(2024, 03, 01, 0, 0, 2).AddTicks(5180212));
+
             Assert.AreEqual(0.564860636165766m, resultset.First().Value);
-            Assert.AreEqual(new DateTime(2024, 03, 14, 23, 59, 58), resultset.Last().Time);
+            resultset.Last().Time.Should().Be(new DateTime(2024, 03, 14, 23, 59, 58).AddTicks(2488239));
+
             Assert.AreEqual(0.457086396616458m, resultset.Last().Value);
 
             // Assert 2
             var resultsetAll = DataFaker.TestDataLayer.LoadData("m1", new DateTime(0001, 01, 01), new DateTime(9999, 12, 31), CacheResolutionPredefined.NoCache, false, false, new KalaQlContext(DataFaker.TestDataLayer));
             resultsetAll = resultsetAll.ToList();
-            Assert.AreEqual(new DateTime(2024, 01, 01, 0, 0, 13), resultsetAll.First().Time);
+            resultsetAll.First().Time.Should().Be(new DateTime(2024, 01, 01, 0, 0, 13).AddTicks(5443658));
             Assert.AreEqual(0.248668584157093m, resultsetAll.First().Value);
-            Assert.AreEqual(new DateTime(2024, 04, 30, 23, 59, 59), resultsetAll.Last().Time);
+            resultsetAll.Last().Time.Should().Be(new DateTime(2024, 04, 30, 23, 59, 59).AddTicks(3647264));
             Assert.AreEqual(0.646428865681602m, resultsetAll.Last().Value);
         }
 
@@ -75,7 +77,7 @@ namespace FKala.Unittests
             resultset!.Count().Should().Be(1);
             
             var firstEntry = resultset!.First();
-            Assert.AreEqual(new DateTime(2024, 04, 30, 23, 59, 59), firstEntry["time"]);
+            firstEntry["time"].Should().Be(new DateTime(2024, 04, 30, 23, 59, 59).AddTicks(3647264));
             Assert.AreEqual(0.646428865681602m, firstEntry["m1"]);
         }
 
