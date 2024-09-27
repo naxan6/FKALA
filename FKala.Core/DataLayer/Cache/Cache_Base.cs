@@ -93,6 +93,13 @@ namespace FKala.Core.DataLayer.Cache
 
         private void NavigateTo(int fileyear, StreamReader sr, DateTime startTime)
         {
+            DataPoint? first = ReadNextLine(fileyear, sr);
+            if (first.Time >= startTime)
+            {
+                return;
+            }
+
+
             long fullLength = sr.BaseStream.Length;
             long position = fullLength / 2;
             long jumpintervall = fullLength / 4;
