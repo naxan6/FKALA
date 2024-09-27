@@ -94,7 +94,7 @@ namespace FKala.Core.DataLayer.Cache
         private void NavigateTo(int fileyear, StreamReader sr, DateTime startTime)
         {
             DataPoint? first = ReadNextLine(fileyear, sr);
-            if (first.Time >= startTime)
+            if (first == null || first.Time >= startTime)
             {
                 return;
             }
