@@ -94,7 +94,7 @@ namespace FKala.Core.DataLayer.Cache
             }
             else if (cacheResolution.Resolution == Resolution.FiveMinutely)
             {
-                cache = new Cache_15Minutely(DataLayer);
+                cache = new Cache_5Minutely(DataLayer);
             }
             else if (cacheResolution.Resolution == Resolution.FifteenMinutely)
             {
