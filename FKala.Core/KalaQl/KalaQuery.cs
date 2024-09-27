@@ -139,6 +139,8 @@ namespace FKala.Core.KalaQl
                     return new Op_BaseQuery(line, fields[1].Trim(':'), fields[2], ParseDateTime(fields[3]), ParseDateTime(fields[4]), ParseCacheResolution(fields[5]));
                 case "Aggr":
                     return new Op_Aggregate(line, fields[1].Trim(':'), fields[2], ParseWindow(fields[3]), ParseAggregate(fields[4]), ParseEmptyWindows(fields.Count > 5 ? fields[5] : ""));
+                case "Inpo":
+                    return new Op_Interpolate(line, fields[1].Trim(':'), fields[2], ParseInterpolationMode(fields[3]), ParseDecimalNullable(fields[4]));
                 case "Expr":
                     return new Op_Expresso(line, fields[1].Trim(':'), fields[2]);
                 case "Publ":
@@ -148,6 +150,36 @@ namespace FKala.Core.KalaQl
                 default:
                     throw new Exception($"Unkown Verb <{verb}>");
             }
+        }
+
+        private decimal? ParseDecimalNullable(string v)
+        {
+            if (v.ToUpper() == "NULL")
+            {
+                return null;
+            }
+            else
+            {
+                return decimal.Parse(v);
+            }
+
+        }
+
+        private InterpolationMode ParseInterpolationMode(string v)
+        {
+            if (v.ToUpper() == "FORWARDS")
+            {
+                return InterpolationMode.forward;
+            }
+            else if (v.ToUpper() == "BACKWARDS")
+            {
+                return InterpolationMode.backwards;
+            }
+            else if (v.ToUpper() == "CONSTANT")
+            {
+                return InterpolationMode.constant;
+            }
+            throw new Exception($"InterpolationMode {v} is invalid");
         }
 
         private MgmtAction ParseMgmtAction(string v)
@@ -167,7 +199,7 @@ namespace FKala.Core.KalaQl
             else if (v.ToUpper() == "IMPORTTSTSFE")
             {
                 return MgmtAction.ImportMariaDbTstsfe;
-            }            
+            }
             else if (v.ToUpper() == "FSCHK")
             {
                 return MgmtAction.FsChk;
@@ -193,7 +225,7 @@ namespace FKala.Core.KalaQl
                 return MgmtAction.Merge;
             }
 
-            throw new Exception($"MgmtAction {v} ist ungültig");
+            throw new Exception($"MgmtAction {v} is invalid");
         }
 
         private CacheResolution ParseCacheResolution(string v)
@@ -235,10 +267,10 @@ namespace FKala.Core.KalaQl
                 return Resolution.Hourly;
             }
             else if (v.ToUpper().StartsWith("AUTO("))
-            {                
+            {
                 var parts = v.Split(['(', ')']);
                 var queriedwindowsize = long.Parse(parts[1]);
-                
+
                 Resolution autoresolution = Resolution.Hourly;
 
                 if (queriedwindowsize < 1 * 60 * 1000)
@@ -256,12 +288,12 @@ namespace FKala.Core.KalaQl
                 else if (queriedwindowsize < 60 * 60 * 1000)
                 {
                     autoresolution = Resolution.FifteenMinutely;
-                } 
+                }
                 else
                 {
                     autoresolution = Resolution.Hourly;
                 }
-                
+
                 Console.WriteLine($"autoselect cache {autoresolution} for {queriedwindowsize}");
                 return autoresolution;
             }
