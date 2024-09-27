@@ -76,7 +76,7 @@ namespace FKala.Core.DataLayer.Cache
                 }
 
                 Console.WriteLine($"Loading from Cache: {cache.CacheSubdir}/{cachefile}");
-                var yearEnumerable = cache.LoadCache(startTime, endTime, year, cacheFilePath);
+                var yearEnumerable = cache.LoadCache(startTime, endTime, year, cacheFilePath, DataLayer.ReadBuffer);
                 foreach (var item in yearEnumerable)
                 {
                     yield return item;

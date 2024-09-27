@@ -13,6 +13,7 @@ namespace FKala.Core.Interfaces
 {
     public interface IDataLayer
     {
+        string DataDirectory { get; }
         IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool NewestOnly, bool doSortRawFiles, KalaQl.KalaQlContext context);
         void Insert(string kalaLinedata);
         void Insert(string kalaLinedata, string? source);
@@ -26,5 +27,8 @@ namespace FKala.Core.Interfaces
         IAsyncEnumerable<Dictionary<string, object>> Cleanup(string measurement, KalaQlContext context, bool cleanSorted);
         void Flush();
         void Flush(string filePath);
+
+        int ReadBuffer { get; }
+        int WriteBuffer { get; }
     }
 }

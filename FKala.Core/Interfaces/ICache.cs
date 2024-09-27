@@ -14,7 +14,7 @@ namespace FKala.Core.Interfaces
         IEnumerable<DataPoint> GetAggregateForCaching(string measurement, DateTime start, DateTime end, AggregateFunction aggrFunc);
         DataPoint ReadLine(int fileyear, string? line);
 
-        IEnumerable<DataPoint> LoadCache(DateTime startTime, DateTime endTime, int year, string yearFilePath);
+        IEnumerable<DataPoint> LoadCache(DateTime startTime, DateTime endTime, int year, string yearFilePath, int readBuffer);
         void GenerateWholeYearCache(string measurement, int year, string yearFilePath, AggregateFunction aggrFunc, bool forceRebuild);
         string EnsureDirectory(string cacheDirectory);
         DateTime ShouldUpdateFromWhere(int cacheYear, DataPoint? newestInCache, DataPoint? newestInRaw);

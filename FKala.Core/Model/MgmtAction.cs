@@ -11,6 +11,7 @@
         Sort,
         Rename,
         Clean,
-        Merge
+        Merge,
+        BenchmarkIo
     }
 }

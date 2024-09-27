@@ -17,27 +17,40 @@ using System.Text;
 
 namespace FKala.Core
 {
-    public partial class DataLayer_Readable_Caching_V1 : IDataLayer, IDisposable
+    public class DataLayer_Readable_Caching_V1 : IDataLayer, IDisposable
     {
-        private string DataDirectory;
+        public int ReadBuffer { get; } = 131072;
+        public int WriteBuffer { get; } = 131072;
 
-        public CachingLayer CachingLayer { get; }
-        public BufferedWriterService WriterSvc { get; } = new BufferedWriterService();
+        public string DataDirectory { get; private set; }        
+        public CachingLayer CachingLayer { get; private set; }
+        public BufferedWriterService WriterSvc { get; private set; }
 
         ConcurrentDictionary<string, byte> CreatedDirectories = new ConcurrentDictionary<string, byte>();
         DefaultObjectPool<StringBuilder> stringBuilderPool = new DefaultObjectPool<StringBuilder>(new StringBuilderPooledObjectPolicy());
 
         public DataLayer_Readable_Caching_V1(string storagePath)
         {
+            Init(storagePath);
+        }
+
+        
+        public DataLayer_Readable_Caching_V1(string storagePath, int readBuffer, int writeBuffer)
+        {
+            this.WriteBuffer = writeBuffer;
+            this.ReadBuffer = readBuffer;
+            Init(storagePath);
+        }
+
+        private void Init(string storagePath)
+        {
             storagePath = storagePath.Replace('\\', Path.DirectorySeparatorChar)
                                        .Replace('/', Path.DirectorySeparatorChar);
 
             this.DataDirectory = Path.Combine(storagePath, "data");
             Directory.CreateDirectory(this.DataDirectory);
-
             CachingLayer = new CachingLayer(this, storagePath);
-
-            
+            WriterSvc = new BufferedWriterService(WriteBuffer);
         }
 
         public IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly, bool doSortRawFiles, KalaQlContext context)
@@ -103,8 +116,9 @@ namespace FKala.Core
             var measurementPath = Path.Combine(DataDirectory, measurementPathPart);
 
             using (var sa = StorageAccess.ForRead(measurementPath, measurementPathPart, startTime, endTime, context, doSortRawFiles))
-            {                
-                foreach (var dp in sa.OpenStreamReaders().StreamDataPoints()) {                    
+            {
+                foreach (var dp in sa.OpenStreamReaders().StreamDataPoints())
+                {
                     yield return dp;
                 }
             }
@@ -124,9 +138,9 @@ namespace FKala.Core
                     {
                         continue;
                     }
-                    
-                    Insert($"{measurement} {dp.Time.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {(dp.Value.HasValue ? dp.Value : dp.ValueText)}", dp.Source, filePath);
-                    
+
+                    Insert($"{targetmeasurement} {dp.Time.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {(dp.Value.HasValue ? dp.Value : dp.ValueText)}", dp.Source, filePath);
+
                     if (day < dp.Time)
                     {
                         day = dp.Time.AddDays(1);
@@ -162,14 +176,14 @@ namespace FKala.Core
         }
 
 
-        public async IAsyncEnumerable<Dictionary<string, object>> MoveMeasurement (string measurementOld, string measurementNew, KalaQlContext context)
+        public async IAsyncEnumerable<Dictionary<string, object>> MoveMeasurement(string measurementOld, string measurementNew, KalaQlContext context)
         {
             var measurementPathPartOld = PathSanitizer.SanitizePath(measurementOld);
             var measurementPathOld = Path.Combine(DataDirectory, measurementPathPartOld);
 
             var measurementPathPartNew = PathSanitizer.SanitizePath(measurementNew);
             var measurementPathNew = Path.Combine(DataDirectory, measurementPathPartNew);
-            var measurementPathNewBak = Path.Combine(DataDirectory, measurementPathPartNew + $".bak_{ DateTime.Now.ToString("s") }");
+            var measurementPathNewBak = Path.Combine(DataDirectory, measurementPathPartNew + $".bak_{DateTime.Now.ToString("s")}");
 
             if (Directory.Exists(measurementPathNew))
             {
@@ -177,7 +191,7 @@ namespace FKala.Core
             }
 
             Directory.Move(measurementPathOld, measurementPathNew);
-            yield return new Dictionary<string, object>() { { "msg",  $"renamed {measurementPathOld} to {measurementPathNew} (backup in {measurementPathNewBak}" } };
+            yield return new Dictionary<string, object>() { { "msg", $"renamed {measurementPathOld} to {measurementPathNew} (backup in {measurementPathNewBak}" } };
         }
 
         public void Insert(string rawData)
@@ -271,7 +285,7 @@ namespace FKala.Core
             valueRaw = span.Slice(0);
             valueString = valueRaw.ToString().Replace('\n', '|');
         }
-        
+
         public List<string> LoadMeasurementList()
         {
             var measurements = Directory.GetDirectories(DataDirectory);

@@ -11,12 +11,14 @@ namespace FKala.Core.DataLayer.Infrastructure
     public class BufferedWriterService : IDisposable
     {
         private readonly ConcurrentDictionary<string, IBufferedWriter> _bufferedWriters = new ConcurrentDictionary<string, IBufferedWriter>();
+        private readonly int WriteBuffer;
         Task BufferedWriterFlushTask;
 
         LockManager lockManager = new LockManager();
 
-        public BufferedWriterService()
+        public BufferedWriterService(int writeBuffer)
         {
+            this.WriteBuffer = writeBuffer;
             BufferedWriterFlushTask = Task.Run(() => FlushBuffersPeriodically());
         }
 
@@ -61,7 +63,7 @@ namespace FKala.Core.DataLayer.Infrastructure
         {
             using (lockManager.AcquireLock(filePath))
             {
-                using (var writer = new BufferedWriter(filePath, append))
+                using (var writer = new BufferedWriter(filePath, WriteBuffer, append))
                 {
                     writeAction(writer);
 
@@ -79,7 +81,7 @@ namespace FKala.Core.DataLayer.Infrastructure
                 {
                     try
                     {
-                        writer = new BufferedWriter(filePath);
+                        writer = new BufferedWriter(filePath, WriteBuffer);
                     }
                     catch (Exception)
                     {
@@ -90,7 +92,7 @@ namespace FKala.Core.DataLayer.Infrastructure
                         }
                         try
                         {
-                            writer = new BufferedWriter(filePath);
+                            writer = new BufferedWriter(filePath, WriteBuffer);
                         }
                         catch (Exception)
                         {

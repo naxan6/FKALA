@@ -71,12 +71,12 @@ namespace FKala.Core.DataLayer.Cache
             }
         }
 
-        public IEnumerable<DataPoint> LoadCache(DateTime startTime, DateTime endTime, int year, string yearFilePath)
+        public IEnumerable<DataPoint> LoadCache(DateTime startTime, DateTime endTime, int year, string yearFilePath, int readBuffer)
         {
             if (!File.Exists(yearFilePath)) yield break;
             int fileyear = year;
             using var _fs = new FileStream(yearFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            using var sr = new StreamReader(_fs, Encoding.UTF8, false, 262088);
+            using var sr = new StreamReader(_fs, Encoding.UTF8, false, readBuffer);
             string? line;
             NavigateTo(fileyear, sr, startTime);
             while ((line = sr.ReadLine()) != null)

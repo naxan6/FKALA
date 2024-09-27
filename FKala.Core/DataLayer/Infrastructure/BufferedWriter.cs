@@ -16,7 +16,7 @@ namespace FKala.Core.DataLayer.Infrastructure
 
         public bool disposed { get; private set; }
 
-        public BufferedWriter(string filePath, bool append = true)
+        public BufferedWriter(string filePath, int writeBuffer, bool append = true)
         {
             var fileMode = FileMode.Append;
             if (!append)
@@ -25,7 +25,7 @@ namespace FKala.Core.DataLayer.Infrastructure
             }
             _filePath = filePath;
             _fileStream = new FileStream(filePath, fileMode, FileAccess.Write, FileShare.Read);
-            _streamWriter = new StreamWriter(_fileStream, Encoding.UTF8, 262088);
+            _streamWriter = new StreamWriter(_fileStream, Encoding.UTF8, writeBuffer);
         }
 
         public void Append(string text)

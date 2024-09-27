@@ -200,6 +200,10 @@ namespace FKala.Core.KalaQl
             {
                 return MgmtAction.ImportMariaDbTstsfe;
             }
+            else if (v.ToUpper() == "BENCHIO")
+            {
+                return MgmtAction.BenchmarkIo;
+            }
             else if (v.ToUpper() == "FSCHK")
             {
                 return MgmtAction.FsChk;

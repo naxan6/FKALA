@@ -1,8 +1,10 @@
 ﻿using FKala.Core.DataLayer.Infrastructure;
+using FKala.Core.Helper;
 using FKala.Core.Interfaces;
 using FKala.Core.Migration;
 using FKala.Core.Model;
 using FKala.Migrate.MariaDb;
+using System.Diagnostics.Metrics;
 using System.Runtime.Intrinsics.Arm;
 
 namespace FKala.Core.KalaQl
@@ -106,7 +108,28 @@ namespace FKala.Core.KalaQl
                 context.Result.StreamResult = importer.Migrate();
                 this.hasExecuted = true;
             }
+            else if (MgmtAction == MgmtAction.BenchmarkIo)
+            {                
+                context.Result = new KalaResult();
+                
+                context.Result.StreamResult = Bench(context.DataLayer.DataDirectory);
+                this.hasExecuted = true;
+            }
         }
+
+        private async IAsyncEnumerable<Dictionary<string, object?>>? Bench(string baseDir)
+        {
+            var bm = Benchmarker.Bench(baseDir);
+            foreach (var rResult in bm.Reading)
+            {
+                yield return new Dictionary<string, object?>() { { $"reading buffer {rResult.Key}", $"{ rResult.Value }" } };
+            }
+            foreach (var rResult in bm.Writing)
+            {
+                yield return new Dictionary<string, object?>() { { $"writing buffer {rResult.Key}", $"{rResult.Value}" } };
+            }
+        }
+
         private async IAsyncEnumerable<Dictionary<string, object?>>? Merge(string measurement, KalaQlContext context)
         {
             var result = context.DataLayer.MergeRawFilesFromMeasurementToMeasurement(measurement, measurement, context);
@@ -148,7 +171,24 @@ namespace FKala.Core.KalaQl
             await foreach (var msg in result)
             {
                 yield return msg;
-            }            
+            }
+            context.DataLayer.Flush();
+            var resultClean = context.DataLayer.Cleanup(targetMeasurement, context, true);
+            await foreach (var msg in resultClean)
+            {
+                yield return msg;
+            }
+            var resultSort = this.SortRawFiles(targetMeasurement, context);
+            await foreach (var msg in resultSort)
+            {
+                yield return msg;
+            }
+            var resultCleanFinal = context.DataLayer.Cleanup(targetMeasurement, context, false);
+            await foreach (var msg in resultCleanFinal)
+            {
+                yield return msg;
+            }
+            yield break;
         }
         private async IAsyncEnumerable<Dictionary<string, object?>>? Rename(string sourceMeasurement, string targetMeasurement, KalaQlContext context)
         {

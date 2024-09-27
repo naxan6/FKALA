@@ -27,7 +27,12 @@ builder.Services.AddSwaggerGen();
 builder.Logging.AddConsole();
 
 var storagePath = builder.Configuration["DataStorage"] ?? "\\\\naxds2\\docker\\fkala";
-builder.Services.AddSingleton<IDataLayer>(new DataLayer_Readable_Caching_V1(storagePath));
+
+var readBuffer = !string.IsNullOrEmpty(builder.Configuration["ReadBuffer"]) ? int.Parse(builder.Configuration["ReadBuffer"]) : 131072;
+var writeBuffer = !string.IsNullOrEmpty(builder.Configuration["WriteBuffer"]) ? int.Parse(builder.Configuration["WriteBuffer"]) : 262144;
+
+
+builder.Services.AddSingleton<IDataLayer>(new DataLayer_Readable_Caching_V1(storagePath, readBuffer, writeBuffer));
 
 if (builder.Configuration.GetSection(MqttSettings.ConfigurationSection).Exists())
 {

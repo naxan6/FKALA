@@ -39,6 +39,8 @@ namespace FKala.Core.DataLayers
         private DateTime EndTime;
 
         public KalaQlContext Context { get; private set; }
+        public int ReadBuffer { get; }
+        public int WriteBuffer { get; }
 
         private bool IsActiveAutoSortRawFiles;
         private IDataLayer? DataLayer;
@@ -46,7 +48,12 @@ namespace FKala.Core.DataLayers
         private StorageAccess(IDataLayer dataLayer)
         {
             this.DataLayer = dataLayer;
+            fileStreamOptions.BufferSize = dataLayer.ReadBuffer;
+            optionFindFilesRecursive.BufferSize = dataLayer.ReadBuffer;
+            ReadBuffer = dataLayer.ReadBuffer;
+            WriteBuffer = dataLayer.WriteBuffer;
         }
+       
         public static StorageAccess ForRead(string measurementPath, string measurementPathPart, DateTime startTime, DateTime endTime, KalaQl.KalaQlContext context, bool doSortRawFiles)
         {
             var ret = new StorageAccess(context.DataLayer);
@@ -220,7 +227,7 @@ namespace FKala.Core.DataLayers
 
         private List<int> GetYearFolders(string measurementDir)
         {
-            var entries = Directory.GetDirectories(measurementDir, "*", new EnumerationOptions() { ReturnSpecialDirectories = false, BufferSize = 131072, });
+            var entries = Directory.GetDirectories(measurementDir, "*", new EnumerationOptions() { ReturnSpecialDirectories = false, BufferSize = ReadBuffer, });
             return entries.Where(e => Path.GetFileName(e) != ".DS_Store").Select(y => int.Parse(Path.GetFileName(y))).ToList();
         }
 
