@@ -95,6 +95,7 @@ namespace FKala.Core.DataLayer.Cache
         {
             long fullLength = sr.BaseStream.Length;
             long position = fullLength / 2;
+            long jumpintervall = fullLength / 4;
             DateTime lineTime = DateTime.MinValue;
             while (true)
             {
@@ -109,11 +110,15 @@ namespace FKala.Core.DataLayer.Cache
                 {
                     if (current.Time < startTime) //position is too early in the file
                     {
-                        position = (position + fullLength) / 2;
+                        Console.WriteLine("jump forwards");
+                        position = position + jumpintervall;
+                        jumpintervall = jumpintervall / 2;
                     } 
                     else if (current.Time >= startTime) // position is to late in the file
                     {
-                        position = position / 2;
+                        Console.WriteLine("jump backwards");
+                        position = position - jumpintervall;
+                        jumpintervall = jumpintervall / 2;
                     }
                 }
             }
