@@ -235,25 +235,35 @@ namespace FKala.Core.KalaQl
                 return Resolution.Hourly;
             }
             else if (v.ToUpper().StartsWith("AUTO("))
-            {
+            {                
                 var parts = v.Split(['(', ')']);
-                if (long.Parse(parts[1]) < 1 * 60 * 1000)
+                var queriedwindowsize = long.Parse(parts[1]);
+                
+                Resolution autoresolution = Resolution.Hourly;
+
+                if (queriedwindowsize < 1 * 60 * 1000)
                 {
-                    return Resolution.Full;
+                    autoresolution = Resolution.Full;
                 }
-                else if (long.Parse(parts[1]) < 5 * 60 * 1000)
+                else if (queriedwindowsize < 5 * 60 * 1000)
                 {
-                    return Resolution.Minutely;
+                    autoresolution = Resolution.Minutely;
                 }
-                else if (long.Parse(parts[1]) < 15 * 60 * 1000)
+                else if (queriedwindowsize < 15 * 60 * 1000)
                 {
-                    return Resolution.FiveMinutely;
+                    autoresolution = Resolution.FiveMinutely;
                 }
-                else if (long.Parse(parts[1]) < 120 * 60 * 1000)
+                else if (queriedwindowsize < 60 * 60 * 1000)
                 {
-                    return Resolution.FifteenMinutely;
+                    autoresolution = Resolution.FifteenMinutely;
+                } 
+                else
+                {
+                    autoresolution = Resolution.Hourly;
                 }
-                return Resolution.Hourly;
+                
+                Console.WriteLine($"autoselect cache {autoresolution} for {queriedwindowsize}");
+                return autoresolution;
             }
             return null;
         }
