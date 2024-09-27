@@ -101,7 +101,7 @@ namespace FKala.Core.DataLayer.Cache
                 sr.BaseStream.Position = position;
                 sr.DiscardBufferedData();
                 DataPoint? current = ReadNextLine(fileyear, sr);
-                if (current == null || (current.Time < startTime && current.Time.AddHours(1) > startTime))
+                if (current == null || (current.Time < startTime && current.Time.Date == startTime.Date))
                 {
                     break;
                 } 
