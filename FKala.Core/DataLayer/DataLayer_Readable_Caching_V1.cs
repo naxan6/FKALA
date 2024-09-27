@@ -133,7 +133,7 @@ namespace FKala.Core
             {
                 foreach (var dp in sa.OpenStreamReaders().StreamMergeDataPoints())
                 {
-                    var filePath = GetInsertTargetFilepath(measurement, dp.Time.ToString("yyyy-MM-dd"));
+                    var filePath = GetInsertTargetFilepath(targetmeasurement, dp.Time.ToString("yyyy-MM-dd"));
                     if (dp.Source != null && dp.Source.StartsWith(filePath + ","))
                     {
                         continue;
