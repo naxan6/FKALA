@@ -88,6 +88,15 @@ namespace FKala.Core.Migrations.Influx
                     sb.Clear();
                     continue;
                 }
+                if ('\\' == c) //read escaped char instantly
+                {
+                    //sb.Add(c);
+                    someleft = ce.MoveNext();
+                    c = ce.Current;
+                    sb.Add(c);
+                    someleft = ce.MoveNext();
+                    continue;
+                }
                 if (' ' == c)
                 {
                     var pair = new string(sb.ToArray()).Trim().Split("=");
@@ -96,13 +105,7 @@ namespace FKala.Core.Migrations.Influx
                     sb.Clear();
                     return;
                 }
-                if ('\\' == c) //read escaped char instantly
-                {
-                    sb.Add(c);
-                    someleft = ce.MoveNext();
-                    sb.Add(c);
-                    continue;
-                }
+
 
 
                 sb.Add(c);
@@ -141,6 +144,15 @@ namespace FKala.Core.Migrations.Influx
                     sb.Clear();
                     continue;
                 }
+                if ('\\' == c) //read escaped char instantly
+                {
+                    //sb.Add(c);
+                    someleft = ce.MoveNext();
+                    c = ce.Current;
+                    sb.Add(c);
+                    someleft = ce.MoveNext();
+                    continue;
+                }
                 if (' ' == c)
                 {
                     var pair = new string(sb.ToArray()).Trim().Split("=");
@@ -149,13 +161,7 @@ namespace FKala.Core.Migrations.Influx
                     sb.Clear();
                     return;
                 }
-                if ('\\' == c) //read escaped char instantly
-                {
-                    sb.Add(c);
-                    someleft = ce.MoveNext();
-                    sb.Add(c);
-                    continue;
-                }
+                
 
 
                 sb.Add(c);

@@ -106,7 +106,7 @@ namespace FKala.Core.Migration
                 } 
                 else if (tags.ContainsKey("sensorname"))
                 {
-                    newMeasurement = tags["sensorname"].Replace(" ", "_");
+                    newMeasurement = measurement + "/" + tags["sensorname"].Replace(" ", "_");
                 }
 
 
