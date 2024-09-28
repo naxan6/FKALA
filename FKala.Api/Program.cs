@@ -26,7 +26,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Logging.AddConsole();
 
-var storagePath = builder.Configuration["DataStorage"] ?? "\\\\naxds2\\docker\\fkala";
+var storagePath = builder.Configuration["DataStorage"] ?? "C:\\fkala";
 
 var readBuffer = !string.IsNullOrEmpty(builder.Configuration["ReadBuffer"]) ? int.Parse(builder.Configuration["ReadBuffer"]) : 16384;
 var writeBuffer = !string.IsNullOrEmpty(builder.Configuration["WriteBuffer"]) ? int.Parse(builder.Configuration["WriteBuffer"]) : 32768;

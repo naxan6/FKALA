@@ -94,6 +94,24 @@ namespace FKala.Core.KalaQl
                 context.Result.StreamResult = Merge(measurement, context);
                 this.hasExecuted = true;
             }
+            else if (MgmtAction == MgmtAction.Blacklist)
+            {
+                Params = Params.Trim('"');
+                var paramParts = Params.Split(" ");
+                var measurement = paramParts[0];
+                context.Result = new KalaResult();
+                context.Result.StreamResult = context.DataLayer.Blacklist(measurement);
+                this.hasExecuted = true;
+            }
+            else if (MgmtAction == MgmtAction.UnBlacklist)
+            {
+                Params = Params.Trim('"');
+                var paramParts = Params.Split(" ");
+                var measurement = paramParts[0];
+                context.Result = new KalaResult();
+                context.Result.StreamResult = context.DataLayer.UnBlacklist(measurement);
+                this.hasExecuted = true;
+            }
             else if (MgmtAction == MgmtAction.ImportInflux)
             {
                 var importer = new InfluxLineProtocolImporter(context.DataLayer);

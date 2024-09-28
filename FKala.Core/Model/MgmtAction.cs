@@ -12,6 +12,8 @@
         Rename,
         Clean,
         Merge,
-        BenchmarkIo
+        BenchmarkIo,
+        UnBlacklist,
+        Blacklist
     }
 }

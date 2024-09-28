@@ -12,13 +12,17 @@ namespace FKala.Core.DataLayer.Infrastructure
     {
         private readonly ConcurrentDictionary<string, IBufferedWriter> _bufferedWriters = new ConcurrentDictionary<string, IBufferedWriter>();
         private readonly int WriteBuffer;
+
+        public IDataLayer DataLayer { get; }
+
         Task BufferedWriterFlushTask;
 
         LockManager lockManager = new LockManager();
 
-        public BufferedWriterService(int writeBuffer)
+        public BufferedWriterService(int writeBuffer, IDataLayer dataLayer)
         {
             this.WriteBuffer = writeBuffer;
+            this.DataLayer = dataLayer;
             BufferedWriterFlushTask = Task.Run(() => FlushBuffersPeriodically());
         }
 
@@ -85,6 +89,11 @@ namespace FKala.Core.DataLayer.Infrastructure
                     }
                     catch (Exception)
                     {
+                        var measurement = new DirectoryInfo(filePath).Parent!.Parent!.Parent!.Name;
+                        if (DataLayer.IsBlacklisted(measurement, true))
+                        {
+                            return;
+                        }
                         var dir = Path.GetDirectoryName(filePath);
                         if (!Directory.Exists(dir))
                         {

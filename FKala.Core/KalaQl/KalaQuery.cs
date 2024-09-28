@@ -228,6 +228,14 @@ namespace FKala.Core.KalaQl
             {
                 return MgmtAction.Merge;
             }
+            else if (v.ToUpper() == "BLACKLIST")
+            {
+                return MgmtAction.Blacklist;
+            }
+            else if (v.ToUpper() == "UNBLACKLIST")
+            {
+                return MgmtAction.UnBlacklist;
+            }
 
             throw new Exception($"MgmtAction {v} is invalid");
         }
@@ -283,7 +291,7 @@ namespace FKala.Core.KalaQl
                 }
                 else if (queriedwindowsize < 5 * 60 * 1000)
                 {
-                    autoresolution = Resolution.Minutely;
+                    autoresolution = Resolution.Full;           // no azto-minutely cache, beacuse mostly raw data is faster
                 }
                 else if (queriedwindowsize < 15 * 60 * 1000)
                 {

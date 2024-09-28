@@ -1,11 +1,13 @@
 ﻿using FKala.Core.DataLayer.Cache;
 using FKala.Core.DataLayer.Infrastructure;
 using FKala.Core.DataLayers;
+using FKala.Core.Helper;
 using FKala.Core.Interfaces;
 using FKala.Core.KalaQl;
 using FKala.Core.Logic;
 using FKala.Core.Model;
 using Microsoft.Extensions.ObjectPool;
+using Microsoft.VisualBasic;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -22,7 +24,8 @@ namespace FKala.Core
         public int ReadBuffer { get; } = 131072;
         public int WriteBuffer { get; } = 131072;
 
-        public string DataDirectory { get; private set; }        
+        public string DataDirectory { get; private set; }
+        public string BlacklistDirectory { get; private set; }
         public CachingLayer CachingLayer { get; private set; }
         public BufferedWriterService WriterSvc { get; private set; }
 
@@ -34,7 +37,7 @@ namespace FKala.Core
             Init(storagePath);
         }
 
-        
+
         public DataLayer_Readable_Caching_V1(string storagePath, int readBuffer, int writeBuffer)
         {
             this.WriteBuffer = writeBuffer;
@@ -48,9 +51,12 @@ namespace FKala.Core
                                        .Replace('/', Path.DirectorySeparatorChar);
 
             this.DataDirectory = Path.Combine(storagePath, "data");
+            this.BlacklistDirectory = Path.Combine(storagePath, "blacklist");
             Directory.CreateDirectory(this.DataDirectory);
+            Directory.CreateDirectory(this.BlacklistDirectory);
             CachingLayer = new CachingLayer(this, storagePath);
-            WriterSvc = new BufferedWriterService(WriteBuffer);
+            WriterSvc = new BufferedWriterService(WriteBuffer, this);
+            LoadMeasureBlacklist();
         }
 
         public IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly, bool doSortRawFiles, KalaQlContext context)
@@ -112,8 +118,7 @@ namespace FKala.Core
 
         private IEnumerable<DataPoint> LoadFullResolution(string measurement, DateTime startTime, DateTime endTime, bool doSortRawFiles, KalaQlContext context)
         {
-            var measurementPathPart = PathSanitizer.SanitizePath(measurement);
-            var measurementPath = Path.Combine(DataDirectory, measurementPathPart);
+            (string measurementPathPart, string measurementPath) = GetMeasurementDirectory(measurement);
 
             using (var sa = StorageAccess.ForRead(measurementPath, measurementPathPart, startTime, endTime, context, doSortRawFiles))
             {
@@ -126,8 +131,8 @@ namespace FKala.Core
 
         public async IAsyncEnumerable<Dictionary<string, object>> MergeRawFilesFromMeasurementToMeasurement(string measurement, string targetmeasurement, KalaQlContext context)
         {
-            var measurementPathPart = PathSanitizer.SanitizePath(measurement);
-            var measurementPath = Path.Combine(DataDirectory, measurementPathPart);
+            (string measurementPathPart, string measurementPath) = GetMeasurementDirectory(measurement);
+
             var day = DateTime.MinValue.AddDays(1);
             using (var sa = StorageAccess.ForMerging(measurementPath, measurementPathPart, context))
             {
@@ -151,10 +156,16 @@ namespace FKala.Core
             yield return new Dictionary<string, object>() { { "msg", $"reinserted/merged {measurementPath} to {targetmeasurement}" } };
         }
 
+        private (string measurementPathPart, string measurementPath) GetMeasurementDirectory(string measurement)
+        {
+            string measurementPathPart = PathSanitizer.SanitizePath(measurement);
+            string measurementPath = Path.Combine(DataDirectory, measurementPathPart);
+            return (measurementPathPart, measurementPath);
+        }
+
         public async IAsyncEnumerable<Dictionary<string, object>> Cleanup(string measurement, KalaQlContext context, bool cleanSorted = false)
         {
-            var measurementPathPart = PathSanitizer.SanitizePath(measurement);
-            var measurementPath = Path.Combine(DataDirectory, measurementPathPart);
+            (string measurementPathPart, string measurementPath) = GetMeasurementDirectory(measurement);
 
             using (var sa = StorageAccess.ForCleanup(measurementPath, measurementPathPart, context))
             {
@@ -209,18 +220,21 @@ namespace FKala.Core
         {
             string measurement, datetimeHHmmssfffffff, valueString;
             ReadOnlySpan<char> datetime_yyyy_MM_dd;
-            ParseRawData(rawData, out measurement, out datetime_yyyy_MM_dd, out datetimeHHmmssfffffff, out valueString);
-            string filePath = GetInsertTargetFilepath(measurement, datetime_yyyy_MM_dd);
-
-            WriterSvc.DoWrite(filePath, (writer) =>
+            ParseRawData(rawData, out measurement, out datetime_yyyy_MM_dd, out datetimeHHmmssfffffff, out valueString);            
+            if (!IsBlacklisted(measurement, false))
             {
-                // Format the line to write
-                writer.Append(datetimeHHmmssfffffff);
-                writer.Append(" ");
-                writer.Append(valueString);
-                writer.AppendNewline();
-            });
+                string filePath = GetInsertTargetFilepath(measurement, datetime_yyyy_MM_dd);
+                WriterSvc.DoWrite(filePath, (writer) =>
+                {
+                    // Format the line to write
+                    writer.Append(datetimeHHmmssfffffff);
+                    writer.Append(" ");
+                    writer.Append(valueString);
+                    writer.AppendNewline();
+                });
+            }
         }
+
 
         /// <summary>
         /// Expects Data in the Form
@@ -233,16 +247,81 @@ namespace FKala.Core
             string measurement, datetimeHHmmssfffffff, valueString;
             ReadOnlySpan<char> datetime;
             ParseRawData(rawData, out measurement, out datetime, out datetimeHHmmssfffffff, out valueString);
-
-            WriterSvc.DoWrite(filePath, (writer) =>
+            if (!IsBlacklisted(measurement, false))
             {
-                // Format the line to write
-                writer.Append(datetimeHHmmssfffffff);
-                writer.Append(" ");
-                writer.Append(valueString);
-                writer.AppendNewline();
-            });
+                WriterSvc.DoWrite(filePath, (writer) =>
+                {
+                    // Format the line to write
+                    writer.Append(datetimeHHmmssfffffff);
+                    writer.Append(" ");
+                    writer.Append(valueString);
+                    writer.AppendNewline();
+                });
+            }
         }
+
+        ConcurrentDictionary<string, bool> measurementBlacklist = new ConcurrentDictionary<string, bool>();
+
+        private void LoadMeasureBlacklist()
+        {
+            var blackListDirs = Directory.GetDirectories(this.BlacklistDirectory, "*", new EnumerationOptions() { BufferSize = ReadBuffer, RecurseSubdirectories = false });
+            ConcurrentDictionary<string, bool> newBl = new ConcurrentDictionary<string, bool>();
+            foreach (var blDir in blackListDirs)
+            {
+                newBl.AddOrUpdate(Path.GetFileName(blDir), true, (string dir, bool old) => true);
+            }
+        }
+
+        public bool IsBlacklisted(string measurement, bool checkOnDisk = true)
+        {            
+            if (measurementBlacklist.ContainsKey(measurement))
+            {
+                return true;
+            }
+            (string measurementPathPart, string measurementPath) = GetMeasurementDirectory(measurement);
+            var blDir = Path.Combine(this.BlacklistDirectory, measurementPathPart);
+            if (checkOnDisk && Directory.Exists(blDir))
+            {
+                measurementBlacklist.AddOrUpdate(measurement, true, (string dir, bool old) => true);
+                return true;
+            }
+            return false;
+        }
+
+        public async IAsyncEnumerable<Dictionary<string, object?>> Blacklist(string measurement)
+        {
+            yield return Msg.Get("msg", $"Live Blacklisting {measurement}");
+            measurementBlacklist.AddOrUpdate(measurement, true, (string dir, bool old) => true);
+            (string measurementPathPart, string measurementPath) = GetMeasurementDirectory(measurement);
+            WriterSvc.ForceFlushWriters();
+            yield return Msg.Get("msg", $"Live Blacklisted {measurement}");
+            if (Directory.Exists(measurementPath))
+            {
+                yield return Msg.Get("msg", $"Moving directory to Blacklist-Directory {measurement}");
+                Directory.Move(measurementPath, Path.Combine(this.BlacklistDirectory, measurementPathPart));
+                yield return Msg.Get("msg", $"Moved directory to Blacklist-Directory {measurement}");
+            }
+        }
+
+        public async IAsyncEnumerable<Dictionary<string, object?>> UnBlacklist(string measurement)
+        {
+
+            (string measurementPathPart, string measurementPath) = GetMeasurementDirectory(measurement);
+            WriterSvc.ForceFlushWriters();
+
+            var blDir = Path.Combine(this.BlacklistDirectory, measurementPathPart);
+            if (Directory.Exists(blDir))
+            {
+                yield return Msg.Get("msg", $"Moving blacklist directory to data-directory {measurement}");
+                Directory.Move(blDir, measurementPath);
+                yield return Msg.Get("msg", $"Moved blacklist directory to data-directory {measurement}");
+            }
+
+            yield return Msg.Get("msg", $"Live Unblacklisting {measurement}");
+            measurementBlacklist.Remove(measurement, out bool randombit);
+            yield return Msg.Get("msg", $"Live Unblacklisted {measurement}");
+        }
+
 
         private string GetInsertTargetFilepath(string measurement, ReadOnlySpan<char> datetime_yyyy_MM_dd)
         {
@@ -306,5 +385,7 @@ namespace FKala.Core
         {
             this.WriterSvc.ForceFlushWriter(filePath);
         }
+
+        
     }
 }
