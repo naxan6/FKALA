@@ -70,85 +70,6 @@ namespace FKala.Core.Migration
             }
         }
 
-        public void ImportLineOld(string line)
-        {
-            line = line.Replace("\\ ", "_");
-            var match = LineProtocolRegex.Match(line);
-            if (!match.Success)
-            {
-                throw new FormatException($"Ungültiges InfluxDB Line Protocol Format: {line}");
-            }
-
-            var measurement = match.Groups["measurement"].Value;
-            var tags = match.Groups["tags"].Value;
-            var fields = match.Groups["fields"].Value;
-            var timestamp = match.Groups["timestamp"].Value;
-
-            DateTime parsedTimestamp = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            parsedTimestamp = parsedTimestamp.AddTicks(long.Parse(timestamp) / 100);
-
-            // Check for the 'topic' tag
-            string? topic = null;
-            if (!string.IsNullOrEmpty(tags))
-            {
-                var tagParts = tags.Split(',');
-                foreach (var tag in tagParts)
-                {
-                    var keyValue = tag.Split('=');
-                    if (keyValue.Length == 2 && keyValue[0] == "topic")
-                    {
-                        topic = keyValue[1];
-                        break;
-                    }
-                }
-            }
-
-            // Parsing fields
-            var fieldParts = fields.Split(',');
-
-            foreach (var fieldPart in fieldParts)
-            {
-                var fieldKeyValue = fieldPart.Split('=');
-                if (fieldKeyValue.Length != 2)
-                {
-                    throw new FormatException($"Ungültiges Feldformat: {fieldPart}");
-                }
-
-                var fieldName = fieldKeyValue[0];
-                var fieldValue = fieldKeyValue[1];
-
-                var fieldExt = fieldName == "value" ? "" : $"_{fieldName}";
-
-                if (fieldValue.EndsWith('i'))
-                {
-                    fieldValue = fieldValue.Substring(fieldValue.Length - 1);
-                }
-                string kalaLineProtValue;
-                if (!decimal.TryParse(fieldValue, NumberStyles.Any, ci, out var parsedValue))
-                {
-                    kalaLineProtValue = parsedValue.ToString(ci);
-                    //throw new FormatException($"Ungültiger Feldwert: {fieldValue}");
-                }
-                else
-                {
-                    kalaLineProtValue = fieldValue.Replace('\n', '|');
-                }
-
-                var newMeasurement = string.IsNullOrEmpty(topic) ? measurement : topic;
-
-                sb.Clear();
-                sb.Append(newMeasurement);
-                sb.Append(fieldExt);
-                sb.Append(' ');
-                sb.Append(parsedTimestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffffff"));
-                sb.Append(' ');
-                sb.Append(kalaLineProtValue);
-                //var rawData = $"{newMeasurement}{fieldExt} {parsedTimestamp:yyyy-MM-ddTHH:mm:ss.fffffff} {parsedValue.ToString(ci)}";
-
-                _dataLayer.Insert(sb.ToString());
-            }
-        }
-
         InfluxLineParser ilp = new InfluxLineParser();
 
         public void ImportLine(string line)
@@ -178,9 +99,18 @@ namespace FKala.Core.Migration
                 //{
                     kalaLineProtValue = fieldValue;
                 //}
+                var newMeasurement = measurement;
+                if (tags.ContainsKey("topic"))
+                {
+                    newMeasurement = tags["topic"];
+                } 
+                else if (tags.ContainsKey("sensorname"))
+                {
+                    newMeasurement = tags["sensorname"].Replace(" ", "_");
+                }
 
-                var newMeasurement = tags.ContainsKey("topic") ? tags["topic"] : measurement;
-                var fieldExt = fieldName == "value" ? "" : $"/{fieldName}";
+
+                    var fieldExt = fieldName == "value" ? "" : $"/{fieldName}";
 
                 sb.Clear();
                 sb.Append(newMeasurement);

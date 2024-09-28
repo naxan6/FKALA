@@ -404,7 +404,9 @@ namespace FKala.Core.DataLayers
                 }
                 else if (retPrev.Time >= ret.Time && checkUnsorted)
                 {
-                    throw new UnexpectedlyUnsortedException($"Marked sorted but unsorted at File {ret.Source} ## {dataline}");
+                    string err = $"Marked sorted but unsorted at File {ret.Source} ## {dataline}";
+                    DataLayer.InsertError(err);
+                    throw new UnexpectedlyUnsortedException(err);
                 }
 
                 if (retPrev.Time >= StartTime && retPrev.Time < EndTime) // send if DataPoint is in window

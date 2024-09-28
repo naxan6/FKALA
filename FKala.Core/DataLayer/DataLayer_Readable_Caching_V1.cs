@@ -386,6 +386,10 @@ namespace FKala.Core
             this.WriterSvc.ForceFlushWriter(filePath);
         }
 
-        
+        public void InsertError(string err)
+        {
+            var line = $"kala/errors {DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {err.Replace("\n", " | ")}";
+            this.Insert(line);
+        }
     }
 }

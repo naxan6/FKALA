@@ -34,5 +34,6 @@ namespace FKala.Core.Interfaces
         IAsyncEnumerable<Dictionary<string, object?>> Blacklist(string measurement);
         IAsyncEnumerable<Dictionary<string, object?>> UnBlacklist(string measurement);
         bool IsBlacklisted(string filePath, bool checkOnDisk);
+        void InsertError(string err);
     }
 }
