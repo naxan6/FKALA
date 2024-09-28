@@ -167,7 +167,7 @@ namespace FKala.Core.Migration
 
                 if (fieldValue.EndsWith('i'))
                 {
-                    fieldValue = fieldValue.Substring(fieldValue.Length - 1);
+                    fieldValue = fieldValue.Substring(0, fieldValue.Length - 1);
                 }
                 string kalaLineProtValue;
                 //if (!decimal.TryParse(fieldValue, NumberStyles.Any, ci, out var parsedValue))
@@ -180,7 +180,7 @@ namespace FKala.Core.Migration
                 //}
 
                 var newMeasurement = tags.ContainsKey("topic") ? tags["topic"] : measurement;
-                var fieldExt = fieldName == "value" ? "" : $"_{fieldName}";
+                var fieldExt = fieldName == "value" ? "" : $"/{fieldName}";
 
                 sb.Clear();
                 sb.Append(newMeasurement);
