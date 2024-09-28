@@ -14,6 +14,7 @@
         Merge,
         BenchmarkIo,
         UnBlacklist,
-        Blacklist
+        Blacklist,
+        MergeAll
     }
 }

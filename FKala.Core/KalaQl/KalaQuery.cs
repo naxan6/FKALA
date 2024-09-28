@@ -228,6 +228,10 @@ namespace FKala.Core.KalaQl
             {
                 return MgmtAction.Merge;
             }
+            else if (v.ToUpper() == "MERGEALL")
+            {
+                return MgmtAction.MergeAll;
+            }
             else if (v.ToUpper() == "BLACKLIST")
             {
                 return MgmtAction.Blacklist;

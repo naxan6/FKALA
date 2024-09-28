@@ -94,6 +94,15 @@ namespace FKala.Core.KalaQl
                 context.Result.StreamResult = Merge(measurement, context);
                 this.hasExecuted = true;
             }
+            else if (MgmtAction == MgmtAction.MergeAll)
+            {
+                Params = Params.Trim('"');
+                var paramParts = Params.Split(" ");
+                var measurement = paramParts[0];
+                context.Result = new KalaResult();
+                context.Result.StreamResult = MergeAll(context);
+                this.hasExecuted = true;
+            }
             else if (MgmtAction == MgmtAction.Blacklist)
             {
                 Params = Params.Trim('"');
@@ -148,7 +157,7 @@ namespace FKala.Core.KalaQl
             }
         }
 
-        private async IAsyncEnumerable<Dictionary<string, object?>>? Merge(string measurement, KalaQlContext context)
+        private async IAsyncEnumerable<Dictionary<string, object?>> Merge(string measurement, KalaQlContext context)
         {
             var result = context.DataLayer.MergeRawFilesFromMeasurementToMeasurement(measurement, measurement, context);
             await foreach (var msg in result)
@@ -173,7 +182,19 @@ namespace FKala.Core.KalaQl
             }
             yield break;
         }
-
+        private async IAsyncEnumerable<Dictionary<string, object?>>? MergeAll(KalaQlContext context)
+        {
+            var measurements = context.DataLayer.LoadMeasurementList();
+            foreach (var measurement in measurements)
+            {
+                yield return Msg.Get("START", $"Merging {measurement}");
+                var ret = Merge(measurement, context);
+                await foreach (var r in ret)
+                {
+                    yield return r;
+                }
+            }
+        }
         private async IAsyncEnumerable<Dictionary<string, object?>>? CleanupRawFiles(string measurement, KalaQlContext context)
         {
             var result = context.DataLayer.Cleanup(measurement, context, false);
