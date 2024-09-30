@@ -8,7 +8,7 @@ namespace FKala.Core.Model
 {
     public enum InterpolationMode
     {
-        forward,
+        forwards,
         backwards,
         constant
 

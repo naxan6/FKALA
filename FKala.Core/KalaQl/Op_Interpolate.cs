@@ -58,7 +58,7 @@ namespace FKala.Core.KalaQl
             var enumerable = input.ResultsetFactory();
             var dataPointsEnumerator = enumerable.GetEnumerator();
 
-            if (Mode == InterpolationMode.forward)
+            if (Mode == InterpolationMode.forwards)
             {
                 decimal? lastValue = ConstantValue;
                 foreach (var w in enumerable)

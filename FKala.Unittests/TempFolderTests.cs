@@ -40,19 +40,19 @@ namespace FKala.Unittests
             // Assert 1
             Console.WriteLine(KalaJson.Serialize(resultset));
 
-            resultset.First().Time.Should().Be(new DateTime(2024, 03, 01, 0, 0, 2).AddTicks(5180212));
+            resultset.First().StartTime.Should().Be(new DateTime(2024, 03, 01, 0, 0, 2).AddTicks(5180212));
 
             Assert.AreEqual(0.564860636165766m, resultset.First().Value);
-            resultset.Last().Time.Should().Be(new DateTime(2024, 03, 14, 23, 59, 58).AddTicks(2488239));
+            resultset.Last().StartTime.Should().Be(new DateTime(2024, 03, 14, 23, 59, 58).AddTicks(2488239));
 
             Assert.AreEqual(0.457086396616458m, resultset.Last().Value);
 
             // Assert 2
             var resultsetAll = DataFaker.TestDataLayer.LoadData("m1", new DateTime(0001, 01, 01), new DateTime(9999, 12, 31), CacheResolutionPredefined.NoCache, false, false, new KalaQlContext(DataFaker.TestDataLayer));
             resultsetAll = resultsetAll.ToList();
-            resultsetAll.First().Time.Should().Be(new DateTime(2024, 01, 01, 0, 0, 13).AddTicks(5443658));
+            resultsetAll.First().StartTime.Should().Be(new DateTime(2024, 01, 01, 0, 0, 13).AddTicks(5443658));
             Assert.AreEqual(0.248668584157093m, resultsetAll.First().Value);
-            resultsetAll.Last().Time.Should().Be(new DateTime(2024, 04, 30, 23, 59, 59).AddTicks(3647264));
+            resultsetAll.Last().StartTime.Should().Be(new DateTime(2024, 04, 30, 23, 59, 59).AddTicks(3647264));
             Assert.AreEqual(0.646428865681602m, resultsetAll.Last().Value);
         }
 
@@ -152,6 +152,29 @@ namespace FKala.Unittests
             var resultset = result.ResultTable;
             resultset.Should().NotBeNull();
             resultset!.Count().Should().Be(14);
+        }
+
+        [TestMethod]
+        public void KalaQuery_LAAP_CutJoin()
+        {
+            // Prepare
+            var kq = KalaQuery.Start().FromQuery(@"
+                Load bm1: m1 2024-03-01T00:00:00Z 2024-03-15T00:00:00Z Hourly_First
+                Aggr a1: bm1 08:00:00 Avg EmptyWindows
+                Aggr a2: bm1 03:00:00 Avg EmptyWindows                
+                Publ ""a1,a2"" Table
+            ");
+            // Act
+            var result = kq.Execute(DataFaker.TestDataLayer);
+
+
+            // Assert
+            Console.WriteLine(KalaJson.Serialize(result));
+            result.Errors.Should().BeEmpty();
+
+            var resultset = result.ResultTable;
+            resultset.Should().NotBeNull();
+            resultset!.Count().Should().Be(140);
         }
     }
 }

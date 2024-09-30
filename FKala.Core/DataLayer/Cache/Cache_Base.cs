@@ -61,7 +61,7 @@ namespace FKala.Core.DataLayer.Cache
                         if (dp.Value != null)
                         {
 
-                            writer.Append(dp.Time.ToString(timeFormat));
+                            writer.Append(dp.StartTime.ToString(timeFormat));
                             writer.Append(" ");
                             writer.Append(dp.Value.Value.ToString(CultureInfo.InvariantCulture));
                             writer.AppendNewline();
@@ -83,7 +83,7 @@ namespace FKala.Core.DataLayer.Cache
             {
                 var datapoint = ReadLine(fileyear, line);
                 datapoint.Source = $"Cache {yearFilePath} Line {line}";
-                if (datapoint.Time >= startTime && datapoint.Time < endTime)
+                if (datapoint.StartTime >= startTime && datapoint.StartTime < endTime)
                 {
                     yield return datapoint;
                 }
@@ -94,7 +94,7 @@ namespace FKala.Core.DataLayer.Cache
         private void NavigateTo(int fileyear, StreamReader sr, DateTime startTime)
         {
             DataPoint? first = ReadNextLine(fileyear, sr);
-            if (first == null || first.Time >= startTime)
+            if (first == null || first.StartTime >= startTime)
             {
                 return;
             }
@@ -109,23 +109,25 @@ namespace FKala.Core.DataLayer.Cache
                 sr.BaseStream.Position = position;
                 sr.DiscardBufferedData();
                 DataPoint? current = ReadNextLine(fileyear, sr);
-                if (current == null || jumpintervall == 0 || (current.Time < startTime.AddMinutes(-1)))
+                if (current == null || 
+                    jumpintervall == 0 ||
+                    (current.StartTime < startTime.AddMinutes(-1) && jumpintervall < 1024)) //BUG/HACK: will only work in some cases
+                    //(current.StartTime < startTime.AddMinutes(-1))) //BUG/HACK: will only work in some cases
                 {
                     break;
                 } 
                 else
                 {
-                    if (current.Time < startTime) //position is too early in the file
+                    if (current.StartTime < startTime) // position is too early in the file
                     {
                         Console.WriteLine("jump forwards");
-                        position = position + jumpintervall;
                         jumpintervall = jumpintervall / 2;
+                        position = position + jumpintervall;
                     } 
-                    else if (current.Time >= startTime) // position is to late in the file
+                    else if (current.StartTime >= startTime) // position is to late in the file
                     {
                         Console.WriteLine("jump backwards");
                         position = position - jumpintervall;
-                        jumpintervall = jumpintervall / 2;
                     }
                 }
             }
@@ -157,7 +159,7 @@ namespace FKala.Core.DataLayer.Cache
             var fileYear = int.Parse(parts[parts.Length - 2]);
             IEnumerable<DataPoint> updateData = GetAggregateForCaching(measurement, rebuildFromDateTime, new DateTime(fileYear, 12, 31,0,0,0, DateTimeKind.Utc), aggrFunc);
 
-            FileFromEndProcessor.ProcessFileFromEnd(newestCacheFile, line => line != "" && ReadLine(fileYear, line).Time <= rebuildFromDateTime, "");
+            FileFromEndProcessor.ProcessFileFromEnd(newestCacheFile, line => line != "" && ReadLine(fileYear, line).StartTime <= rebuildFromDateTime, "");
 
             //var newFileContent = validCacheEntries.Concat(updateData);
 

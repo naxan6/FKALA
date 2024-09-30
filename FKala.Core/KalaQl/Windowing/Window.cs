@@ -229,7 +229,8 @@ namespace FKala.Core.KalaQl.Windowing
         public DataPoint GetDataPoint(decimal? value)
         {
             var dp = Pools.DataPoint.Get();
-            dp.Time = this.StartTime;
+            dp.StartTime = this.StartTime;
+            dp.EndTime = this.EndTime;
             dp.Value = value;
             return dp;
         }

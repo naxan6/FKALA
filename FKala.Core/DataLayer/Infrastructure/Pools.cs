@@ -30,7 +30,8 @@ namespace FKala.Core.DataLayer.Infrastructure
             obj.ValueText = null;
             obj.Value = null;
             obj.ValueText = null;
-            obj.Time = DateTime.MinValue;
+            obj.StartTime = DateTime.MinValue;
+            obj.EndTime = DateTime.MinValue;
             return true;
         }
     }

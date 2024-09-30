@@ -138,18 +138,18 @@ namespace FKala.Core
             {
                 foreach (var dp in sa.OpenStreamReaders().StreamMergeDataPoints())
                 {
-                    var filePath = GetInsertTargetFilepath(targetmeasurement, dp.Time.ToString("yyyy-MM-dd"));
+                    var filePath = GetInsertTargetFilepath(targetmeasurement, dp.StartTime.ToString("yyyy-MM-dd"));
                     if (dp.Source != null && dp.Source.StartsWith(filePath + ","))
                     {
                         continue;
                     }
 
-                    Insert($"{targetmeasurement} {dp.Time.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {(dp.Value.HasValue ? dp.Value : dp.ValueText)}", dp.Source, filePath);
+                    Insert($"{targetmeasurement} {dp.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {(dp.Value.HasValue ? dp.Value : dp.ValueText)}", dp.Source, filePath);
 
-                    if (day < dp.Time)
+                    if (day < dp.StartTime)
                     {
-                        day = dp.Time.AddDays(1);
-                        yield return new Dictionary<string, object>() { { "msg", $"rewrite of day {dp.Time.Date} done" } };
+                        day = dp.StartTime.AddDays(1);
+                        yield return new Dictionary<string, object>() { { "msg", $"rewrite of day {dp.StartTime.Date} done" } };
                     }
                 }
             }

@@ -283,7 +283,7 @@ namespace FKala.Core.DataLayers
             // if not sorted, sort it
             if (!persistenceIsSorted)
             {
-                dataPoints.Sort((a, b) => a.Time.CompareTo(b.Time)); // Sort
+                dataPoints.Sort((a, b) => a.StartTime.CompareTo(b.StartTime)); // Sort
                 dataPoints = dataPoints.Distinct(comparer).ToList(); // Deduplicate
 
                 // persist sorted (if activated)
@@ -329,7 +329,7 @@ namespace FKala.Core.DataLayers
                     {
                         if (dp.Value != null)
                         {
-                            writer.Append(dp.Time.ToString(TimeFormat));
+                            writer.Append(dp.StartTime.ToString(TimeFormat));
                             writer.Append(" ");
                             writer.Append(dp.Value.Value.ToString(CultureInfo.InvariantCulture));
                             writer.AppendNewline();
@@ -393,7 +393,7 @@ namespace FKala.Core.DataLayers
                     continue;
                 }
 
-                if (retPrev.Time == ret.Time) // combine, if same time and consume both
+                if (retPrev.StartTime == ret.StartTime) // combine, if same time and consume both
                 {
                     retPrev.Value = retPrev.Value ?? ret.Value;
                     retPrev.ValueText = retPrev.ValueText ?? ret.ValueText;
@@ -402,21 +402,21 @@ namespace FKala.Core.DataLayers
                     retPrev = null;
                     continue;
                 }
-                else if (retPrev.Time >= ret.Time && checkUnsorted)
+                else if (retPrev.StartTime >= ret.StartTime && checkUnsorted)
                 {
                     string err = $"Marked sorted but unsorted at File {ret.Source} ## {dataline}";
                     DataLayer.InsertError(err);
                     throw new UnexpectedlyUnsortedException(err);
                 }
 
-                if (retPrev.Time >= StartTime && retPrev.Time < EndTime) // send if DataPoint is in window
+                if (retPrev.StartTime >= StartTime && retPrev.StartTime < EndTime) // send if DataPoint is in window
                 {
                     yield return retPrev; //send retPrev
                 }
                 retPrev = ret; //consume retPrev
             }
             // send last DataPoint is in window
-            if (retPrev != null && retPrev.Time >= StartTime && retPrev.Time < EndTime)
+            if (retPrev != null && retPrev.StartTime >= StartTime && retPrev.StartTime < EndTime)
             {
                 yield return retPrev;
             }

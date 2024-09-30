@@ -44,7 +44,7 @@ namespace FKala.Core.KalaQl
 
                 foreach (var item in syncedResult)
                 {
-                    row["time"] = item.DataPoint.Time;
+                    row["time"] = syncedResult.Key.Item1;
                     if (item.DataPoint.Value.HasValue)
                     {
                         row[item.Result.Name] = item.DataPoint.Value;
@@ -57,7 +57,6 @@ namespace FKala.Core.KalaQl
                     {
                         receivedDatapoint[item.Result.Name] = true;
                     }
-                    Pools.DataPoint.Return(item.DataPoint);
                 }
                 foreach (var key in NamesToPublish)
                 {
@@ -117,7 +116,7 @@ namespace FKala.Core.KalaQl
                     
                     foreach (var item in syncedResult)
                     {
-                        row["time"] = item.DataPoint.Time;
+                        row["time"] = syncedResult.Key.Item1;
                         if (item.DataPoint.Value.HasValue)
                         {
                             row[item.Result.Name] = item.DataPoint.Value;
@@ -129,8 +128,7 @@ namespace FKala.Core.KalaQl
                         if (row[item.Result.Name] != null)
                         {
                             receivedDatapoint[item.Result.Name] = true;
-                        }
-                        Pools.DataPoint.Return(item.DataPoint);
+                        }                        
                     }
                     foreach (var key in NamesToPublish)
                     {

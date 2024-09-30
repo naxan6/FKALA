@@ -169,7 +169,7 @@ namespace FKala.Core.KalaQl
         {
             if (v.ToUpper() == "FORWARDS")
             {
-                return InterpolationMode.forward;
+                return InterpolationMode.forwards;
             }
             else if (v.ToUpper() == "BACKWARDS")
             {

@@ -79,26 +79,26 @@ namespace FKala.Core.KalaQl
                 previous = currentInputDatePoint;
                 if (isFirstAfterMoveNext)
                 {
-                    slidingWindow.Init(currentInputDatePoint.Time < input.Query_StartTime ? currentInputDatePoint.Time : input.Query_StartTime, context.AlignTzTimeZoneId);
+                    slidingWindow.Init(currentInputDatePoint.StartTime < input.Query_StartTime ? currentInputDatePoint.StartTime : input.Query_StartTime, context.AlignTzTimeZoneId);
                     currentAggregator = new StreamingAggregator(AggregateFunc, slidingWindow);
                     isFirstAfterMoveNext = false;
                 }
 
 
-                if (slidingWindow.IsInWindow(currentInputDatePoint.Time))
+                if (slidingWindow.IsInWindow(currentInputDatePoint.StartTime))
                 {
-                    currentAggregator!.AddValue(currentInputDatePoint.Time, currentInputDatePoint.Value);
+                    currentAggregator!.AddValue(currentInputDatePoint.StartTime, currentInputDatePoint.Value);
                     scrolledForward = true;
                 }
-                else if (slidingWindow.DateTimeIsBeforeWindow(currentInputDatePoint.Time))
+                else if (slidingWindow.DateTimeIsBeforeWindow(currentInputDatePoint.StartTime))
                 {
                     if (!scrolledForward)
                     {
-                        while (slidingWindow.DateTimeIsBeforeWindow(currentInputDatePoint.Time))
+                        while (slidingWindow.DateTimeIsBeforeWindow(currentInputDatePoint.StartTime))
                         {
                             slidingWindow.Next();
                         }
-                        currentAggregator!.AddValue(currentInputDatePoint.Time, currentInputDatePoint.Value);
+                        currentAggregator!.AddValue(currentInputDatePoint.StartTime, currentInputDatePoint.Value);
                         scrolledForward = true;
 
                     }
@@ -107,9 +107,9 @@ namespace FKala.Core.KalaQl
                         throw new Exception($"Bug 1, Datenpunkt übersehen einzusortieren (nach {seenPoints}) ### Aggr {this.Name} ### DP: {currentInputDatePoint} ### in {slidingWindow.StartTime.ToString("s")}-{slidingWindow.EndTime.ToString("s")} PREVIOUS {previous}");
                     }
                 }
-                else if (slidingWindow.DateTimeIsAfterWindow(currentInputDatePoint.Time))
+                else if (slidingWindow.DateTimeIsAfterWindow(currentInputDatePoint.StartTime))
                 {
-                    while (slidingWindow.DateTimeIsAfterWindow(currentInputDatePoint.Time))
+                    while (slidingWindow.DateTimeIsAfterWindow(currentInputDatePoint.StartTime))
                     {
                         var currentDataPoint = slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValue());
                         if (EmptyWindows || currentDataPoint.Value != null) yield return currentDataPoint;
@@ -117,9 +117,9 @@ namespace FKala.Core.KalaQl
                         slidingWindow.Next();
 
                         currentAggregator.Reset(currentAggregator.LastAggregatedValue);
-                        if (slidingWindow.IsInWindow(currentInputDatePoint.Time))
+                        if (slidingWindow.IsInWindow(currentInputDatePoint.StartTime))
                         {
-                            currentAggregator.AddValue(currentInputDatePoint.Time, currentInputDatePoint.Value);
+                            currentAggregator.AddValue(currentInputDatePoint.StartTime, currentInputDatePoint.Value);
                         }
                     }
                 }

@@ -30,7 +30,8 @@ namespace FKala.Core.DataLayer.Infrastructure
                 decimal value;
 
                 var dp = Pools.DataPoint.Get();
-                dp.Time = dateTime;
+                dp.StartTime = dateTime;
+                dp.EndTime = dateTime;
                 var success = decimal.TryParse(valueRaw, CultureInfo.InvariantCulture, out value);
 
                 

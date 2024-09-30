@@ -260,10 +260,10 @@ namespace FKala.Core.KalaQl
             DateTime day = DateTime.MinValue;
             foreach (var r in localresult) // iterate to load everything
             {
-                if (day < r.Time)
+                if (day < r.StartTime)
                 {
-                    yield return new Dictionary<string, object>() { { "msg", $"Sort of day {r.Time.Date} done" } };
-                    day = r.Time.AddDays(1);
+                    yield return new Dictionary<string, object>() { { "msg", $"Sort of day {r.StartTime.Date} done" } };
+                    day = r.StartTime.AddDays(1);
                 }
                 Pools.DataPoint.Return(r);
             }
@@ -297,7 +297,7 @@ namespace FKala.Core.KalaQl
                     var localresult = result.ResultSets!.First().Resultset;
                     foreach (var r in localresult) // iterate to load everything
                     {
-                        var t = r.Time;
+                        var t = r.StartTime;
                         Pools.DataPoint.Return(r);
                     }
                 }

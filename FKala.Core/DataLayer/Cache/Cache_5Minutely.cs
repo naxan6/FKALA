@@ -14,6 +14,7 @@ namespace FKala.Core.DataLayer.Cache
         {
             return "MM-ddTHH:mm";
         }
+        public Window Window { get; } = Window.Aligned_5Minutes;
         public Cache_5Minutely(IDataLayer dataLayer) : base(dataLayer)
         {
         }
@@ -23,7 +24,7 @@ namespace FKala.Core.DataLayer.Cache
             KalaResult aggResult = KalaQuery
                .Start()
                .Add(new Op_BaseQuery(null, "fullRes", measurement, start, end, CacheResolutionPredefined.NoCache))
-               .Add(new Op_Aggregate(null, "5minutely", "fullRes", Window.Aligned_5Minutes, aggrFunc, false, false))
+               .Add(new Op_Aggregate(null, "5minutely", "fullRes", Window, aggrFunc, false, false))
                .Add(new Op_Publish(null, new List<string>() { "5minutely" }, PublishMode.MultipleResultsets))
                .Execute(DataLayer);
 
@@ -46,7 +47,8 @@ namespace FKala.Core.DataLayer.Cache
             span = span.Slice(12);
             var value = decimal.Parse(span, CultureInfo.InvariantCulture);
             var dp = Pools.DataPoint.Get();
-            dp.Time = dateTime;
+            dp.StartTime = dateTime;
+            dp.EndTime = dateTime.Add(Window.Interval);
             dp.Value = value;
             return dp;
         }
@@ -59,13 +61,13 @@ namespace FKala.Core.DataLayer.Cache
             }
 
             // allow 10 minutes from windowstart aging against raw-data
-            if (newestInCache.Time.Add(new TimeSpan(0, 10, 0)) > newestInRaw.Time)
+            if (newestInCache.StartTime.Add(new TimeSpan(0, 10, 0)) > newestInRaw.StartTime)
             {
                 return DateTime.MaxValue;
             }
 
             // then refresh the last 15 (3 windows) existent minutes in the cache
-            DateTime calculated = newestInCache.Time.Subtract(new TimeSpan(0, 15, 0));
+            DateTime calculated = newestInCache.StartTime.Subtract(new TimeSpan(0, 15, 0));
             DateTime maxValueInCacheFile = new DateTime(cacheYear, 12, 31, 0, 0, 0, DateTimeKind.Utc);
             return calculated < maxValueInCacheFile ? calculated : maxValueInCacheFile;
         }

@@ -15,6 +15,7 @@ namespace FKala.Core.DataLayer.Cache
         {
             return "MM-ddTHH";
         }
+        public Window Window { get; } = Window.Aligned_1Hour;
         public Cache_Hourly(IDataLayer dataLayer) : base(dataLayer)
         {            
         }
@@ -24,7 +25,7 @@ namespace FKala.Core.DataLayer.Cache
             KalaResult aggResult = KalaQuery
                             .Start()
                             .Add(new Op_BaseQuery(null, "fullRes", measurement, start, end, CacheResolutionPredefined.NoCache))
-                            .Add(new Op_Aggregate(null, "hourly", "fullRes", Window.Aligned_1Hour, aggrFunc, false, false))
+                            .Add(new Op_Aggregate(null, "hourly", "fullRes", Window, aggrFunc, false, false))
                             .Add(new Op_Publish(null, new List<string>() { "hourly" }, PublishMode.MultipleResultsets))
                             .Execute(DataLayer);
             if (aggResult?.ResultSets == null)
@@ -46,7 +47,8 @@ namespace FKala.Core.DataLayer.Cache
             var value = decimal.Parse(span, CultureInfo.InvariantCulture);
 
             var dp = Pools.DataPoint.Get();
-            dp.Time = dateTime;
+            dp.StartTime = dateTime;
+            dp.EndTime = dateTime.Add(Window.Interval);
             dp.Value = value;
             return dp;
         }
@@ -60,13 +62,13 @@ namespace FKala.Core.DataLayer.Cache
             }
 
             // allow 30 minutes aging against raw data
-            if (newestInCache.Time.Add(new TimeSpan(1, 30, 0)) > newestInRaw.Time)
+            if (newestInCache.StartTime.Add(new TimeSpan(1, 30, 0)) > newestInRaw.StartTime)
             {
                 return DateTime.MaxValue;
             }
 
             // ..dann so viel refreshen: die letzten 2 Stunden
-            DateTime calculated = newestInCache.Time.Subtract(new TimeSpan(2, 0, 0));
+            DateTime calculated = newestInCache.StartTime.Subtract(new TimeSpan(2, 0, 0));
             DateTime maxValueInCacheFile = new DateTime(cacheYear, 12, 31, 0, 0, 0, DateTimeKind.Utc);
             return calculated < maxValueInCacheFile ? calculated : maxValueInCacheFile;
         }

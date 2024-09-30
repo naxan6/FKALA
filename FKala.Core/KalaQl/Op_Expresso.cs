@@ -70,7 +70,7 @@ namespace FKala.Core.KalaQl
             {
                 if (isFirstStartTime)
                 {
-                    firstStartTime = timeSynchronizedItems.First().DataPoint.Time;
+                    firstStartTime = timeSynchronizedItems.First().DataPoint.StartTime;
                 }
 
                 var missingIdentifiers = UnknownIdInfo.UnknownIdentifiers.ToList();
@@ -91,12 +91,9 @@ namespace FKala.Core.KalaQl
                 decimal? expressoResultValue = (decimal?)Lambda.Invoke(paramValues);
 
                 var currentDataPoint = Pools.DataPoint.Get();
-                currentDataPoint.Time = timeSynchronizedItems.First().DataPoint.Time;
+                currentDataPoint.StartTime = timeSynchronizedItems.Key.Item1;
+                currentDataPoint.EndTime = timeSynchronizedItems.Key.Item2;
                 currentDataPoint.Value = expressoResultValue;
-                foreach (var item in timeSynchronizedItems)
-                {
-                    Pools.DataPoint.Return(item.DataPoint);
-                }
                 yield return currentDataPoint;
             }
         }

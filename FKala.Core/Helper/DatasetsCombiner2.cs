@@ -1,4 +1,5 @@
-﻿using FKala.Core.Interfaces;
+﻿using FKala.Core.DataLayer.Infrastructure;
+using FKala.Core.Interfaces;
 using FKala.Core.KalaQl;
 using FKala.Core.Model;
 using System;
@@ -18,7 +19,7 @@ namespace FKala.Core.Logic
             public required IEnumerator<DataPoint> Enumerator;
         }
 
-        public static IEnumerable<IGrouping<DateTime, (ResultPromise Result, DataPoint DataPoint)>> CombineSynchronizedResults(List<ResultPromise> results)
+        public static IEnumerable<IGrouping<(DateTime, DateTime), (ResultPromise Result, DataPoint DataPoint)>> CombineSynchronizedResults(List<ResultPromise> results)
         {
 
             // Start Iterators
@@ -33,11 +34,16 @@ namespace FKala.Core.Logic
 
             // Consume in timley manner
             List<ResultEnumerator> consumedEnumerators = enumerators.ToList();
+            DateTime previousSyncResultEnd = DateTime.MinValue;
             while (true)
             {
                 bool someLeft = false;
                 foreach (var result in consumedEnumerators)
                 {
+                    if (result.Enumerator.Current != null)
+                    {
+                        Pools.DataPoint.Return(result.Enumerator.Current);
+                    }
                     bool success = result.Enumerator.MoveNext();
                     someLeft = someLeft | success;
                     if (!success) enumerators.Remove(result);
@@ -48,18 +54,30 @@ namespace FKala.Core.Logic
                 }
                 consumedEnumerators.Clear();
 
-                var minTime = enumerators.Min(e => e.Enumerator.Current.Time);
+                var minStartTime = enumerators.Min(e => e.Enumerator.Current.StartTime);
+                minStartTime = minStartTime < previousSyncResultEnd ? previousSyncResultEnd : minStartTime;                
+                var minEndTime = enumerators.Min(e => e.Enumerator.Current.StartTime > minStartTime ? e.Enumerator.Current.StartTime : e.Enumerator.Current.EndTime);
+                previousSyncResultEnd = minEndTime;
                 List<(ResultPromise result, DataPoint datapoint)> timeMatches = new List<(ResultPromise result, DataPoint datapoint)>();
                 foreach (var enumerator in enumerators)
                 {
-                    if (minTime == enumerator.Enumerator.Current.Time)
+                    if (minStartTime < enumerator.Enumerator.Current.EndTime && minEndTime >= enumerator.Enumerator.Current.StartTime)
+                    {
+                        timeMatches.Add((enumerator.Result, enumerator.Enumerator.Current));                        
+                    }
+                    if (minStartTime == minEndTime &&
+                        minStartTime == enumerator.Enumerator.Current.StartTime &&
+                        minStartTime == enumerator.Enumerator.Current.EndTime)
                     {
                         timeMatches.Add((enumerator.Result, enumerator.Enumerator.Current));
+                    }
+                    if (minStartTime >= enumerator.Enumerator.Current.EndTime || minEndTime == enumerator.Enumerator.Current.EndTime)
+                    {
                         consumedEnumerators.Add(enumerator);
                     }
                 }
 
-                yield return new Grouping<DateTime, (ResultPromise result, DataPoint DataPoint)>(minTime, timeMatches);
+                yield return new Grouping<(DateTime, DateTime), (ResultPromise result, DataPoint DataPoint)>((minStartTime, minEndTime), timeMatches);
             }
         }
 
