@@ -58,9 +58,14 @@ namespace FKala.Api.Controller
             // Verarbeite den String hier nach Bedarf
             var inputmultiline = ProcessString(input);
 
+            DateTime previous = DateTime.Now;
             await foreach (var retRowDict in DoQuery(inputmultiline))
             {
-                await Task.Delay(TimeSpan.FromMilliseconds(1));
+                if (previous.AddMilliseconds(250) < DateTime.Now)
+                {
+                    previous = DateTime.Now;
+                    await Task.Delay(TimeSpan.FromMilliseconds(1));
+                }
                 yield return retRowDict;
             }
 

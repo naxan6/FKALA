@@ -348,7 +348,13 @@ namespace FKala.Core.DataLayers
             char[] newPath = currentPath.ToCharArray();// "measure$aasd_2024-11-02.dat"
             newPath[newPath.Length - 15] = '#';   // "<measure$aasd#2024-11-02.dat"
             string sortedMarkedPath = new string(newPath);
-            File.Move(currentPath, sortedMarkedPath);
+            try
+            {
+                File.Move(currentPath, sortedMarkedPath);
+            } catch (Exception)
+            {
+                Console.WriteLine("failed renaming to sorted. maybe already marked sorted by parallel stream");
+            }
         }
 
         static bool IsSorted<T>(List<T> list) where T : IComparable<T>

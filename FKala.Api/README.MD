@@ -110,6 +110,17 @@ Loads data from storage
     it uses a cache with minutely aggregated data. "Max" was used to condense the data to minutely values. 
     if the cache doesn't exist yet, it gets populated. if it does exists, it is NOT used - but recreated (because of "_Rebuild").
 
+### Loaj
+  Nearly like Load but allows access to a member of a json value.
+  See example, only a path to a json-member is added on top of Load-parameters ("data/general/freeHeap").
+  Array-indices are only supported as leaves, e.g. "nrg[0]" will get you the first entry, so '{ "nrg" : [11,22,33] }' will give you 11.
+  ```
+  Loaj rFreeHeap: nxG1`$getStatus`$response data/general/freeHeap 2024-09-22T00:00:00 2024-09-30T00:00:00 NoCache
+  Loaj rUptime: nxG1`$getStatus`$response data/general/uptime64 2024-09-22T00:00:00 2024-09-30T00:00:00 NoCache
+  Aggr a: rFreeHeap  Aligned_1Hour Min
+  Aggr b: rUptime  Aligned_1Hour Min
+  Publ a,b Table"
+  ```
 ### Aggr
 Aggregates Data.
 #### Pattern ```Aggr <Name>: <Source> <Window> <Aggregate> [EmptyWindows]```
