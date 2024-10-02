@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FKala.Core.DataLayer.Cache;
 using FKala.Core.DataLayer.Infrastructure;
 using FKala.Core.KalaQl;
 using FKala.Core.KalaQl.Windowing;
@@ -14,7 +15,8 @@ namespace FKala.Core.Interfaces
     public interface IDataLayer
     {
         string DataDirectory { get; }
-        IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool NewestOnly, bool doSortRawFiles, KalaQl.KalaQlContext context);
+        CachingLayer CachingLayer { get; }
+        IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool NewestOnly, KalaQl.KalaQlContext context, bool dontInvalidateCache_ForUseWhileCacheRebuild);
         void Insert(string kalaLinedata);
         void Insert(string kalaLinedata, string? source);
         List<int> LoadAvailableYears(string measurement);
@@ -24,7 +26,7 @@ namespace FKala.Core.Interfaces
 
         IAsyncEnumerable<Dictionary<string, object>> MergeRawFilesFromMeasurementToMeasurement(string measurement, string targetmeasurement, KalaQlContext context);
         IAsyncEnumerable<Dictionary<string, object>> MoveMeasurement(string measurementOld, string measurementNew, KalaQlContext context);
-        IAsyncEnumerable<Dictionary<string, object>> Cleanup(string measurement, KalaQlContext context, bool cleanSorted);
+        IAsyncEnumerable<Dictionary<string, object>> Cleanup(string measurement, KalaQlContext context);
         void Flush();
         void Flush(string filePath);
 
@@ -35,5 +37,7 @@ namespace FKala.Core.Interfaces
         IAsyncEnumerable<Dictionary<string, object?>> UnBlacklist(string measurement);
         bool IsBlacklisted(string filePath, bool checkOnDisk);
         void InsertError(string err);
+        IAsyncEnumerable<Dictionary<string, object?>> SortRawFiles(string measurement, KalaQlContext context);
+        string GetInsertTargetFilepath(string measurement, ReadOnlySpan<char> yyyy_MM_dd);
     }
 }

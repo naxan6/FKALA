@@ -74,6 +74,7 @@ namespace FKala.Core.KalaQl
             {
 
                 seenPoints++;
+                
                 var currentInputDatePoint = dataPointsEnumerator.Current;
                 //Console.WriteLine($"Aggregate {c} from {input.Name} to {Name} ##### {previous}");
                 previous = currentInputDatePoint;

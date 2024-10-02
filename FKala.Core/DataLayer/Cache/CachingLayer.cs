@@ -37,6 +37,11 @@ namespace FKala.Core.DataLayer.Cache
             years = FilterYearsForExistingRawData(measurement, years);
             foreach (int year in years)
             {
+                if (DataLayer.CachingLayer.IsMarked2Invalidate(measurement, new DateOnly(year, 1, 1)))
+                {
+                    DataLayer.CachingLayer.Invalidate(measurement, new DateOnly(year, 1, 1));
+                }
+
                 string cachefile = $"{measurementPath}_{year}_{cacheResolution.AggregateFunction}.dat";
                 var cacheFilePath = Path.Combine(measurementCachePath, cachefile);
 
@@ -84,6 +89,8 @@ namespace FKala.Core.DataLayer.Cache
 
             }
         }
+
+        
 
         private ICache GetCacheImplementation(CacheResolution cacheResolution)
         {
@@ -157,6 +164,55 @@ namespace FKala.Core.DataLayer.Cache
             var rawYears = DataLayer.LoadAvailableYears(measurement);
             years = years.Where(year => rawYears.Contains(year));
             return years;
+        }
+
+        internal void Mark2Invalidate(string measurement, DateOnly year)
+        {
+            var flagfile = GetInvalidateCacheFlagFile(measurement, year);
+            if (!invalidateFlagFiles.ContainsKey(flagfile))
+            {
+                using (var fs = File.Create(flagfile)) { };
+                invalidateFlagFiles[flagfile] = true;
+            }
+        }
+
+        Dictionary<string, bool> invalidateFlagFiles = new Dictionary<string, bool>();
+
+        private string GetInvalidateCacheFlagFile(string measurement, DateOnly day)
+        {
+            return Path.Combine(CacheDirectory, $"INVALIDATE_{measurement}_{day.Year}.flag");
+        }
+
+        internal bool IsMarked2Invalidate(string measurement, DateOnly year)
+        {
+            var flagfile = GetInvalidateCacheFlagFile(measurement, year);
+            if (invalidateFlagFiles.ContainsKey(flagfile)) {
+                return true;
+            }
+            else
+            {
+                var exists = File.Exists(GetInvalidateCacheFlagFile(measurement, year));
+                if (exists)
+                {
+                    invalidateFlagFiles[flagfile] = true;
+                }
+                return exists;
+            }
+            
+        }
+
+        internal void Invalidate(string measurement, DateOnly year)
+        {
+            var flagfile = GetInvalidateCacheFlagFile(measurement, year);
+            if (File.Exists(flagfile))
+            {
+                new Cache_Hourly(DataLayer).Invalidate(measurement, year);
+                new Cache_15Minutely(DataLayer).Invalidate(measurement, year);
+                new Cache_5Minutely(DataLayer).Invalidate(measurement, year);
+                new Cache_Minutely(DataLayer).Invalidate(measurement, year);
+                File.Delete(flagfile);
+                invalidateFlagFiles.Remove(flagfile);
+            }
         }
     }
 }

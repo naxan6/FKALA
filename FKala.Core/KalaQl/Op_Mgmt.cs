@@ -67,15 +67,6 @@ namespace FKala.Core.KalaQl
                 context.Result.StreamResult = Rename(sourceMeasurement, targetMeasurement, context);
                 this.hasExecuted = true;
             }
-            else if (MgmtAction == MgmtAction.Sort)
-            {
-                Params = Params.Trim('"');
-                var paramParts = Params.Split(" ");
-                var measurement = paramParts[0];
-                context.Result = new KalaResult();
-                context.Result.StreamResult = SortRawFiles(measurement, context);
-                this.hasExecuted = true;
-            }
             else if (MgmtAction == MgmtAction.Clean)
             {
                 Params = Params.Trim('"');
@@ -165,17 +156,17 @@ namespace FKala.Core.KalaQl
                 yield return msg;
             }
             context.DataLayer.Flush();
-            var resultClean = context.DataLayer.Cleanup(measurement, context, true);
+            var resultClean = context.DataLayer.Cleanup(measurement, context);
             await foreach (var msg in resultClean)
             {
                 yield return msg;
             }
-            var resultSort = this.SortRawFiles(measurement, context);
+            var resultSort = context.DataLayer.SortRawFiles(measurement, context);
             await foreach (var msg in resultSort)
             {
                 yield return msg;
             }
-            var resultCleanFinal = context.DataLayer.Cleanup(measurement, context, false);
+            var resultCleanFinal = context.DataLayer.Cleanup(measurement, context);
             await foreach (var msg in resultCleanFinal)
             {
                 yield return msg;
@@ -197,7 +188,7 @@ namespace FKala.Core.KalaQl
         }
         private async IAsyncEnumerable<Dictionary<string, object?>>? CleanupRawFiles(string measurement, KalaQlContext context)
         {
-            var result = context.DataLayer.Cleanup(measurement, context, false);
+            var result = context.DataLayer.Cleanup(measurement, context);
             await foreach (var msg in result)
             {
                 yield return msg;
@@ -212,17 +203,17 @@ namespace FKala.Core.KalaQl
                 yield return msg;
             }
             context.DataLayer.Flush();
-            var resultClean = context.DataLayer.Cleanup(targetMeasurement, context, true);
+            var resultClean = context.DataLayer.Cleanup(targetMeasurement, context);
             await foreach (var msg in resultClean)
             {
                 yield return msg;
             }
-            var resultSort = this.SortRawFiles(targetMeasurement, context);
+            var resultSort = context.DataLayer.SortRawFiles(targetMeasurement, context);
             await foreach (var msg in resultSort)
             {
                 yield return msg;
             }
-            var resultCleanFinal = context.DataLayer.Cleanup(targetMeasurement, context, false);
+            var resultCleanFinal = context.DataLayer.Cleanup(targetMeasurement, context);
             await foreach (var msg in resultCleanFinal)
             {
                 yield return msg;
@@ -243,32 +234,11 @@ namespace FKala.Core.KalaQl
             var result = context.DataLayer.LoadMeasurementList();
             foreach (var measurement in result)
             {
-                await foreach (var msg in SortRawFiles(measurement, context))
+                await foreach (var msg in context.DataLayer.SortRawFiles(measurement, context))
                 {
                     yield return msg;
                 }
             }
-        }
-
-        private async IAsyncEnumerable<Dictionary<string, object?>> SortRawFiles(string measurement, KalaQlContext context)
-        {
-            var q = new KalaQuery()
-                .Add(new Op_BaseQuery("SortRawFiles", "toSort", measurement, DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefined.NoCache, false, true))
-                .Add(new Op_Publish("SortRawFiles", new List<string>() { "toSort" }, PublishMode.MultipleResultsets));
-            var localresult = q.Execute(context.DataLayer).ResultSets!.First().Resultset;
-
-            DateTime day = DateTime.MinValue;
-            foreach (var r in localresult) // iterate to load everything
-            {
-                if (day < r.StartTime)
-                {
-                    yield return new Dictionary<string, object>() { { "msg", $"Sort of day {r.StartTime.Date} done" } };
-                    day = r.StartTime.AddDays(1);
-                }
-                Pools.DataPoint.Return(r);
-            }
-            Console.WriteLine($"Sorted measurement {measurement}.");
-            yield return new Dictionary<string, object?>() { { "msg", $"Sorted measurement {measurement}." } };
         }
 
 #pragma warning disable CS1998 // Bei der asynchronen Methode fehlen "await"-Operatoren. Die Methode wird synchron ausgeführt.
@@ -291,7 +261,7 @@ namespace FKala.Core.KalaQl
                 try
                 {
                     var q = new KalaQuery()
-                        .Add(new Op_BaseQuery("SortRawFiles", "toSort", measurement, DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefined.NoCache, false, false))
+                        .Add(new Op_BaseQuery("SortRawFiles", "toSort", measurement, DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefined.NoCache, false))
                         .Add(new Op_Publish("SortRawFiles", new List<string>() { "toSort" }, PublishMode.MultipleResultsets));
                     result = q.Execute(context.DataLayer);
                     var localresult = result.ResultSets!.First().Resultset;

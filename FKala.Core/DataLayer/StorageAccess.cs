@@ -1,4 +1,5 @@
-﻿using FKala.Core.DataLayer.Infrastructure;
+﻿using FKala.Core.DataLayer.Cache;
+using FKala.Core.DataLayer.Infrastructure;
 using FKala.Core.Interfaces;
 using FKala.Core.KalaQl;
 using FKala.Core.Model;
@@ -17,7 +18,7 @@ namespace FKala.Core.DataLayers
     public class StorageAccess : IDisposable
     {
         FileStreamOptions fileStreamOptions = new FileStreamOptions()
-        {            
+        {
             Access = FileAccess.Read,
             BufferSize = 131072,
             Mode = FileMode.Open,
@@ -33,8 +34,8 @@ namespace FKala.Core.DataLayers
         };
 
         public string TimeFormat { get { return "HH:mm:ss.fffffff"; } }
-        private SortedDictionary<DateTime, ReaderTuple> TimeSortedStreamReader;
-        private ILookup<DateTime, ReaderTuple> StreamReaderLookupForMerge;
+        private SortedDictionary<DateOnly, ReaderTuple> TimeSortedStreamReader;
+        private ILookup<DateOnly, ReaderTuple> StreamReaderLookupForMerge;
         private DateTime StartTime;
         private DateTime EndTime;
 
@@ -44,6 +45,7 @@ namespace FKala.Core.DataLayers
 
         private bool IsActiveAutoSortRawFiles;
         private IDataLayer? DataLayer;
+        private TimeOnly AtMidnight = new TimeOnly(0, 0, 0);
 
         private StorageAccess(IDataLayer dataLayer)
         {
@@ -53,7 +55,16 @@ namespace FKala.Core.DataLayers
             ReadBuffer = dataLayer.ReadBuffer;
             WriteBuffer = dataLayer.WriteBuffer;
         }
-       
+
+        public static StorageAccess ForReadMultiFile(string measurementPath, string measurementPathPart, DateTime startTime, DateTime endTime, KalaQl.KalaQlContext context)
+        {
+            var ret = new StorageAccess(context.DataLayer);
+            ret.StartTime = startTime;
+            ret.EndTime = endTime;
+            ret.Context = context;
+            ret.StreamReaderLookupForMerge = ret.QueryFilesForMergingMultipleFiles(measurementPath, measurementPathPart, startTime, endTime);
+            return ret;
+        }
         public static StorageAccess ForRead(string measurementPath, string measurementPathPart, DateTime startTime, DateTime endTime, KalaQl.KalaQlContext context, bool doSortRawFiles)
         {
             var ret = new StorageAccess(context.DataLayer);
@@ -64,6 +75,7 @@ namespace FKala.Core.DataLayers
             ret.TimeSortedStreamReader = ret.GetFilePaths(measurementPath, measurementPathPart, startTime, endTime);
             return ret;
         }
+
         public static StorageAccess ForSort(string measurementPath, string measurementPathPart, DateTime startTime, DateTime endTime, KalaQl.KalaQlContext context)
         {
             var ret = new StorageAccess(context.DataLayer);
@@ -93,7 +105,7 @@ namespace FKala.Core.DataLayers
             return ret;
         }
 
-        private SortedDictionary<DateTime, ReaderTuple> GetFilePaths(string measurementPath, string measurementPathPart, DateTime startTime, DateTime endTime)
+        private SortedDictionary<DateOnly, ReaderTuple> GetFilePaths(string measurementPath, string measurementPathPart, DateTime startTime, DateTime endTime)
         {
             // years
             int startYear = startTime.Year;
@@ -109,7 +121,7 @@ namespace FKala.Core.DataLayers
 
 
 
-            SortedDictionary<DateTime, ReaderTuple> ret = new SortedDictionary<DateTime, ReaderTuple>();
+            SortedDictionary<DateOnly, ReaderTuple> ret = new SortedDictionary<DateOnly, ReaderTuple>();
 
             foreach (var candidate in fileCandidates)
             {
@@ -122,9 +134,9 @@ namespace FKala.Core.DataLayers
                 int filemonth = int.Parse(dateSpan.Slice(6, 2));
                 int fileday = int.Parse(dateSpan.Slice(9, 2));
 
-                var fileDateTime = new DateTime(fileyear, filemonth, fileday, 0, 0, 0, DateTimeKind.Utc);
+                var fileDateTime = new DateOnly(fileyear, filemonth, fileday);
 
-                if (startTime < fileDateTime.AddDays(1) && fileDateTime < endTime)
+                if (startTime < fileDateTime.AddDays(1).ToDateTime(AtMidnight) && fileDateTime.ToDateTime(AtMidnight) < endTime)
                 {
                     try
                     {
@@ -141,7 +153,7 @@ namespace FKala.Core.DataLayers
             return ret;
         }
 
-        private ILookup<DateTime, ReaderTuple> QueryFilesForCleanup(string measurementPath, string measurementPathPart)
+        private ILookup<DateOnly, ReaderTuple> QueryFilesForCleanup(string measurementPath, string measurementPathPart)
         {
             // years            
             var years = GetYearFolders(measurementPath);
@@ -153,11 +165,11 @@ namespace FKala.Core.DataLayers
 
 
 
-            List<(DateTime, ReaderTuple)> retList = new List<(DateTime, ReaderTuple)>();
+            List<(DateOnly, ReaderTuple)> retList = new List<(DateOnly, ReaderTuple)>();
 
             foreach (var candidate in fileCandidates)
             {
-                retList.Add((DateTime.MinValue, new ReaderTuple() { FileDate = DateTime.MinValue, FilePath = candidate, MarkedAsSorted = false }));
+                retList.Add((DateOnly.MinValue, new ReaderTuple() { FileDate = DateOnly.MinValue, FilePath = candidate, MarkedAsSorted = false }));
 
             }
 
@@ -165,7 +177,7 @@ namespace FKala.Core.DataLayers
             return ret;
         }
 
-        private ILookup<DateTime, ReaderTuple> QueryFilesForMergingAllFiles(string measurementPath, string measurementPathPart)
+        private ILookup<DateOnly, ReaderTuple> QueryFilesForMergingAllFiles(string measurementPath, string measurementPathPart)
         {
             // years            
             var years = GetYearFolders(measurementPath);
@@ -175,9 +187,7 @@ namespace FKala.Core.DataLayers
 
             var fileCandidates = years.AsParallel().SelectMany(y => Directory.GetFileSystemEntries(Path.Combine(measurementPath, y.ToString()), filter, optionFindFilesRecursive)).ToList();
 
-
-
-            List<(DateTime, ReaderTuple)> retList = new List<(DateTime, ReaderTuple)>();
+            List<(DateOnly, ReaderTuple)> retList = new List<(DateOnly, ReaderTuple)>();
 
             foreach (var candidate in fileCandidates)
             {
@@ -187,9 +197,44 @@ namespace FKala.Core.DataLayers
                 int fileyear = int.Parse(dateSpan.Slice(1, 4));
                 int filemonth = int.Parse(dateSpan.Slice(6, 2));
                 int fileday = int.Parse(dateSpan.Slice(9, 2));
-                var fileDateTime = new DateTime(fileyear, filemonth, fileday, 0, 0, 0, DateTimeKind.Utc);
+                var fileDateTime = new DateOnly(fileyear, filemonth, fileday);
                 retList.Add((fileDateTime, new ReaderTuple() { FileDate = fileDateTime, FilePath = candidate, MarkedAsSorted = false }));
 
+            }
+            var ret = retList.ToLookup(t => t.Item1, t => t.Item2);
+            return ret;
+        }
+
+        private ILookup<DateOnly, ReaderTuple> QueryFilesForMergingMultipleFiles(string measurementPath, string measurementPathPart, DateTime startTime, DateTime endTime)
+        {
+            // years            
+            int startYear = startTime.Year;
+            int endYear = endTime.Year;
+            var years = GetYearFolders(measurementPath);
+            var filteredYears = years.Where(y => y >= startYear && y <= endYear);
+
+            // files
+            string filter = $"*.dat";
+
+            var fileCandidates = filteredYears.AsParallel().SelectMany(y => Directory.GetFileSystemEntries(Path.Combine(measurementPath, y.ToString()), filter, optionFindFilesRecursive)).ToList();
+            fileCandidates = fileCandidates.Order().ToList();
+
+            List<(DateOnly, ReaderTuple)> retList = new List<(DateOnly, ReaderTuple)>();
+
+            foreach (var candidate in fileCandidates)
+            {
+                string barename = Path.GetFileNameWithoutExtension(candidate);
+                var datePart = barename.Substring(barename.Length - 11, 11);
+                ReadOnlySpan<char> dateSpan = datePart.AsSpan();
+                int fileyear = int.Parse(dateSpan.Slice(1, 4));
+                int filemonth = int.Parse(dateSpan.Slice(6, 2));
+                int fileday = int.Parse(dateSpan.Slice(9, 2));
+                var fileDateTime = new DateOnly(fileyear, filemonth, fileday);
+
+                if (startTime < fileDateTime.AddDays(1).ToDateTime(AtMidnight) && fileDateTime.ToDateTime(AtMidnight) < endTime)
+                {
+                    retList.Add((fileDateTime, new ReaderTuple() { FileDate = fileDateTime, FilePath = candidate, MarkedAsSorted = IsSortMarkSet(candidate) }));
+                }
             }
 
             var ret = retList.ToLookup(t => t.Item1, t => t.Item2);
@@ -223,7 +268,7 @@ namespace FKala.Core.DataLayers
             }
             return new List<ReaderTuple>().AsEnumerable();
 
-        }        
+        }
 
         private List<int> GetYearFolders(string measurementDir)
         {
@@ -233,7 +278,7 @@ namespace FKala.Core.DataLayers
 
         public IEnumerable<DataPoint> StreamMergeDataPoints()
         {
-            foreach (var streamreaderTuple in StreamReaderLookupForMerge)
+            foreach (var streamreaderTuple in StreamReaderLookupForMerge.OrderBy(k => k.Key))
             {
                 int fileyear = streamreaderTuple.Key.Year;
                 int filemonth = streamreaderTuple.Key.Month;
@@ -244,6 +289,88 @@ namespace FKala.Core.DataLayers
                     foreach (var dp in InternalStreamDataPoints(srTuple, fileyear, filemonth, fileday, false))
                     {
                         yield return dp;
+                    }
+                }
+            }
+        }
+
+        public static string SetSortMark(string filepath, bool sorted)
+        {
+            char[] newPath = filepath.ToCharArray();// "measure$aasd[#_]2024-11-02.dat"
+            if (sorted)
+            {
+                newPath[newPath.Length - 15] = '#';   // "<measure$aasd_2024-11-02.dat"
+            }
+            else
+            {
+                newPath[newPath.Length - 15] = '_';   // "<measure$aasd_2024-11-02.dat"
+            }
+
+            string changePath = new string(newPath);
+            return changePath;
+        }
+        public static bool IsSortMarkSet(string filepath)
+        {
+            char[] newPath = filepath.ToCharArray();
+            return newPath[newPath.Length - 15] == '#';
+        }
+
+        public IEnumerable<DataPoint> StreamMergeDataPoints_MaterializeSortIfNeeded(string measurement, bool dontInvalidateCache_ForUseWhileCacheRebuild)
+        {
+            foreach (var streamreaderDayList in StreamReaderLookupForMerge.OrderBy(srl => srl.Key))
+            {
+                int fileyear = streamreaderDayList.Key.Year;
+                int filemonth = streamreaderDayList.Key.Month;
+                int fileday = streamreaderDayList.Key.Day;
+                foreach (var srTuple in streamreaderDayList)
+                {
+                    DataLayer.Flush(srTuple.FilePath);
+                }
+
+                // ###### If out of order by multiple files per day or by only single but unsorted file
+                if (streamreaderDayList.Count() > 1 ||
+                    (streamreaderDayList.Count() == 0 && !streamreaderDayList.First().MarkedAsSorted))
+                {
+                    var allDpsInAllFilesForThisDay = streamreaderDayList.SelectMany(srTuple => InternalStreamDataPoints(srTuple, fileyear, filemonth, fileday, false));
+
+                    Dictionary<DateTime, DataPoint> ret = new Dictionary<DateTime, DataPoint>();
+                    // DEDUPLICATE, LAST WINS (has to be sorted in insertion order until here)
+                    foreach (var dp in allDpsInAllFilesForThisDay)
+                    {
+                        ret[dp.StartTime] = dp;
+                    }
+
+                    var ordered = ret.OrderBy(k => k.Key).Select(v => v.Value).ToList();
+                    string filePath = DataLayer.GetInsertTargetFilepath(measurement, $"{fileyear:00}-{filemonth:00}-{fileday:00}");
+                    filePath = SetSortMark(filePath, true);                    
+                    WriteSortedFile(filePath, ordered);
+                    foreach (var oldFile in streamreaderDayList.Select(sr => sr.FilePath))
+                    {
+                        if (oldFile != filePath)
+                        {
+                            File.Delete(oldFile);
+                        }
+                    }
+                    if (!dontInvalidateCache_ForUseWhileCacheRebuild)
+                    {
+                        DataLayer.CachingLayer.Invalidate(measurement, streamreaderDayList.Key);
+                    }
+                    foreach (var dp in ordered)
+                    {
+                        yield return dp;
+                    }
+
+                }
+                // ###### If in order
+                else
+                {
+                    var sr = streamreaderDayList.First();
+                    if (sr.MarkedAsSorted)
+                    {
+                        foreach (var dp in InternalStreamDataPoints(sr, fileyear, filemonth, fileday, true))
+                        {
+                            yield return dp;
+                        }
                     }
                 }
             }
@@ -283,12 +410,12 @@ namespace FKala.Core.DataLayers
             // if not sorted, sort it
             if (!persistenceIsSorted)
             {
-                dataPoints.Sort((a, b) => a.StartTime.CompareTo(b.StartTime)); // Sort
+                dataPoints = dataPoints.OrderBy(a => a.StartTime).ToList(); // Sort
                 dataPoints = dataPoints.Distinct(comparer).ToList(); // Deduplicate
 
                 // persist sorted (if activated)
                 // and only if it's at least older than 1-2 days (pathdate is start of day at midnight!)
-                if (IsActiveAutoSortRawFiles && readerTuple.FileDate < DateTime.Now.AddDays(-2))
+                if (IsActiveAutoSortRawFiles && readerTuple.FileDate.ToDateTime(AtMidnight) < DateTime.Now.AddDays(-2))
                 {
                     WriteSortedFile(readerTuple.FilePath, dataPoints);
                     persistenceIsSorted = true;
@@ -297,7 +424,7 @@ namespace FKala.Core.DataLayers
 
             // mark as sorted (if it already was or is now) -
             // and only if it's at least older than 1-2 days (pathdate is start of day at midnight!)
-            if (persistenceIsSorted && readerTuple.FileDate < DateTime.Now.AddDays(-2))
+            if (persistenceIsSorted && readerTuple.FileDate.ToDateTime(AtMidnight) < DateTime.Now.AddDays(-2))
             {
                 MarkFileAsSorted(readerTuple.FilePath);
             }
@@ -336,14 +463,15 @@ namespace FKala.Core.DataLayers
                         };
                     }
                 });
-                File.Move(filePath, filePath + $".bak_{ DateTime.Now.ToString("yyyyMMddHHmmssfff") }");
+                var bakFile = filePath + $".bak_{DateTime.Now.ToString("yyyyMMddHHmmssfff")}";
+                File.Move(filePath, bakFile);
                 File.Move(filePath + ".sorted", filePath);
-                //File.Delete(filePath + ".sorted", filePath);
+                File.Delete(bakFile);
                 Console.WriteLine($"Sorted rewrite of file {filePath}");
             }
         }
 
-        private void MarkFileAsSorted(string currentPath)
+        private static void MarkFileAsSorted(string currentPath)
         {
             char[] newPath = currentPath.ToCharArray();// "measure$aasd_2024-11-02.dat"
             newPath[newPath.Length - 15] = '#';   // "<measure$aasd#2024-11-02.dat"
@@ -351,11 +479,32 @@ namespace FKala.Core.DataLayers
             try
             {
                 File.Move(currentPath, sortedMarkedPath);
-            } catch (Exception)
+            }
+            catch (Exception)
             {
                 Console.WriteLine("failed renaming to sorted. maybe already marked sorted by parallel stream");
             }
         }
+
+        //public static void UnMarkFileAsSorted(string currentPath)
+        //{
+
+        //    char[] newPath = currentPath.ToCharArray();// "measure$aasd[#_]2024-11-02.dat"
+        //    newPath[newPath.Length - 15] = '#';   // "<measure$aasd#2024-11-02.dat"
+        //    string sortedMarkedPath = new string(newPath);
+
+        //    char[] newPathUnsorted = currentPath.ToCharArray();// "measure$aasd[#_]2024-11-02.dat"
+        //    newPathUnsorted[newPath.Length - 15] = '_';   // "<measure$aasd_2024-11-02.dat"
+        //    string unsortedMarkedPath = new string(newPathUnsorted);
+        //    try
+        //    {
+        //        File.Move(sortedMarkedPath, unsortedMarkedPath);
+        //    }
+        //    catch (Exception)
+        //    {
+        //        Console.WriteLine("failed renaming to sorted. maybe already marked unsorted by parallel stream");
+        //    }
+        //}
 
         static bool IsSorted<T>(List<T> list) where T : IComparable<T>
         {
@@ -385,7 +534,7 @@ namespace FKala.Core.DataLayers
             int lineIdx = 0;
             DataPoint? retPrev = null;
             string? dataline;
-            
+
             while ((dataline = sr.StreamReader!.ReadLine()) != null)
             {
                 lineIdx++;

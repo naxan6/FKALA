@@ -28,6 +28,8 @@ namespace FKala.Core
         public string BlacklistDirectory { get; private set; }
         public CachingLayer CachingLayer { get; private set; }
         public BufferedWriterService WriterSvc { get; private set; }
+        ConcurrentDictionary<string, bool> MeasurementBlacklist = new ConcurrentDictionary<string, bool>();
+        ConcurrentDictionary<string, string> LatestEntries = new ConcurrentDictionary<string, string>();
 
         ConcurrentDictionary<string, byte> CreatedDirectories = new ConcurrentDictionary<string, byte>();
         DefaultObjectPool<StringBuilder> stringBuilderPool = new DefaultObjectPool<StringBuilder>(new StringBuilderPooledObjectPolicy());
@@ -59,7 +61,7 @@ namespace FKala.Core
             LoadMeasureBlacklist();
         }
 
-        public IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly, bool doSortRawFiles, KalaQlContext context)
+        public IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly, KalaQlContext context, bool dontInvalidateCache_ForUseWhileCacheRebuild)
         {
             if (newestOnly)
             {
@@ -71,7 +73,7 @@ namespace FKala.Core
             }
             else
             {
-                return LoadFullResolution(measurement, startTime, endTime, doSortRawFiles, context);
+                return LoadFullResolution(measurement, startTime, endTime, context, dontInvalidateCache_ForUseWhileCacheRebuild);
             }
         }
 
@@ -116,13 +118,20 @@ namespace FKala.Core
             }
         }
 
-        private IEnumerable<DataPoint> LoadFullResolution(string measurement, DateTime startTime, DateTime endTime, bool doSortRawFiles, KalaQlContext context)
+        private IEnumerable<DataPoint> LoadFullResolution(string measurement, DateTime startTime, DateTime endTime, KalaQlContext context, bool dontInvalidateCache_ForUseWhileCacheRebuild)
         {
             (string measurementPathPart, string measurementPath) = GetMeasurementDirectory(measurement);
 
-            using (var sa = StorageAccess.ForRead(measurementPath, measurementPathPart, startTime, endTime, context, doSortRawFiles))
+            //using (var sa = StorageAccess.ForRead(measurementPath, measurementPathPart, startTime, endTime, context, doSortRawFiles))
+            //{
+            //    foreach (var dp in sa.OpenStreamReaders().StreamDataPoints())
+            //    {
+            //        yield return dp;
+            //    }
+            //}
+            using (var sa = StorageAccess.ForReadMultiFile(measurementPath, measurementPathPart, startTime, endTime, context))
             {
-                foreach (var dp in sa.OpenStreamReaders().StreamDataPoints())
+                foreach (var dp in sa.OpenStreamReaders().StreamMergeDataPoints_MaterializeSortIfNeeded(measurement, dontInvalidateCache_ForUseWhileCacheRebuild))
                 {
                     yield return dp;
                 }
@@ -163,8 +172,9 @@ namespace FKala.Core
             return (measurementPathPart, measurementPath);
         }
 
-        public async IAsyncEnumerable<Dictionary<string, object>> Cleanup(string measurement, KalaQlContext context, bool cleanSorted = false)
+        public async IAsyncEnumerable<Dictionary<string, object>> Cleanup(string measurement, KalaQlContext context)
         {
+            bool cleanSorted = false;
             (string measurementPathPart, string measurementPath) = GetMeasurementDirectory(measurement);
 
             using (var sa = StorageAccess.ForCleanup(measurementPath, measurementPathPart, context))
@@ -219,11 +229,21 @@ namespace FKala.Core
         public void Insert(string rawData, string source)
         {
             string measurement, datetimeHHmmssfffffff, valueString;
-            ReadOnlySpan<char> datetime_yyyy_MM_dd;
-            ParseRawData(rawData, out measurement, out datetime_yyyy_MM_dd, out datetimeHHmmssfffffff, out valueString);            
+            ReadOnlySpan<char> datetime_yyyy_MM_ddTHH_mm_ss_fffffff;
+            ParseRawData(rawData, out measurement, out datetime_yyyy_MM_ddTHH_mm_ss_fffffff, out datetimeHHmmssfffffff, out valueString);
             if (!IsBlacklisted(measurement, false))
             {
-                string filePath = GetInsertTargetFilepath(measurement, datetime_yyyy_MM_dd);
+                string filePath = GetInsertTargetFilepath(measurement, datetime_yyyy_MM_ddTHH_mm_ss_fffffff);
+                if (IsDelayedInsert(measurement, datetime_yyyy_MM_ddTHH_mm_ss_fffffff, null))
+                {                    
+                    DateOnly dt = new DateOnly(int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(0, 4)), int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(5, 2)), int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(8, 2)));
+                    CachingLayer.Mark2Invalidate(measurement, dt);
+                } 
+                else
+                {
+                    filePath = StorageAccess.SetSortMark(filePath, true);
+                }
+                
                 WriterSvc.DoWrite(filePath, (writer) =>
                 {
                     // Format the line to write
@@ -232,6 +252,33 @@ namespace FKala.Core
                     writer.Append(valueString);
                     writer.AppendNewline();
                 });
+            }
+        }
+
+        private bool IsDelayedInsert(string measurement, ReadOnlySpan<char> datetime_yyyy_MM_ddTHH_mm_ss_fffffff, KalaQlContext context)
+        {
+            var toCheckTime = datetime_yyyy_MM_ddTHH_mm_ss_fffffff.ToString();
+            if (!this.LatestEntries.ContainsKey(measurement))
+            {
+                var newest = this.LoadNewestDatapoint(measurement, context).FirstOrDefault();
+                if (newest != null)
+                {
+                    this.LatestEntries[measurement] = newest.StartTime.ToString("yyyy.MM.ddTHH:mm:ss.fffffff");
+                }
+                else
+                {
+                    this.LatestEntries[measurement] = DateTime.MinValue.ToString("yyyy.MM.ddTHH:mm:ss.fffffff");
+                }
+            }
+
+            if (this.LatestEntries[measurement].CompareTo(toCheckTime) < 0)
+            {
+                this.LatestEntries[measurement] = toCheckTime;
+                return false;
+            }
+            else
+            {
+                return true;
             }
         }
 
@@ -260,8 +307,6 @@ namespace FKala.Core
             }
         }
 
-        ConcurrentDictionary<string, bool> measurementBlacklist = new ConcurrentDictionary<string, bool>();
-
         private void LoadMeasureBlacklist()
         {
             var blackListDirs = Directory.GetDirectories(this.BlacklistDirectory, "*", new EnumerationOptions() { BufferSize = ReadBuffer, RecurseSubdirectories = false });
@@ -273,8 +318,8 @@ namespace FKala.Core
         }
 
         public bool IsBlacklisted(string measurement, bool checkOnDisk = true)
-        {            
-            if (measurementBlacklist.ContainsKey(measurement))
+        {
+            if (MeasurementBlacklist.ContainsKey(measurement))
             {
                 return true;
             }
@@ -282,7 +327,7 @@ namespace FKala.Core
             var blDir = Path.Combine(this.BlacklistDirectory, measurementPathPart);
             if (checkOnDisk && Directory.Exists(blDir))
             {
-                measurementBlacklist.AddOrUpdate(measurement, true, (string dir, bool old) => true);
+                MeasurementBlacklist.AddOrUpdate(measurement, true, (string dir, bool old) => true);
                 return true;
             }
             return false;
@@ -291,7 +336,7 @@ namespace FKala.Core
         public async IAsyncEnumerable<Dictionary<string, object?>> Blacklist(string measurement)
         {
             yield return Msg.Get("msg", $"Live Blacklisting {measurement}");
-            measurementBlacklist.AddOrUpdate(measurement, true, (string dir, bool old) => true);
+            MeasurementBlacklist.AddOrUpdate(measurement, true, (string dir, bool old) => true);
             (string measurementPathPart, string measurementPath) = GetMeasurementDirectory(measurement);
             WriterSvc.ForceFlushWriters();
             yield return Msg.Get("msg", $"Live Blacklisted {measurement}");
@@ -318,12 +363,11 @@ namespace FKala.Core
             }
 
             yield return Msg.Get("msg", $"Live Unblacklisting {measurement}");
-            measurementBlacklist.Remove(measurement, out bool randombit);
+            MeasurementBlacklist.Remove(measurement, out bool randombit);
             yield return Msg.Get("msg", $"Live Unblacklisted {measurement}");
         }
 
-
-        private string GetInsertTargetFilepath(string measurement, ReadOnlySpan<char> datetime_yyyy_MM_dd)
+        public string GetInsertTargetFilepath(string measurement, ReadOnlySpan<char> datetime_yyyy_MM_dd)
         {
             // Create the directory path
             var directoryPath = Path.Combine(DataDirectory, measurement, datetime_yyyy_MM_dd.Slice(0, 4).ToString(), datetime_yyyy_MM_dd.Slice(5, 2).ToString());
@@ -390,6 +434,27 @@ namespace FKala.Core
         {
             var line = $"kala/errors {DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {err.Replace("\n", " | ")}";
             this.Insert(line);
+        }
+
+        public async IAsyncEnumerable<Dictionary<string, object?>> SortRawFiles(string measurement, KalaQlContext context)
+        {
+            var q = new KalaQuery()
+                .Add(new Op_BaseQuery("SortRawFiles", "toSort", measurement, DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefined.NoCache, false))
+                .Add(new Op_Publish("SortRawFiles", new List<string>() { "toSort" }, PublishMode.MultipleResultsets));
+            var localresult = q.Execute(context.DataLayer).ResultSets!.First().Resultset;
+
+            DateTime day = DateTime.MinValue;
+            foreach (var r in localresult) // iterate to load everything
+            {
+                if (day < r.StartTime)
+                {
+                    yield return new Dictionary<string, object>() { { "msg", $"Sort of day {r.StartTime.Date} done" } };
+                    day = r.StartTime.AddDays(1);
+                }
+                Pools.DataPoint.Return(r);
+            }
+            Console.WriteLine($"Sorted measurement {measurement}.");
+            yield return new Dictionary<string, object?>() { { "msg", $"Sorted measurement {measurement}." } };
         }
     }
 }

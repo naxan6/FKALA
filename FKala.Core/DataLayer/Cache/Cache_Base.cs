@@ -10,6 +10,8 @@ using FKala.Core.Logic;
 using System.Diagnostics.Metrics;
 using System.Globalization;
 using System.Net.WebSockets;
+using System.Collections;
+using FKala.Core.KalaQl;
 
 namespace FKala.Core.DataLayer.Cache
 {
@@ -25,7 +27,7 @@ namespace FKala.Core.DataLayer.Cache
         public abstract DataPoint ReadLine(int fileyear, string? line);
         public abstract string CacheSubdir { get; }
         public IDataLayer DataLayer { get; }
-
+        
         public abstract DateTime ShouldUpdateFromWhere(int cacheYear, DataPoint? newestInCache, DataPoint? newestInRaw);
 
         public IEnumerable<DataPoint?> LoadNewestDatapoint(string newestFile)
@@ -46,6 +48,21 @@ namespace FKala.Core.DataLayer.Cache
 
             IEnumerable<DataPoint> rs = GetAggregateForCaching(measurement, new DateTime(year, 1, 1, 0, 0, 0, DateTimeKind.Utc), new DateTime(year + 1, 1, 1, 0, 0, 0, DateTimeKind.Utc), aggrFunc);
             WriteCacheFile(cacheFilePath, rs, false);
+        }
+
+        public void Invalidate(string measurement, DateOnly date)
+        {
+            int year = date.Year;
+            var measurementCachePath = Path.Combine(DataLayer.CachingLayer.CacheDirectory, CacheSubdir);
+            string filter = $"{measurement}_{year}_*.dat";
+            if (Directory.Exists(measurementCachePath))
+            {
+                var toInvalidate = Directory.GetFiles(measurementCachePath, filter);
+                foreach (var file in toInvalidate)
+                {
+                    File.Delete(file);
+                }
+            }
         }
 
         private void WriteCacheFile(string cacheFilePath, IEnumerable<DataPoint> rs, bool append)

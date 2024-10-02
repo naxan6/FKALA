@@ -20,10 +20,10 @@ namespace FKala.Core.KalaQl
         public DateTime EndTime { get; }
         public CacheResolution CacheResolution { get; }
         public bool NewestOnly { get; }
-        public bool DoSortRawFiles { get; }
         public string FieldPath { get; }
+        public bool DontInvalidateCache_ForUseWhileCacheRebuild { get; set; } = false;
 
-        public Op_JsonQuery(string? line, string name, string measurement, string fieldPath, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly = false, bool doSortRawFiles = false) : base(line)
+        public Op_JsonQuery(string? line, string name, string measurement, string fieldPath, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly = false) : base(line)
         {
             this.Name = name;
             this.Measurement = measurement;
@@ -31,7 +31,6 @@ namespace FKala.Core.KalaQl
             this.EndTime = endTime;
             this.CacheResolution = cacheResolution;
             this.NewestOnly = newestOnly;
-            this.DoSortRawFiles = doSortRawFiles;
             this.FieldPath = fieldPath;
         }
 
@@ -59,7 +58,7 @@ namespace FKala.Core.KalaQl
                     Creator = this,
                     ResultsetFactory = () =>
                     {
-                        var result = context.DataLayer.LoadData(this.Measurement, this.StartTime, this.EndTime, CacheResolution, NewestOnly, DoSortRawFiles, context);
+                        var result = context.DataLayer.LoadData(this.Measurement, this.StartTime, this.EndTime, CacheResolution, NewestOnly, context, DontInvalidateCache_ForUseWhileCacheRebuild);
                         return ReadJson(result, pathParts);
                     }
                 });

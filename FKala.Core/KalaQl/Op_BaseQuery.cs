@@ -18,16 +18,16 @@ namespace FKala.Core.KalaQl
         public CacheResolution CacheResolution { get; }
         public bool NewestOnly { get; }
         public bool DoSortRawFiles { get; }
+        public bool DontInvalidateCache_ForUseWhileCacheRebuild { get; set; } = false;
 
-        public Op_BaseQuery(string? line, string name, string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly = false, bool doSortRawFiles = false) : base(line)
+        public Op_BaseQuery(string? line, string name, string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly = false) : base(line)
         {
             this.Name = name;
             this.Measurement = measurement;
             this.StartTime = startTime;
             this.EndTime = endTime;
             this.CacheResolution = cacheResolution;
-            this.NewestOnly = newestOnly;
-            this.DoSortRawFiles = doSortRawFiles;
+            this.NewestOnly = newestOnly;            
         }
 
         public override bool CanExecute(KalaQlContext context)
@@ -52,7 +52,7 @@ namespace FKala.Core.KalaQl
                     Creator = this,
                     ResultsetFactory = () =>
                     {
-                        var result = context.DataLayer.LoadData(this.Measurement, this.StartTime, this.EndTime, CacheResolution, NewestOnly, DoSortRawFiles, context);
+                        var result = context.DataLayer.LoadData(this.Measurement, this.StartTime, this.EndTime, CacheResolution, NewestOnly, context, DontInvalidateCache_ForUseWhileCacheRebuild);
                         return result;
                     }
                 });

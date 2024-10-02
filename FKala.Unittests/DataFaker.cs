@@ -1,5 +1,6 @@
 ﻿using FKala.Core;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -51,6 +52,13 @@ namespace FKala.Unittests
             TestStorage.Delete(true);
         }
 
-        
+        internal DataFaker FakeMeasure_OutOfOrder(string measure, DateTime dateTime)
+        {
+            Random randomValue = new Random((int)(dateTime.Ticks % int.MaxValue));
+            var currentFakeValue = new decimal(randomValue.NextDouble());
+            TestDataLayer.Insert($"{measure} {dateTime:yyyy-MM-ddTHH:mm:ss.fffffff} {currentFakeValue.ToString(CultureInfo.InvariantCulture)}");
+            TestDataLayer.WriterSvc.ForceFlushWriters();
+            return this;
+        }
     }
 }

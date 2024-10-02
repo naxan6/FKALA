@@ -32,28 +32,29 @@ namespace FKala.Unittests
         public void DataLayer_LoadData_CheckBorders()
         {
             // Act
-            var resultset = DataFaker.TestDataLayer.LoadData("m1", new DateTime(2024, 03, 01), new DateTime(2024, 03, 15), CacheResolutionPredefined.NoCache, false, false, new KalaQlContext(DataFaker.TestDataLayer));
+            var resultset = DataFaker.TestDataLayer.LoadData("m1", new DateTime(2024, 03, 01), new DateTime(2024, 03, 15), CacheResolutionPredefined.NoCache, false, new KalaQlContext(DataFaker.TestDataLayer), false);
 
 
-
+            var resultlist = resultset.ToList();
             // Assert 1
             Console.WriteLine(KalaJson.Serialize(resultset));
             using (new AssertionScope())
             {
-                resultset.First().StartTime.Should().Be(new DateTime(2024, 03, 01, 0, 0, 03).AddTicks(2370446));
-                resultset.First().Value.Should().Be(0.429102592370055M);
-                resultset.Last().StartTime.Should().Be(new DateTime(2024, 03, 14, 23, 59, 58).AddTicks(4310596));
-                resultset.Last().Value.Should().Be(0.136571015760568M);
+               resultlist.First().StartTime.Should().Be(new DateTime(2024, 03, 01, 0, 0, 03).AddTicks(2370446));
+               resultlist.First().Value.Should().Be(0.429102592370055M);
+               resultlist.Last().StartTime.Should().Be(new DateTime(2024, 03, 14, 23, 59, 58).AddTicks(4310596));
+                resultlist.Last().Value.Should().Be(0.136571015760568M);
             }
 
             // Assert 2
-            var resultsetAll = DataFaker.TestDataLayer.LoadData("m1", new DateTime(0001, 01, 01), new DateTime(9999, 12, 31), CacheResolutionPredefined.NoCache, false, false, new KalaQlContext(DataFaker.TestDataLayer));
+            var resultsetAll = DataFaker.TestDataLayer.LoadData("m1", new DateTime(0001, 01, 01), new DateTime(9999, 12, 31), CacheResolutionPredefined.NoCache, false, new KalaQlContext(DataFaker.TestDataLayer), false);
+            var resultlistAll = resultsetAll.ToList();
             using (new AssertionScope())
             {
-                resultsetAll.First().StartTime.Should().Be(new DateTime(2024, 01, 01, 0, 0, 10).AddTicks(0024500));
-                resultsetAll.First().Value.Should().Be(0.248668584157093M);
-                resultsetAll.Last().StartTime.Should().Be(new DateTime(2024, 04, 30, 23, 59, 58).AddTicks(2580834));
-                resultsetAll.Last().Value.Should().Be(0.669364353022242M);
+                resultlistAll.First().StartTime.Should().Be(new DateTime(2024, 01, 01, 0, 0, 10).AddTicks(0024500));
+                resultlistAll.First().Value.Should().Be(0.248668584157093M);
+                resultlistAll.Last().StartTime.Should().Be(new DateTime(2024, 04, 30, 23, 59, 58).AddTicks(2580834));
+                resultlistAll.Last().Value.Should().Be(0.669364353022242M);
             }            
         }
 
