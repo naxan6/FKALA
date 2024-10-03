@@ -8,7 +8,14 @@
         let isProgrammaticScroll = false;
         let userScrolled = false;
 
+        
+
         window.onload = (ev) => {
+
+            var url = document.getElementById('url');
+            var base_url = window.location.origin;
+            url.value = base_url + "/" + "api/StreamQuery";
+
             var sendButton = document.getElementById('send');
             sendButton.addEventListener('click', async () => {
                 var url = document.getElementById('url');
@@ -121,7 +128,7 @@
 </head>
 <body>
     URL: <br />
-    <input id="url" value="http://localhost:5258/api/StreamQuery" size="80"></input><br />
+    <input id="url" value="http://server/api/StreamQuery" size="80"></input><br />
     Query: <br />
     <textarea id="query" name="Text1" cols="80" rows="15" spellcheck="false">Mgmt ListMeasurements</textarea>
     <br />
