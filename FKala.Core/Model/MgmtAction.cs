@@ -11,10 +11,8 @@
         Sort,
         Rename,
         Clean,
-        Merge,
         BenchmarkIo,
         UnBlacklist,
-        Blacklist,
-        MergeAll
+        Blacklist        
     }
 }

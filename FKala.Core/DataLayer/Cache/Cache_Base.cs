@@ -70,7 +70,7 @@ namespace FKala.Core.DataLayer.Cache
             if (rs.Any())
             {
                 var timeFormat = GetTimeFormat();
-                var writerSvc = DataLayer.WriterSvc;
+                var writerSvc = DataLayer.BufferedWriterSvc;
                 writerSvc.CreateWriteDispose(cacheFilePath, append, (writer) =>
                 {
                     foreach (var dp in rs)

@@ -38,7 +38,7 @@ namespace FKala.Unittests
                 variation = randomTime.NextInt64(range);
                 currentFakeTime = currentFakeTime.Add(distMin).AddTicks(variation);
             }
-            TestDataLayer.WriterSvc.ForceFlushWriters();
+            TestDataLayer.BufferedWriterSvc.ForceFlushWriters();
             return this;
         }
         internal void FakeMeasure_OutOfOrder(string measure, DateTime from, DateTime to, TimeSpan fromDistMinus, TimeSpan toDistPlus)
@@ -57,7 +57,7 @@ namespace FKala.Unittests
             Random randomValue = new Random((int)(dateTime.Ticks % int.MaxValue));
             var currentFakeValue = new decimal(randomValue.NextDouble());
             TestDataLayer.Insert($"{measure} {dateTime:yyyy-MM-ddTHH:mm:ss.fffffff} {currentFakeValue.ToString(CultureInfo.InvariantCulture)}");
-            TestDataLayer.WriterSvc.ForceFlushWriters();
+            TestDataLayer.BufferedWriterSvc.ForceFlushWriters();
             return this;
         }
     }

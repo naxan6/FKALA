@@ -67,33 +67,6 @@ namespace FKala.Core.KalaQl
                 context.Result.StreamResult = Rename(sourceMeasurement, targetMeasurement, context);
                 this.hasExecuted = true;
             }
-            else if (MgmtAction == MgmtAction.Clean)
-            {
-                Params = Params.Trim('"');
-                var paramParts = Params.Split(" ");
-                var measurement = paramParts[0];
-                context.Result = new KalaResult();
-                context.Result.StreamResult = CleanupRawFiles(measurement, context);
-                this.hasExecuted = true;
-            }
-            else if (MgmtAction == MgmtAction.Merge)
-            {
-                Params = Params.Trim('"');
-                var paramParts = Params.Split(" ");
-                var measurement = paramParts[0];
-                context.Result = new KalaResult();
-                context.Result.StreamResult = Merge(measurement, context);
-                this.hasExecuted = true;
-            }
-            else if (MgmtAction == MgmtAction.MergeAll)
-            {
-                Params = Params.Trim('"');
-                var paramParts = Params.Split(" ");
-                var measurement = paramParts[0];
-                context.Result = new KalaResult();
-                context.Result.StreamResult = MergeAll(context);
-                this.hasExecuted = true;
-            }
             else if (MgmtAction == MgmtAction.Blacklist)
             {
                 Params = Params.Trim('"');
@@ -148,73 +121,57 @@ namespace FKala.Core.KalaQl
             }
         }
 
-        private async IAsyncEnumerable<Dictionary<string, object?>> Merge(string measurement, KalaQlContext context)
-        {
-            var result = context.DataLayer.MergeRawFilesFromMeasurementToMeasurement(measurement, measurement, context);
-            await foreach (var msg in result)
-            {
-                yield return msg;
-            }
-            context.DataLayer.Flush();
-            var resultClean = context.DataLayer.Cleanup(measurement, context);
-            await foreach (var msg in resultClean)
-            {
-                yield return msg;
-            }
-            var resultSort = context.DataLayer.SortRawFiles(measurement, context);
-            await foreach (var msg in resultSort)
-            {
-                yield return msg;
-            }
-            var resultCleanFinal = context.DataLayer.Cleanup(measurement, context);
-            await foreach (var msg in resultCleanFinal)
-            {
-                yield return msg;
-            }
-            yield break;
-        }
-        private async IAsyncEnumerable<Dictionary<string, object?>>? MergeAll(KalaQlContext context)
-        {
-            var measurements = context.DataLayer.LoadMeasurementList();
-            foreach (var measurement in measurements)
-            {
-                yield return Msg.Get("START", $"Merging {measurement}");
-                var ret = Merge(measurement, context);
-                await foreach (var r in ret)
-                {
-                    yield return r;
-                }
-            }
-        }
-        private async IAsyncEnumerable<Dictionary<string, object?>>? CleanupRawFiles(string measurement, KalaQlContext context)
-        {
-            var result = context.DataLayer.Cleanup(measurement, context);
-            await foreach (var msg in result)
-            {
-                yield return msg;
-            }
-        }
+        //private async IAsyncEnumerable<Dictionary<string, object?>> Merge(string measurement, KalaQlContext context)
+        //{
+        //    var result = context.DataLayer.MergeRawFilesFromMeasurementToMeasurement(measurement, measurement, context);
+        //    await foreach (var msg in result)
+        //    {
+        //        yield return msg;
+        //    }
+        //    context.DataLayer.Flush();
+        //    var resultClean = context.DataLayer.Cleanup(measurement, context);
+        //    await foreach (var msg in resultClean)
+        //    {
+        //        yield return msg;
+        //    }
+        //    var resultSort = context.DataLayer.SortRawFiles(measurement, context);
+        //    await foreach (var msg in resultSort)
+        //    {
+        //        yield return msg;
+        //    }
+        //    var resultCleanFinal = context.DataLayer.Cleanup(measurement, context);
+        //    await foreach (var msg in resultCleanFinal)
+        //    {
+        //        yield return msg;
+        //    }
+        //    yield break;
+        //}
+        //private async IAsyncEnumerable<Dictionary<string, object?>>? MergeAll(KalaQlContext context)
+        //{
+        //    var measurements = context.DataLayer.LoadMeasurementList();
+        //    foreach (var measurement in measurements)
+        //    {
+        //        yield return Msg.Get("START", $"Merging {measurement}");
+        //        var ret = Merge(measurement, context);
+        //        await foreach (var r in ret)
+        //        {
+        //            yield return r;
+        //        }
+        //    }
+        //}
+        //private async IAsyncEnumerable<Dictionary<string, object?>>? CleanupRawFiles(string measurement, KalaQlContext context)
+        //{
+        //    var result = context.DataLayer.Cleanup(measurement, context);
+        //    await foreach (var msg in result)
+        //    {
+        //        yield return msg;
+        //    }
+        //}
 
         private async IAsyncEnumerable<Dictionary<string, object?>>? Copy(string sourceMeasurement, string targetMeasurement, KalaQlContext context)
         {
-            var result = context.DataLayer.MergeRawFilesFromMeasurementToMeasurement(sourceMeasurement, targetMeasurement, context);
+            var result = context.DataLayer.CopyFilesFromMeasurementToMeasurement(sourceMeasurement, targetMeasurement, context);
             await foreach (var msg in result)
-            {
-                yield return msg;
-            }
-            context.DataLayer.Flush();
-            var resultClean = context.DataLayer.Cleanup(targetMeasurement, context);
-            await foreach (var msg in resultClean)
-            {
-                yield return msg;
-            }
-            var resultSort = context.DataLayer.SortRawFiles(targetMeasurement, context);
-            await foreach (var msg in resultSort)
-            {
-                yield return msg;
-            }
-            var resultCleanFinal = context.DataLayer.Cleanup(targetMeasurement, context);
-            await foreach (var msg in resultCleanFinal)
             {
                 yield return msg;
             }
@@ -304,7 +261,7 @@ namespace FKala.Core.KalaQl
                             { "status", $"error" },
                             { "measurement", $"{measurement}" },
                             { "progress", $"({progress}% {count}/{total})" },
-                            { "msg", $"{err}" }
+                            { "error", $"{err}" }
                         };
                         yield return retRow;
                     }
@@ -317,8 +274,7 @@ namespace FKala.Core.KalaQl
                         {
                             { "status", $"Ok" },
                             { "measurement", $"{measurement}" },
-                            { "progress", $"({progress}% {count}/{total})" },
-                            { "msg", $"({progress}% {count}/{total}) All files OK for measurement: {measurement}" }
+                            { "progress", $"({progress}% {count}/{total})" }                            
                         };
                     yield return retRow;
                 }

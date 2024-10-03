@@ -35,8 +35,8 @@ var storagePath = builder.Configuration["DataStorage"] ?? "C:\\fkala";
 var readBuffer = !string.IsNullOrEmpty(builder.Configuration["ReadBuffer"]) ? int.Parse(builder.Configuration["ReadBuffer"]) : 16384;
 var writeBuffer = !string.IsNullOrEmpty(builder.Configuration["WriteBuffer"]) ? int.Parse(builder.Configuration["WriteBuffer"]) : 32768;
 
-
-builder.Services.AddSingleton<IDataLayer>(new DataLayer_Readable_Caching_V1(storagePath, readBuffer, writeBuffer));
+var dl = new DataLayer_Readable_Caching_V1(storagePath, readBuffer, writeBuffer);
+builder.Services.AddSingleton<IDataLayer>(dl);
 
 if (builder.Configuration.GetSection(MqttSettings.ConfigurationSection).Exists())
 {
@@ -68,6 +68,12 @@ app.UseEndpoints(endpoints =>
 });
 #pragma warning restore ASP0014 // Suggest using top level route registrations
 app.UseHttpsRedirection();
+
+IHostApplicationLifetime lifetime = app.Lifetime;
+lifetime.ApplicationStopping.Register(() =>
+{
+    dl.Shutdown();
+});
 
 // Run GC regularly
 Task task = Task.Run(async () =>

@@ -52,7 +52,7 @@ namespace FKala.Core.Migration
                 if (previousPercent + 0.001M < percent)
                 {
                     previousPercent = percent;
-                    var msg = $"Progress {100.0m * percent}% for Import {filePath}";
+                    var msg = $"processing Import {filePath} ...";
                     Console.WriteLine(msg);
 
                     var elapsed = DateTime.Now.Ticks - start.Ticks;

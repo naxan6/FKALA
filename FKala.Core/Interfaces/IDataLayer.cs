@@ -22,9 +22,9 @@ namespace FKala.Core.Interfaces
         List<int> LoadAvailableYears(string measurement);
         List<string> LoadMeasurementList();
         IEnumerable<DataPoint?> LoadNewestDatapoint(string measurement, KalaQl.KalaQlContext context);
-        BufferedWriterService WriterSvc { get; }
+        BufferedWriterService BufferedWriterSvc { get; }
 
-        IAsyncEnumerable<Dictionary<string, object>> MergeRawFilesFromMeasurementToMeasurement(string measurement, string targetmeasurement, KalaQlContext context);
+        IAsyncEnumerable<Dictionary<string, object>> CopyFilesFromMeasurementToMeasurement(string measurement, string targetmeasurement, KalaQlContext context);
         IAsyncEnumerable<Dictionary<string, object>> MoveMeasurement(string measurementOld, string measurementNew, KalaQlContext context);
         IAsyncEnumerable<Dictionary<string, object>> Cleanup(string measurement, KalaQlContext context);
         void Flush();

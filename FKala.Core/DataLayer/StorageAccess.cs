@@ -252,7 +252,7 @@ namespace FKala.Core.DataLayers
             }
             if (this.StreamReaderLookupForMerge != null)
             {
-                DataLayer.WriterSvc.ForceFlushWriters();
+                DataLayer.BufferedWriterSvc.ForceFlushWriters();
                 this.StreamReaderLookupForMerge.AsParallel().ForAll(daySrs => daySrs.ToList().ForEach(sr => sr.StreamReader = new StreamReader(sr.FilePath, Encoding.UTF8, false, fileStreamOptions)));
             }
 
@@ -332,7 +332,8 @@ namespace FKala.Core.DataLayers
 
                 // ###### If out of order by multiple files per day or by only single but unsorted file
                 if (streamreaderDayList.Count() > 1 ||
-                    (streamreaderDayList.Count() == 1 && !streamreaderDayList.First().MarkedAsSorted))
+                    (streamreaderDayList.Count() == 1 && 
+                    (!streamreaderDayList.First().MarkedAsSorted || streamreaderDayList.First().MeasurementFileDiffersToPath())))
                 {
                     string genericFilePath = DataLayer.GetInsertTargetFilepath(measurement, $"{fileyear:00}-{filemonth:00}-{fileday:00}");
                     using (LockManager.AcquireLock(genericFilePath))
@@ -461,7 +462,7 @@ namespace FKala.Core.DataLayers
             {
                 using (this.LockManager.AcquireLock(filePath))
                 {
-                    var writerSvc = DataLayer.WriterSvc;
+                    var writerSvc = DataLayer.BufferedWriterSvc;
                     writerSvc.CreateWriteDispose(filePath + ".sorted", false, (writer) =>
                     {
                         foreach (var dp in rs)
