@@ -1,0 +1,129 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script>
+        var cancelled = false;
+        let isProgrammaticScroll = false;
+        let userScrolled = false;
+
+        window.onload = (ev) => {
+            var sendButton = document.getElementById('send');
+            sendButton.addEventListener('click', async () => {
+                var url = document.getElementById('url');
+
+                var query = document.getElementById('query');
+                console.log("URL: " + url.value);
+                console.log("QUERY: " + query.value);
+                cancelled = false;
+                await streamquery(url.value, query.value);
+            });
+            var clearButton = document.getElementById('clear');
+            clearButton.addEventListener('click', async () => {
+                const outputDiv = document.getElementById('output');
+                outputDiv.innerHTML = "";
+            });
+            var cancelButton = document.getElementById('cancel');
+            cancelButton.addEventListener('click', async () => {
+                cancelled = true;
+            });
+            const scrollableDiv = document.getElementById('output');
+            scrollableDiv.addEventListener('scroll', () => {
+                if (!isProgrammaticScroll) {                    
+                    const isScrolledToBottom = scrollableDiv.scrollHeight - scrollableDiv.clientHeight <= scrollableDiv.scrollTop + 1;
+                    if (isScrolledToBottom) {
+                        userScrolled = false;
+                    } else {
+                        userScrolled = true;
+                    }
+                    console.log("Der Benutzer hat gescrollt.");
+                }
+                // Resetting the flag for programmatic scrolls
+                isProgrammaticScroll = false;
+            });
+
+        }
+
+        function autoScroll() {
+            const outputDiv = document.getElementById('output');
+            if (!userScrolled) {
+                // Scroll to bottom
+                isProgrammaticScroll = true;
+                outputDiv.scrollTop = outputDiv.scrollHeight;
+            }
+        }
+
+        async function streamquery(url, query) {
+            
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'text/plain'
+                },
+                body: query,
+            })
+
+            if (!response.body) {
+                console.error('ReadableStream not supported in this browser.');
+                return;
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            
+            var firstline = true;
+            // Function to read each chunk from the stream
+            async function readStream() {
+                const outputDiv = document.getElementById('output');
+                const { done, value } = await reader.read();
+                if (done) {
+                    console.log('Stream complete');
+                    outputDiv.innerHTML += "<br/>===========================<br/>"
+                    return;
+                }
+
+                // Decode and display the chunk
+                const chunk = decoder.decode(value, { stream: true });
+                if (firstline) {
+                    outputDiv.innerHTML += new Date().toISOString() + " # ";
+                    firstline = false;
+                }
+                outputDiv.innerHTML += chunk.replaceAll("{", "<br>" + new Date().toISOString() + " # " + "{");                
+                autoScroll();
+
+                if (cancelled) {
+                    reader.cancel("user");
+                    outputDiv.innerHTML += "<br/>Cancelled ===========================<br/>"
+                    return;
+                }
+
+                // Continue reading the next chunk
+                readStream();
+            }
+
+            // Start reading from the stream
+            readStream();
+        }
+    </script>
+    <style>
+        .scrollable-div {
+            width: 98%;
+            height: 400px;
+            overflow: auto; /* Enables scrolling */
+            border: 1px solid #ccc;
+            padding: 10px;
+            resize: both;
+        }
+    </style>
+</head>
+<body>
+    URL: <br />
+    <input id="url" value="http://localhost:5258/api/StreamQuery" size="80"></input><br />
+    Query: <br />
+    <textarea id="query" name="Text1" cols="80" rows="15">Mgmt ListMeasurements</textarea>
+    <br />
+    <button id="send">Send</button>&nbsp;&nbsp;<button id="cancel">Cancel</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id="clear">Clear</button>
+    <div id="output" class="scrollable-div"></div>
+</body>
+</html>

@@ -92,10 +92,10 @@ namespace FKala.Api.Controller
                     });
                     throw new Exception(string.Join(", " + result.Errors));
                 }
-                else if (result?.MeasureList != null)
-                {
-                    throw new Exception("MeasureList streaming is not supported. Use Query endpoint.");
-                }
+                //else if (result?.MeasureList != null)
+                //{
+                //    throw new Exception("MeasureList streaming is not supported. Use Query endpoint.");
+                //}
                 else if (result?.ResultSets != null)
                 {
                     throw new Exception("Resultset streaming is not supported. Use Table.");

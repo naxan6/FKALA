@@ -33,6 +33,7 @@ namespace FKala.Core.KalaQl
                 var result = context.DataLayer.LoadMeasurementList();
                 context.Result = new KalaResult();
                 context.Result.MeasureList = result;
+                context.Result.StreamResult = result.Select(e => Msg.Get("name", e)).AsAsyncEnumerable();
                 this.hasExecuted = true;
             }
             else if (MgmtAction == MgmtAction.SortAllRaw)

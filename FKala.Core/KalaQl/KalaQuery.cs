@@ -189,7 +189,7 @@ namespace FKala.Core.KalaQl
 
         private MgmtAction ParseMgmtAction(string v)
         {
-            if (v.ToUpper() == "LOADMEASURES")
+            if (v.ToUpper() == "LOADMEASURES" || v.ToUpper() == "LISTMEASUREMENTS")
             {
                 return MgmtAction.LoadMeasures;
             }
