@@ -264,11 +264,11 @@ namespace FKala.Core
                 var newest = this.LoadNewestDatapoint(measurement, context).FirstOrDefault();
                 if (newest != null)
                 {
-                    this.LatestEntries[measurement] = newest.StartTime.ToString("yyyy.MM.ddTHH:mm:ss.fffffff");
+                    this.LatestEntries[measurement] = newest.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
                 }
                 else
                 {
-                    this.LatestEntries[measurement] = DateTime.MinValue.ToString("yyyy.MM.ddTHH:mm:ss.fffffff");
+                    this.LatestEntries[measurement] = DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
                 }
             }
 

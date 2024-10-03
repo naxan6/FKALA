@@ -4,6 +4,7 @@ using FKala.Core.KalaQl;
 using FKala.Core.KalaQl.Windowing;
 using FKala.Core.Logic;
 using FKala.Core.Model;
+using System.Collections.Concurrent;
 
 namespace FKala.Core.DataLayer.Cache
 {
@@ -176,7 +177,7 @@ namespace FKala.Core.DataLayer.Cache
             }
         }
 
-        Dictionary<string, bool> invalidateFlagFiles = new Dictionary<string, bool>();
+        ConcurrentDictionary<string, bool> invalidateFlagFiles = new ConcurrentDictionary<string, bool>();
 
         private string GetInvalidateCacheFlagFile(string measurement, DateOnly day)
         {
