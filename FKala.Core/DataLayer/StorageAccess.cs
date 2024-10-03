@@ -459,33 +459,35 @@ namespace FKala.Core.DataLayers
             }
             if (rs.Any())
             {
-                var writerSvc = DataLayer.WriterSvc;
-                writerSvc.CreateWriteDispose(filePath + ".sorted", false, (writer) =>
+                using (this.LockManager.AcquireLock(filePath))
                 {
-                    foreach (var dp in rs)
+                    var writerSvc = DataLayer.WriterSvc;
+                    writerSvc.CreateWriteDispose(filePath + ".sorted", false, (writer) =>
                     {
-                        if (dp.Value != null)
+                        foreach (var dp in rs)
                         {
-                            writer.Append(dp.StartTime.ToString(TimeFormat));
-                            writer.Append(" ");
-                            writer.Append(dp.Value.Value.ToString(CultureInfo.InvariantCulture));
-                            writer.AppendNewline();
-                        };
+                            if (dp.Value != null)
+                            {
+                                writer.Append(dp.StartTime.ToString(TimeFormat));
+                                writer.Append(" ");
+                                writer.Append(dp.Value.Value.ToString(CultureInfo.InvariantCulture));
+                                writer.AppendNewline();
+                            };
+                        }
+                    });
+                    var bakFile = filePath + $".bak_{DateTime.Now.ToString("yyyyMMddHHmmssfff")}";
+                    if (File.Exists(filePath))
+                    {
+                        File.Move(filePath, bakFile);
+                        File.Move(filePath + ".sorted", filePath);
+                        File.Delete(bakFile);
                     }
-                });
-                var bakFile = filePath + $".bak_{DateTime.Now.ToString("yyyyMMddHHmmssfff")}";
-                if (File.Exists(filePath))
-                {
-                    File.Move(filePath, bakFile);
-                    File.Move(filePath + ".sorted", filePath);
-                    File.Delete(bakFile);
-                }   
-                else
-                {
-                    File.Move(filePath + ".sorted", filePath);
+                    else
+                    {
+                        File.Move(filePath + ".sorted", filePath);
+                    }
+                    Console.WriteLine($"Sorted rewrite of file {filePath}");
                 }
-                
-                Console.WriteLine($"Sorted rewrite of file {filePath}");
             }
         }
 
