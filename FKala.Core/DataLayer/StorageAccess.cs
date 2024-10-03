@@ -329,7 +329,7 @@ namespace FKala.Core.DataLayers
 
                 // ###### If out of order by multiple files per day or by only single but unsorted file
                 if (streamreaderDayList.Count() > 1 ||
-                    (streamreaderDayList.Count() == 0 && !streamreaderDayList.First().MarkedAsSorted))
+                    (streamreaderDayList.Count() == 1 && !streamreaderDayList.First().MarkedAsSorted))
                 {
                     var allDpsInAllFilesForThisDay = streamreaderDayList.SelectMany(srTuple => InternalStreamDataPoints(srTuple, fileyear, filemonth, fileday, false));
 
@@ -464,9 +464,17 @@ namespace FKala.Core.DataLayers
                     }
                 });
                 var bakFile = filePath + $".bak_{DateTime.Now.ToString("yyyyMMddHHmmssfff")}";
-                File.Move(filePath, bakFile);
-                File.Move(filePath + ".sorted", filePath);
-                File.Delete(bakFile);
+                if (File.Exists(filePath))
+                {
+                    File.Move(filePath, bakFile);
+                    File.Move(filePath + ".sorted", filePath);
+                    File.Delete(bakFile);
+                }   
+                else
+                {
+                    File.Move(filePath + ".sorted", filePath);
+                }
+                
                 Console.WriteLine($"Sorted rewrite of file {filePath}");
             }
         }

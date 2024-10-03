@@ -8,11 +8,13 @@ namespace FKala.Core.KalaQl
     {
         public List<string> NamesToPublish { get; private set; }
         public PublishMode PublishMode { get; }
+        public int Limit { get; private set; }
 
         public Op_Publish(string? line, List<string> namesToPublish, PublishMode mode) : base(line)
         {
             this.NamesToPublish = namesToPublish;
             this.PublishMode = mode;
+            this.Limit = 250000;
         }
 
         public override bool CanExecute(KalaQlContext context)
@@ -36,7 +38,7 @@ namespace FKala.Core.KalaQl
             int count = 0;
             await foreach (var syncedResult in synced.AsAsyncEnumerable())
             {
-                if (count++ >= 50000) // limit result to 50000 datapoints
+                if (count++ >= Limit) // limit result to 50000 datapoints
                 {
                     break;
                 };
@@ -108,7 +110,7 @@ namespace FKala.Core.KalaQl
                 int count = 0;
                 foreach (var syncedResult in synced)
                 {
-                    if (count++ >= 50000) // limit result to 50000 datapoints
+                    if (count++ >= Limit) // limit result to 50000 datapoints
                     {
                         break;
                     };
