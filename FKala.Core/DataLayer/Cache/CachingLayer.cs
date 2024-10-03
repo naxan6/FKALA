@@ -170,10 +170,13 @@ namespace FKala.Core.DataLayer.Cache
         internal void Mark2Invalidate(string measurement, DateOnly year)
         {
             var flagfile = GetInvalidateCacheFlagFile(measurement, year);
-            if (!invalidateFlagFiles.ContainsKey(flagfile))
+            using (_lockManager.AcquireLock(flagfile))
             {
-                using (var fs = File.Create(flagfile)) { };
-                invalidateFlagFiles[flagfile] = true;
+                if (!invalidateFlagFiles.ContainsKey(flagfile))
+                {
+                    using (var fs = File.Create(flagfile)) { };
+                    invalidateFlagFiles[flagfile] = true;
+                }
             }
         }
 
@@ -205,14 +208,17 @@ namespace FKala.Core.DataLayer.Cache
         internal void Invalidate(string measurement, DateOnly year)
         {
             var flagfile = GetInvalidateCacheFlagFile(measurement, year);
-            if (File.Exists(flagfile))
+            using (_lockManager.AcquireLock(flagfile))
             {
-                new Cache_Hourly(DataLayer).Invalidate(measurement, year);
-                new Cache_15Minutely(DataLayer).Invalidate(measurement, year);
-                new Cache_5Minutely(DataLayer).Invalidate(measurement, year);
-                new Cache_Minutely(DataLayer).Invalidate(measurement, year);
-                File.Delete(flagfile);
-                invalidateFlagFiles.Remove(flagfile, out bool trash);
+                if (File.Exists(flagfile))
+                {
+                    new Cache_Hourly(DataLayer).Invalidate(measurement, year);
+                    new Cache_15Minutely(DataLayer).Invalidate(measurement, year);
+                    new Cache_5Minutely(DataLayer).Invalidate(measurement, year);
+                    new Cache_Minutely(DataLayer).Invalidate(measurement, year);
+                    File.Delete(flagfile);
+                    invalidateFlagFiles.Remove(flagfile, out bool trash);
+                }
             }
         }
     }
