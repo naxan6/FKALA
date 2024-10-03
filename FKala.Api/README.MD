@@ -195,6 +195,17 @@ Can be used to calculate with and combine datasets.
 ##### Examples
 - ```Expr StromVerbrauch_KWH: "(StromVerbrauch_WH.Value) / 1000"``` - divide the value of StromVerbrauch_WH by 1000 an create a new dataset named StromVerbrauch_KWH by the result.
 - ```Expr PVSumInWatt: "(PV1_Windowed.Value + PV2_Windowed.Value) * 1000"``` - add PV1 and PV2 together and multiply to get W instead of kW, name the result PVSumInWatt.
+- ```# skipping requires casting the value to (object) and skips the datapoint, null on the other hand results in a datapoint with value null.
+  Var $FROM 2024-08-01T00:00:00Z
+  Var $TO 2024-08-02T00:00:00Z
+  Load rPV1A: Sofar/measure/PVInput1/0x585_Current_PV1[A] $FROM $TO NoCache
+  Load rPV2A: Sofar/measure/PVInput1/0x588_Current_PV2[A] $FROM $TO NoCache
+  Expr Filtered1: "rPV1A.Value < 4 ? (object)rPV1A.Value : skip"
+  Expr Filtered2: "rPV2A.Value < 4 ? rPV2A.Value : null"
+  #Insert Ins1: Filtered1 Sofar/measure/PVInput1/0x585_Current_PV1[A]CLEANED
+  #Insert Ins2: Filtered2 Sofar/measure/PVInput1/0x588_Current_PV2[A]CLEANED
+  Publ "Filtered1,Filtered2" Table
+  ```
 
 ### Publ
 Can be used to "publish" generated temporary datasets to the result.  This is what you get.

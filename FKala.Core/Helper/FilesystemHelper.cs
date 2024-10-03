@@ -30,7 +30,15 @@ public class FileSystemHelper {
         foreach (FileInfo file in files)
         {
             string temppath = Path.Combine(destDirName, file.Name);
-            file.CopyTo(temppath, true);
+            try
+            {
+                file.CopyTo(temppath, false);
+            } 
+            catch (IOException iex)
+            {
+                string iextemppath = Path.Combine(destDirName, $"{DateTime.Now.ToString("s")}_COPY_" + file.Name);
+                file.CopyTo(iextemppath, false);
+            }
         }
 
         if (copySubDirs)

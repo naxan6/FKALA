@@ -146,6 +146,8 @@ namespace FKala.Core.KalaQl
                     return new Op_Aggregate(line, fields[1].Trim(':'), fields[2], ParseWindow(fields[3]), ParseAggregate(fields[4]), ParseEmptyWindows(fields.Count > 5 ? fields[5] : ""));
                 case "Inpo":
                     return new Op_Interpolate(line, fields[1].Trim(':'), fields[2], ParseInterpolationMode(fields[3]), ParseDecimalNullable(fields[4]));
+                case "Insert":
+                    return new Op_Insert(line, fields[1].Trim(':'), fields[2], fields[3]);
                 case "Expr":
                     return new Op_Expresso(line, fields[1].Trim(':'), fields[2]);
                 case "Publ":

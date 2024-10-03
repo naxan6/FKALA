@@ -16,9 +16,9 @@ namespace FKala.Core.Interfaces
     {
         string DataDirectory { get; }
         CachingLayer CachingLayer { get; }
-        IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool NewestOnly, KalaQl.KalaQlContext context, bool dontInvalidateCache_ForUseWhileCacheRebuild);
-        void Insert(string kalaLinedata);
-        void Insert(string kalaLinedata, string? source);
+        IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool NewestOnly, KalaQl.KalaQlContext context, bool dontInvalidateCache_ForUseWhileCacheRebuild);        
+        void Insert(string measurement, DataPoint dataPoint, string? source = null);
+        void Insert(string kalaLinedata, string? source = null);
         List<int> LoadAvailableYears(string measurement);
         List<string> LoadMeasurementList();
         IEnumerable<DataPoint?> LoadNewestDatapoint(string measurement, KalaQl.KalaQlContext context);

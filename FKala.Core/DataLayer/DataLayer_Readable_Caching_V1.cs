@@ -208,9 +208,10 @@ namespace FKala.Core
             yield return new Dictionary<string, object>() { { "msg", $"renamed {measurementPathOld} to {measurementPathNew} (backup in {measurementPathNewBak}" } };
         }
 
-        public void Insert(string rawData)
+
+        public void Insert(string measurement, DataPoint dataPoint, string? source = "input")
         {
-            Insert(rawData, "input");
+            Insert(dataPoint.AsLineData(measurement), source);
         }
 
         /// <summary>
@@ -219,7 +220,7 @@ namespace FKala.Core
         /// </summary>
         /// <param name="rawData"></param>
         /// <param name="locking"></param>
-        public void Insert(string rawData, string source)
+        public void Insert(string rawData, string source = "input")
         {
             if (ShuttingDown)
             {
@@ -459,5 +460,6 @@ namespace FKala.Core
             this.ShuttingDown = true;
             this.Dispose();
         }
+
     }
 }

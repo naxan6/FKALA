@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -49,6 +50,11 @@ namespace FKala.Core.Model
         public int GetHashCode([DisallowNull] DataPoint obj)
         {
             return $"{obj.StartTime.Ticks} # {obj.Value} # {obj.ValueText} #".GetHashCode();
+        }
+
+        public string AsLineData(string measurement)
+        {
+            return $"{measurement} {StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {Value?.ToString() ?? ValueText}";
         }
     }
 }

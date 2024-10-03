@@ -7,6 +7,7 @@ using FKala.Core.Logic;
 using FKala.Core.Model;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace FKala.Core.KalaQl
 {
@@ -25,7 +26,7 @@ namespace FKala.Core.KalaQl
 
             Interpreter = new Interpreter();
             Interpreter.SetDefaultNumberType(DefaultNumberType.Decimal);
-
+            Interpreter.SetVariable("skip", new Skip());
             UnknownIdInfo = Interpreter.DetectIdentifiers(Expresso);
             var parameters = UnknownIdInfo.UnknownIdentifiers
                 .Order()
@@ -33,6 +34,8 @@ namespace FKala.Core.KalaQl
 
             Lambda = Interpreter.Parse(Expresso, parameters.ToArray());
         }
+
+        public class Skip { }
 
         public override bool CanExecute(KalaQlContext context)
         {
@@ -72,7 +75,6 @@ namespace FKala.Core.KalaQl
                 {
                     firstStartTime = timeSynchronizedItems.First().DataPoint.StartTime;
                 }
-
                 var missingIdentifiers = UnknownIdInfo.UnknownIdentifiers.ToList();
                 var paramValues = new List<Parameter>();
                 foreach (var si in timeSynchronizedItems)
@@ -88,13 +90,20 @@ namespace FKala.Core.KalaQl
                     paramValues.Add(new Parameter(mi, ldp));
                 }
 
-                decimal? expressoResultValue = (decimal?)Lambda.Invoke(paramValues);
-
-                var currentDataPoint = Pools.DataPoint.Get();
-                currentDataPoint.StartTime = timeSynchronizedItems.Key.Item1;
-                currentDataPoint.EndTime = timeSynchronizedItems.Key.Item2;
-                currentDataPoint.Value = expressoResultValue;
-                yield return currentDataPoint;
+                object? result = Lambda.Invoke(paramValues);
+                if (result is Skip)
+                {
+                    continue;
+                }
+                else
+                {
+                    decimal? expressoResultValue = (decimal?)result;
+                    var currentDataPoint = Pools.DataPoint.Get();
+                    currentDataPoint.StartTime = timeSynchronizedItems.Key.Item1;
+                    currentDataPoint.EndTime = timeSynchronizedItems.Key.Item2;
+                    currentDataPoint.Value = expressoResultValue;
+                    yield return currentDataPoint;
+                }
             }
         }
     }

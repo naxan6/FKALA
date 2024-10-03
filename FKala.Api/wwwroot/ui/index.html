@@ -71,7 +71,9 @@
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder('utf-8');
-            
+            function datePrefix() {
+                return "<span style='color:grey;'>"+new Date().toISOString() + " # </span>";
+            }
             var firstline = true;
             // Function to read each chunk from the stream
             async function readStream() {
@@ -79,22 +81,22 @@
                 const { done, value } = await reader.read();
                 if (done) {
                     console.log('Stream complete');
-                    outputDiv.innerHTML += "<br/>===========================<br/>"
+                    outputDiv.innerHTML += "<br/>" + datePrefix() + "Stream Complete ===========================<br/>"
                     return;
                 }
 
                 // Decode and display the chunk
                 const chunk = decoder.decode(value, { stream: true });
                 if (firstline) {
-                    outputDiv.innerHTML += new Date().toISOString() + " # ";
+                    outputDiv.innerHTML += "<br/>" + datePrefix() + "Stream Start ===========================<br/>"
                     firstline = false;
                 }
-                outputDiv.innerHTML += chunk.replaceAll("{", "<br>" + new Date().toISOString() + " # " + "{");                
+                outputDiv.innerHTML += chunk.replaceAll("{", "<br>" + datePrefix() + "{");                
                 autoScroll();
 
                 if (cancelled) {
                     reader.cancel("user");
-                    outputDiv.innerHTML += "<br/>Cancelled ===========================<br/>"
+                    outputDiv.innerHTML += "<br/>" + datePrefix() + "Stream Cancelled ===========================<br/>"
                     return;
                 }
 
@@ -121,7 +123,7 @@
     URL: <br />
     <input id="url" value="http://localhost:5258/api/StreamQuery" size="80"></input><br />
     Query: <br />
-    <textarea id="query" name="Text1" cols="80" rows="15">Mgmt ListMeasurements</textarea>
+    <textarea id="query" name="Text1" cols="80" rows="15" spellcheck="false">Mgmt ListMeasurements</textarea>
     <br />
     <button id="send">Send</button>&nbsp;&nbsp;<button id="cancel">Cancel</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id="clear">Clear</button>
     <div id="output" class="scrollable-div"></div>
