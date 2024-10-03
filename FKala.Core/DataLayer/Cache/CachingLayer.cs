@@ -212,7 +212,7 @@ namespace FKala.Core.DataLayer.Cache
                 new Cache_5Minutely(DataLayer).Invalidate(measurement, year);
                 new Cache_Minutely(DataLayer).Invalidate(measurement, year);
                 File.Delete(flagfile);
-                invalidateFlagFiles.Remove(flagfile);
+                invalidateFlagFiles.Remove(flagfile, out bool trash);
             }
         }
     }
