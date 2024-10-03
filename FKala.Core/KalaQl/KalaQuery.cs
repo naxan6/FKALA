@@ -63,9 +63,7 @@ namespace FKala.Core.KalaQl
                         break;
                     }
                 }
-            }
-            context.Result.Errors.InsertRange(0, context.Warnings);
-            context.Result.Errors.InsertRange(0, context.Errors);
+            }            
             return context.Result;
         }
 

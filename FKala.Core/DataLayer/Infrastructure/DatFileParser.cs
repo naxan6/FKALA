@@ -46,12 +46,12 @@ namespace FKala.Core.DataLayer.Infrastructure
 
                 return dp;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 string msg = $"Error while parsing line {lineIdx} # {line} # in {filepath}";
                 context.AddError(msg);
                 
-                throw;
+                throw new Exception(msg);
             }
         }
     }
