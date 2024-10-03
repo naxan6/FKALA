@@ -47,6 +47,8 @@ namespace FKala.Core.DataLayers
         private IDataLayer? DataLayer;
         private TimeOnly AtMidnight = new TimeOnly(0, 0, 0);
 
+        private LockManager LockManager;
+
         private StorageAccess(IDataLayer dataLayer)
         {
             this.DataLayer = dataLayer;
@@ -54,6 +56,7 @@ namespace FKala.Core.DataLayers
             optionFindFilesRecursive.BufferSize = dataLayer.ReadBuffer;
             ReadBuffer = dataLayer.ReadBuffer;
             WriteBuffer = dataLayer.WriteBuffer;
+            LockManager = new LockManager();
         }
 
         public static StorageAccess ForReadMultiFile(string measurementPath, string measurementPathPart, DateTime startTime, DateTime endTime, KalaQl.KalaQlContext context)
@@ -331,35 +334,42 @@ namespace FKala.Core.DataLayers
                 if (streamreaderDayList.Count() > 1 ||
                     (streamreaderDayList.Count() == 1 && !streamreaderDayList.First().MarkedAsSorted))
                 {
-                    var allDpsInAllFilesForThisDay = streamreaderDayList.SelectMany(srTuple => InternalStreamDataPoints(srTuple, fileyear, filemonth, fileday, false));
-
-                    Dictionary<DateTime, DataPoint> ret = new Dictionary<DateTime, DataPoint>();
-                    // DEDUPLICATE, LAST WINS (has to be sorted in insertion order until here)
-                    foreach (var dp in allDpsInAllFilesForThisDay)
+                    string genericFilePath = DataLayer.GetInsertTargetFilepath(measurement, $"{fileyear:00}-{filemonth:00}-{fileday:00}");
+                    using (LockManager.AcquireLock(genericFilePath))
                     {
-                        ret[dp.StartTime] = dp;
-                    }
+                        var allDpsInAllFilesForThisDay = streamreaderDayList.SelectMany(srTuple => InternalStreamDataPoints(srTuple, fileyear, filemonth, fileday, false));
 
-                    var ordered = ret.OrderBy(k => k.Key).Select(v => v.Value).ToList();
-                    string filePath = DataLayer.GetInsertTargetFilepath(measurement, $"{fileyear:00}-{filemonth:00}-{fileday:00}");
-                    filePath = SetSortMark(filePath, true);                    
-                    WriteSortedFile(filePath, ordered);
-                    foreach (var oldFile in streamreaderDayList.Select(sr => sr.FilePath))
-                    {
-                        if (oldFile != filePath)
+                        Dictionary<DateTime, DataPoint> ret = new Dictionary<DateTime, DataPoint>();
+                        // DEDUPLICATE, LAST WINS (has to be sorted in insertion order until here)
+                        foreach (var dp in allDpsInAllFilesForThisDay)
                         {
-                            File.Delete(oldFile);
+                            ret[dp.StartTime] = dp;
+                        }
+
+                        var ordered = ret.OrderBy(k => k.Key).Select(v => v.Value).ToList();
+
+                        var filePath = SetSortMark(genericFilePath, true);
+
+
+                        WriteSortedFile(filePath, ordered);
+                        foreach (var oldFile in streamreaderDayList.Select(sr => sr.FilePath))
+                        {
+                            if (oldFile != filePath)
+                            {
+                                File.Delete(oldFile);
+                            }
+                        }
+
+                        if (!dontInvalidateCache_ForUseWhileCacheRebuild)
+                        {
+                            DataLayer.CachingLayer.Invalidate(measurement, streamreaderDayList.Key);
+                        }
+
+                        foreach (var dp in ordered)
+                        {
+                            yield return dp;
                         }
                     }
-                    if (!dontInvalidateCache_ForUseWhileCacheRebuild)
-                    {
-                        DataLayer.CachingLayer.Invalidate(measurement, streamreaderDayList.Key);
-                    }
-                    foreach (var dp in ordered)
-                    {
-                        yield return dp;
-                    }
-
                 }
                 // ###### If in order
                 else
