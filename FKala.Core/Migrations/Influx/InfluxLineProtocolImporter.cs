@@ -17,6 +17,9 @@ namespace FKala.Core.Migration
         private static CultureInfo ci = CultureInfo.InvariantCulture;
 
         private readonly IDataLayer _dataLayer;
+        private DateTime _start;
+        private DateTime _end;
+
         // Regex to match the InfluxDB Line Protocol with optional tags and required fields and timestamp
         private static readonly Regex LineProtocolRegex = new Regex(@"^(?<measurement>[^,]+)(?:,(?<tags>[^ ]+))? (?<fields>[^ ]+) (?<timestamp>\d+)$", RegexOptions.Compiled);
 
@@ -27,9 +30,27 @@ namespace FKala.Core.Migration
         StringBuilder sb = new StringBuilder();
 
 #pragma warning disable CS1998 // Bei der asynchronen Methode fehlen "await"-Operatoren. Die Methode wird synchron ausgeführt.
-        public async IAsyncEnumerable<Dictionary<string, object?>> Import(string filePath)
+        public async IAsyncEnumerable<Dictionary<string, object?>> Import(string stringParams)
 #pragma warning restore CS1998 // Bei der asynchronen Methode fehlen "await"-Operatoren. Die Methode wird synchron ausgeführt.
         {
+            var parts = stringParams.Split(";");
+            string filePath = "";
+            if (parts.Count() == 1)
+            {
+                this._start = DateTime.MinValue;
+                this._end = DateTime.MaxValue;
+                filePath = parts[0];
+            } 
+            else if (parts.Count() == 3)
+            {
+                this._start = DateTime.Parse(parts[0]);
+                this._end = DateTime.Parse(parts[1]);
+                filePath = parts[2];
+            }
+            else
+            {
+                throw new Exception("wrong parameter count. only <path> or <from> <until> <path>!");
+            }
             StreamReader sr = new StreamReader(filePath, Encoding.UTF8, false, new FileStreamOptions() { BufferSize = 262144, Access = FileAccess.Read, Mode = FileMode.Open, Share = FileShare.Read });
             var gesamt = sr.BaseStream.Length;
             string? line;
@@ -80,6 +101,11 @@ namespace FKala.Core.Migration
             var tags = ilp.tags;
             var fields = ilp.fields;
             var time = ilp.time;
+
+            if (!(time >= _start && time < _end))
+            {
+                return;
+            }
 
             foreach (var field in fields)
             {
