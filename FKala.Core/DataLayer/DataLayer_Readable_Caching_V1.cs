@@ -63,6 +63,7 @@ namespace FKala.Core
 
         public IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly, KalaQlContext context, bool dontInvalidateCache_ForUseWhileCacheRebuild)
         {
+            measurement = PathSanitizer.SanitizePath(measurement);
             if (newestOnly)
             {
                 return this.LoadNewestDatapoint(measurement, context);
