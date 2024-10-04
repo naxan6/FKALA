@@ -90,7 +90,7 @@ namespace FKala.Api.Controller
                         ModelState.AddModelError($"Error {i}", e);
                         Logger.LogError($"Error {i}: " + e);
                     });
-                    throw new Exception(string.Join(", " + result.Errors));
+                    throw new Exception(string.Join(", ", result.Errors));
                 }
                 //else if (result?.MeasureList != null)
                 //{
