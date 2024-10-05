@@ -21,6 +21,7 @@ namespace FKala.Core
 {
     public class DataLayer_Readable_Caching_V1 : IDataLayer, IDisposable
     {
+        private readonly int FilenameDatePatternLength = "yyyy.MM.dd.dat".Length;
         public int ReadBuffer { get; } = 131072;
         public int WriteBuffer { get; } = 131072;
 
@@ -105,7 +106,7 @@ namespace FKala.Core
                 {
                     var month = int.Parse(Path.GetFileName(monthDir));
 
-                    foreach (var file in Directory.GetFiles(monthDir, $"{measurementSubPath}*.dat").OrderDescending())
+                    foreach (var file in Directory.GetFiles(monthDir, $"{measurementSubPath}*.dat").OrderByDescending(fn => fn.Substring(fn.Length - FilenameDatePatternLength)))
                     {
                         var lastLine = LastLineReader.ReadLastLine(file);
                         if (string.IsNullOrEmpty(lastLine))
