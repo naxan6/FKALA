@@ -55,7 +55,7 @@ namespace FKala.Core.KalaQl
                     if (notExecuted.Any())
                     {
                         context.Result = new KalaResult();
-                        context.Result.Errors.Add("KalaQuery could not execute : " + string.Join(", ", notExecuted.Select(x => x.ToString())));
+                        context.Result.Errors.Add("KalaQuery missing inputs for: " + string.Join(", ", notExecuted.Select(x => x.ToString())));
                         return context.Result;
                     }
                     else

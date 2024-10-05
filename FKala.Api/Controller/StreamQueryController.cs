@@ -61,6 +61,7 @@ namespace FKala.Api.Controller
             DateTime previous = DateTime.Now;
             await foreach (var retRowDict in DoQuery(inputmultiline))
             {
+                // hack for streaming all 250ms too see progress with sparse data and long runtimes (additionally to "if buffer is full" as in standard asp.net core)
                 if (previous.AddMilliseconds(250) < DateTime.Now)
                 {
                     previous = DateTime.Now;
@@ -90,7 +91,7 @@ namespace FKala.Api.Controller
                         ModelState.AddModelError($"Error {i}", e);
                         Logger.LogError($"Error {i}: " + e);
                     });
-                    throw new Exception(string.Join(", ", result.Errors));
+                    throw new Exception(string.Join(", " , result.Errors));
                 }
                 //else if (result?.MeasureList != null)
                 //{
@@ -112,6 +113,7 @@ namespace FKala.Api.Controller
             }
             catch (Exception ex)
             {
+                throw;
                 Logger.LogError(ex, "Exception");
                 List<string> exres = new List<string>();
                 exres.Add("ex: " + ex.Message);

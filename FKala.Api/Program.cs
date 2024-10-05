@@ -51,6 +51,29 @@ builder.Services.AddCors(o => o.AddPolicy("AllowAll", builder =>
 }));
 
 
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        // To preserve the default behaviour, capture the original delegate to call later.
+        var builtInFactory = options.InvalidModelStateResponseFactory;
+
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var logger = context.HttpContext.RequestServices
+                                .GetRequiredService<ILogger<Program>>();
+
+            // Perform logging here.
+            // ...
+
+            // Invoke the default behaviour, which produces a ValidationProblemDetails
+            // response.
+            // To produce a custom response, return a different implementation of 
+            // IActionResult instead.
+            return builtInFactory(context);
+        };
+    });
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -68,7 +91,7 @@ app.UseEndpoints(endpoints =>
     endpoints.MapControllers();
 });
 #pragma warning restore ASP0014 // Suggest using top level route registrations
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 IHostApplicationLifetime lifetime = app.Lifetime;
 lifetime.ApplicationStopping.Register(() =>
