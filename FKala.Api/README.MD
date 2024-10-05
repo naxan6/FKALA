@@ -292,6 +292,6 @@ Marks or Sorts-and-marks all raw files as sorted (only file newer than 2 days wi
 
 ### Grafana-Datasource-Plugin
 * extract "kala-kala-datasource" in 7z to plugins folder auf grafana
-* use at least grafana 12 (11 does not work!)
+* use at least grafana 11 (10 does not work!)
 * edit "grafana.ini", add:  allow_loading_unsigned_plugins = kala-kala-datasource
 * restart Grafana
