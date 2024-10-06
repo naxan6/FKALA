@@ -149,7 +149,7 @@ namespace FKala.Core.KalaQl
                 case "Insert":
                     return new Op_Insert(line, fields[1].Trim(':'), fields[2], fields[3]);
                 case "Expr":
-                    return new Op_Expresso(line, fields[1].Trim(':'), fields[2]);
+                    return new Op_Expresso(line, fields[1].Trim(':'), fields[2].Replace('\'', '"'));
                 case "Publ":
                     return new Op_Publish(line, fields[1].Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(), ParsePublishMode(fields[2]));
                 case "Mgmt":

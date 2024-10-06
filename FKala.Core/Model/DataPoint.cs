@@ -56,5 +56,16 @@ namespace FKala.Core.Model
         {
             return $"{measurement} {StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {Value?.ToString() ?? ValueText}";
         }
+
+        public DataPoint Clone()
+        {
+            var ret = Pools.DataPoint.Get();
+            ret.StartTime = new DateTime(StartTime.Ticks);
+            ret.EndTime = new DateTime(EndTime.Ticks);
+            ret.Value = Value;
+            ret.ValueText = ValueText;
+            ret.Source = Source;
+            return ret;
+        }
     }
 }

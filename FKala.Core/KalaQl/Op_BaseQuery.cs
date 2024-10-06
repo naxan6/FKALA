@@ -37,12 +37,8 @@ namespace FKala.Core.KalaQl
 
         public override void Execute(KalaQlContext context)
         {
-            //var result = context.DataLayer.LoadData(this.Measurement, this.StartTime, this.EndTime, CacheResolution, NewestOnly, DoSortRawFiles);
+            var result = context.DataLayer.LoadData(this.Measurement, this.StartTime, this.EndTime, CacheResolution, NewestOnly, context, DontInvalidateCache_ForUseWhileCacheRebuild).ToList();
 
-//TODODODODODODDODODO REBUILD IST SOMIT DEFEKT            
-            // bei ForceRebuild auch ohne Ausgabe etc. den Rebuild durchführen, ..was erst geschieht beim Materialisieren                        
-            //if (CacheResolution.ForceRebuild) result = result.ToList();
-            
             context.IntermediateDatasources.Add(
                 new ResultPromise()
                 {
@@ -52,11 +48,24 @@ namespace FKala.Core.KalaQl
                     Creator = this,
                     ResultsetFactory = () =>
                     {
-                        var result = context.DataLayer.LoadData(this.Measurement, this.StartTime, this.EndTime, CacheResolution, NewestOnly, context, DontInvalidateCache_ForUseWhileCacheRebuild);
-                        return result;
+                        // source file streaming
+                        //var result = context.DataLayer.LoadData(this.Measurement, this.StartTime, this.EndTime, CacheResolution, NewestOnly, context, DontInvalidateCache_ForUseWhileCacheRebuild);
+                        //return result;
+
+                        //in-mem copy
+                        return Clone(result);
                     }
                 });
             this.hasExecuted = true;
+        }
+
+
+        private IEnumerable<DataPoint> Clone(IEnumerable<DataPoint> input)
+        {
+            foreach(var dp in input)
+            {
+                yield return dp.Clone();
+            }
         }
     }
 }

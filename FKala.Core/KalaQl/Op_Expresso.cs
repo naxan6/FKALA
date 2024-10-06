@@ -8,6 +8,7 @@ using FKala.Core.Model;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.Intrinsics.Arm;
 
 namespace FKala.Core.KalaQl
 {
@@ -30,7 +31,17 @@ namespace FKala.Core.KalaQl
             UnknownIdInfo = Interpreter.DetectIdentifiers(Expresso);
             var parameters = UnknownIdInfo.UnknownIdentifiers
                 .Order()
-                .Select(identifier => new Parameter(identifier, typeof(DataPoint)));
+                .Select(identifier => {
+                    if (identifier == "previousInput")
+                    {
+                        return new Parameter(identifier, typeof(Dictionary<string, DataPoint>));
+                    } 
+                    else
+                    {
+                        return new Parameter(identifier, typeof(DataPoint));
+                    }
+                    
+                });
 
             Lambda = Interpreter.Parse(Expresso, parameters.ToArray());
         }
@@ -40,7 +51,10 @@ namespace FKala.Core.KalaQl
         public override bool CanExecute(KalaQlContext context)
         {
             var IdInfo = Interpreter.DetectIdentifiers(Expresso);
-            return IdInfo.UnknownIdentifiers.All(id => context.IntermediateDatasources.Any(res => res.Name == id));
+            var missingIdentifiers = IdInfo.UnknownIdentifiers.ToList();
+            missingIdentifiers.Remove("previousInput");
+            missingIdentifiers.Remove("previousOutput");
+            return missingIdentifiers.All(id => context.IntermediateDatasources.Any(res => res.Name == id));
         }
 
         public override void Execute(KalaQlContext context)
@@ -64,19 +78,34 @@ namespace FKala.Core.KalaQl
             this.hasExecuted = true;
 
         }
-        DateTime firstStartTime;
+        
         public IEnumerable<DataPoint> ExecuteInternal(KalaQlContext context, IEnumerable<ResultPromise> datenquellen)
         {
+            Dictionary<string, DataPoint> previousInput = new Dictionary<string, DataPoint>();
+            foreach (string id in UnknownIdInfo.UnknownIdentifiers)
+            {
+                if (id == "previousInput") continue;
+                previousInput[id] = Pools.DataPoint.Get();
+                previousInput[id].Value = 0;
+            }
+           
+
+            var pInitial = Pools.DataPoint.Get();
+            pInitial.Value = 0;
+            DataPoint? previousOutput = pInitial;
             var combined = new List<(DateTime Timestamp, int ListIndex, ResultPromise Item)>();
-            bool isFirstStartTime = true;
             foreach (var timeSynchronizedItems in DatasetsCombiner2.CombineSynchronizedResults(datenquellen.ToList()))
             {
-                if (isFirstStartTime)
-                {
-                    firstStartTime = timeSynchronizedItems.First().DataPoint.StartTime;
-                }
+                
                 var missingIdentifiers = UnknownIdInfo.UnknownIdentifiers.ToList();
-                var paramValues = new List<Parameter>();
+                var paramValues = new List<Parameter>
+                {
+                    new Parameter("previousInput", previousInput),
+                    new Parameter("previousOutput", previousOutput)
+                };
+                missingIdentifiers.Remove("previousInput");
+                missingIdentifiers.Remove("previousOutput");
+
                 foreach (var si in timeSynchronizedItems)
                 {
                     paramValues.Add(new Parameter(si.Result.Name, si.DataPoint));
@@ -89,7 +118,12 @@ namespace FKala.Core.KalaQl
                     localDps.Add(ldp);
                     paramValues.Add(new Parameter(mi, ldp));
                 }
-
+                var nextPreviousInput = new Dictionary<string, DataPoint>();
+                foreach (var pv in paramValues)
+                {
+                    if (pv.Name == "previousInput") continue;
+                    nextPreviousInput[pv.Name] = ((DataPoint)pv.Value).Clone();
+                }
                 object? result = Lambda.Invoke(paramValues);
                 if (result is Skip)
                 {
@@ -102,8 +136,17 @@ namespace FKala.Core.KalaQl
                     currentDataPoint.StartTime = timeSynchronizedItems.Key.Item1;
                     currentDataPoint.EndTime = timeSynchronizedItems.Key.Item2;
                     currentDataPoint.Value = expressoResultValue;
+                    previousOutput.Value = expressoResultValue;
                     yield return currentDataPoint;
                 }
+                
+                //foreach (var item in previousInput.Values)
+                //{
+                //    Pools.DataPoint.Return(item);
+                //}
+                previousInput = nextPreviousInput;
+
+               
             }
         }
     }
