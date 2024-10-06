@@ -37,7 +37,8 @@ namespace FKala.Core.KalaQl
 
         public override void Execute(KalaQlContext context)
         {
-            var result = context.DataLayer.LoadData(this.Measurement, this.StartTime, this.EndTime, CacheResolution, NewestOnly, context, DontInvalidateCache_ForUseWhileCacheRebuild).ToList();
+            //in-mem copy probably mem-leak
+            //var result = context.DataLayer.LoadData(this.Measurement, this.StartTime, this.EndTime, CacheResolution, NewestOnly, context, DontInvalidateCache_ForUseWhileCacheRebuild).ToList();
 
             context.IntermediateDatasources.Add(
                 new ResultPromise()
@@ -49,11 +50,11 @@ namespace FKala.Core.KalaQl
                     ResultsetFactory = () =>
                     {
                         // source file streaming
-                        //var result = context.DataLayer.LoadData(this.Measurement, this.StartTime, this.EndTime, CacheResolution, NewestOnly, context, DontInvalidateCache_ForUseWhileCacheRebuild);
-                        //return result;
+                        var result = context.DataLayer.LoadData(this.Measurement, this.StartTime, this.EndTime, CacheResolution, NewestOnly, context, DontInvalidateCache_ForUseWhileCacheRebuild);
+                        return result;
 
-                        //in-mem copy
-                        return Clone(result);
+                        //in-mem copy probably mem-leak
+                        //return Clone(result);
                     }
                 });
             this.hasExecuted = true;
