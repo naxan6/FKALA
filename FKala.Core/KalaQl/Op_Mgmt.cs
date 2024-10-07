@@ -12,6 +12,9 @@ namespace FKala.Core.KalaQl
     public class Op_Mgmt : Op_Base, IKalaQlOperation
     {
         public MgmtAction MgmtAction { get; }
+
+        public override string Name => throw new NotImplementedException();
+
         public string Params;
 
         public Op_Mgmt(string line, MgmtAction mgmtAction, string parameters) : base(line)
@@ -219,7 +222,7 @@ namespace FKala.Core.KalaQl
                 try
                 {
                     var q = new KalaQuery()
-                        .Add(new Op_BaseQuery("SortRawFiles", "toSort", measurement, DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefined.NoCache, false))
+                        .Add(new Op_Load("SortRawFiles", "toSort", measurement, DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefined.NoCache, false))
                         .Add(new Op_Publish("SortRawFiles", new List<string>() { "toSort" }, PublishMode.MultipleResultsets));
                     result = q.Execute(context.DataLayer);
                     var localresult = result.ResultSets!.First().Resultset;
@@ -297,6 +300,21 @@ namespace FKala.Core.KalaQl
         public override string ToString()
         {
             return $"Op_Mgmt: {MgmtAction}";
+        }
+
+        public override List<string> GetInputNames()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override IKalaQlOperation Clone()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override string ToLine()
+        {
+            throw new NotImplementedException();
         }
     }
 }

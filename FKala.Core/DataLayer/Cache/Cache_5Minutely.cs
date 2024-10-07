@@ -21,7 +21,7 @@ namespace FKala.Core.DataLayer.Cache
 
         public override IEnumerable<DataPoint> GetAggregateForCaching(string measurement, DateTime start, DateTime end, AggregateFunction aggrFunc)
         {
-            var baseQuery = new Op_BaseQuery(null, "fullRes", measurement, start, end, CacheResolutionPredefined.NoCache);
+            var baseQuery = new Op_Load(null, "fullRes", measurement, start, end, CacheResolutionPredefined.NoCache);
             baseQuery.DontInvalidateCache_ForUseWhileCacheRebuild = true;
             KalaResult aggResult = KalaQuery
                .Start()

@@ -10,6 +10,7 @@ namespace FKala.Core.KalaQl
 {
     public class KalaQlContext
     {
+        public KalaQuery KalaQuery { get; }
         public IDataLayer DataLayer { get; private set; }
         public List<ResultPromise> IntermediateDatasources { get; set; } = new List<ResultPromise>();
         public KalaResult Result { get; set; }
@@ -18,8 +19,9 @@ namespace FKala.Core.KalaQl
 
         public List<string> Warnings = new List<string>();
         public List<string> Errors = new List<string>();
-        public KalaQlContext(IDataLayer DataLayer)
+        public KalaQlContext(KalaQuery kalaQuery, IDataLayer DataLayer)
         {
+            this.KalaQuery = kalaQuery;
             this.DataLayer = DataLayer;
             this.Result = new KalaResult();
         }

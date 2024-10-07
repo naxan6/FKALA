@@ -39,5 +39,7 @@ namespace FKala.Core.Interfaces
         void InsertError(string err);
         IAsyncEnumerable<Dictionary<string, object?>> SortRawFiles(string measurement, KalaQlContext context);
         string GetInsertTargetFilepath(string measurement, ReadOnlySpan<char> yyyy_MM_dd);
+        bool DoesMeasurementExist(string name);
+        void WriteMatViewFile(string viewName, List<string> lines);
     }
 }

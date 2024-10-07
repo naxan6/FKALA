@@ -16,7 +16,7 @@ namespace FKala.Core.KalaQl
     {
         Interpreter Interpreter;
         Lambda Lambda;
-        public string Name { get; }
+        public override string Name { get; }
         public string Expresso { get; }
         public IdentifiersInfo UnknownIdInfo { get; private set; }
 
@@ -31,16 +31,17 @@ namespace FKala.Core.KalaQl
             UnknownIdInfo = Interpreter.DetectIdentifiers(Expresso);
             var parameters = UnknownIdInfo.UnknownIdentifiers
                 .Order()
-                .Select(identifier => {
+                .Select(identifier =>
+                {
                     if (identifier == "previousInput")
                     {
                         return new Parameter(identifier, typeof(Dictionary<string, DataPoint>));
-                    } 
+                    }
                     else
                     {
                         return new Parameter(identifier, typeof(DataPoint));
                     }
-                    
+
                 });
 
             Lambda = Interpreter.Parse(Expresso, parameters.ToArray());
@@ -50,11 +51,16 @@ namespace FKala.Core.KalaQl
 
         public override bool CanExecute(KalaQlContext context)
         {
-            var IdInfo = Interpreter.DetectIdentifiers(Expresso);
-            var missingIdentifiers = IdInfo.UnknownIdentifiers.ToList();
+            List<string> missingIdentifiers = GetNeededInputnames();
+            return missingIdentifiers.All(id => context.IntermediateDatasources.Any(res => res.Name == id));
+        }
+
+        private List<string> GetNeededInputnames()
+        {
+            var missingIdentifiers = UnknownIdInfo.UnknownIdentifiers.ToList();
             missingIdentifiers.Remove("previousInput");
             missingIdentifiers.Remove("previousOutput");
-            return missingIdentifiers.All(id => context.IntermediateDatasources.Any(res => res.Name == id));
+            return missingIdentifiers;
         }
 
         public override void Execute(KalaQlContext context)
@@ -78,7 +84,7 @@ namespace FKala.Core.KalaQl
             this.hasExecuted = true;
 
         }
-        
+
         public IEnumerable<DataPoint> ExecuteInternal(KalaQlContext context, IEnumerable<ResultPromise> datenquellen)
         {
             Dictionary<string, DataPoint> previousInput = new Dictionary<string, DataPoint>();
@@ -88,7 +94,7 @@ namespace FKala.Core.KalaQl
                 previousInput[id] = Pools.DataPoint.Get();
                 previousInput[id].Value = 0;
             }
-           
+
 
             var pInitial = Pools.DataPoint.Get();
             pInitial.Value = 0;
@@ -96,7 +102,7 @@ namespace FKala.Core.KalaQl
             var combined = new List<(DateTime Timestamp, int ListIndex, ResultPromise Item)>();
             foreach (var timeSynchronizedItems in DatasetsCombiner2.CombineSynchronizedResults(datenquellen.ToList()))
             {
-                
+
                 var missingIdentifiers = UnknownIdInfo.UnknownIdentifiers.ToList();
                 var paramValues = new List<Parameter>
                 {
@@ -139,15 +145,27 @@ namespace FKala.Core.KalaQl
                     previousOutput.Value = expressoResultValue;
                     yield return currentDataPoint;
                 }
-                
+
                 //foreach (var item in previousInput.Values)
                 //{
                 //    Pools.DataPoint.Return(item);
                 //}
                 previousInput = nextPreviousInput;
-
-               
             }
+        }
+        public override List<string> GetInputNames()
+        {
+            return GetNeededInputnames();
+        }
+
+        public override IKalaQlOperation Clone()
+        {
+            return new Op_Expresso(null, Name, Expresso);
+        }
+
+        public override string ToLine()
+        {
+            return $"Expr {this.Name}: \"{this.Expresso}\"";
         }
     }
 }

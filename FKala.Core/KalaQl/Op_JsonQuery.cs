@@ -14,7 +14,7 @@ namespace FKala.Core.KalaQl
 {
     public class Op_JsonQuery : Op_Base, IKalaQlOperation
     {
-        public string Name { get; }
+        public override string Name { get; }
         public string Measurement { get; }
         public DateTime StartTime { get; }
         public DateTime EndTime { get; }
@@ -123,6 +123,21 @@ namespace FKala.Core.KalaQl
                     }
                 }
             }
+        }
+
+        public override List<string> GetInputNames()
+        {
+            return new List<string>();
+        }
+
+        public override IKalaQlOperation Clone()
+        {
+            return new Op_JsonQuery(null, Name, Measurement, FieldPath, StartTime, EndTime, CacheResolution, NewestOnly);
+        }
+
+        public override string ToLine()
+        {
+            return $"Loaj {Name}: {Measurement} {StartTime.ToString("s")} {EndTime.ToString("s")} {this.CacheResolution}";
         }
     }
 }

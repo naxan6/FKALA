@@ -34,7 +34,7 @@ namespace FKala.Unittests
             DataLayer_Readable_Caching_V1 dl = new DataLayer_Readable_Caching_V1(@"./Testdata/UTC_CET_CEST/");
 
             var query = KalaQuery.Start()
-                .Add(new Op_BaseQuery(null, "overDst", "UTC_CET_CEST_Load",
+                .Add(new Op_Load(null, "overDst", "UTC_CET_CEST_Load",
                         new DateTime(2024, 03, 30, 0, 0, 0, DateTimeKind.Utc),
                         new DateTime(2024, 03, 31, 23, 0, 0, DateTimeKind.Utc),
                     new CacheResolution()
@@ -61,7 +61,7 @@ namespace FKala.Unittests
             DataLayer_Readable_Caching_V1 dl = new DataLayer_Readable_Caching_V1(@".\Testdata\UTC_CET_CEST\");
 
             var query = KalaQuery.Start()
-                .Add(new Op_BaseQuery(null, "overDst", "UTC_CET_CEST_Load",
+                .Add(new Op_Load(null, "overDst", "UTC_CET_CEST_Load",
                         new DateTime(2024, 03, 28, 23, 0, 0, DateTimeKind.Utc),
                         new DateTime(2024, 03, 30, 23, 0, 0, DateTimeKind.Utc),
                     new CacheResolution()
@@ -103,7 +103,7 @@ namespace FKala.Unittests
             DataLayer_Readable_Caching_V1 dl = new DataLayer_Readable_Caching_V1(@".\Testdata\UTC_CET_CEST\");
 
             var query = KalaQuery.Start()
-                .Add(new Op_BaseQuery(null, "overDst", "UTC_CET_CEST_Load",
+                .Add(new Op_Load(null, "overDst", "UTC_CET_CEST_Load",
                         new DateTime(2024, 03, 29, 0, 0, 0, DateTimeKind.Utc),
                         new DateTime(2024, 03, 31, 22, 00, 00, DateTimeKind.Utc),
                     new CacheResolution()

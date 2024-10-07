@@ -8,7 +8,7 @@ namespace FKala.Core.KalaQl
 {
     public class Op_Interpolate : Op_Base, IKalaQlOperation
     {
-        public string Name { get; }
+        public override string Name { get; }
         public string InputDataSetName { get; }
         public InterpolationMode Mode { get; }
         public decimal? ConstantValue { get; }
@@ -99,6 +99,21 @@ namespace FKala.Core.KalaQl
                     yield return w;
                 }
             }
+        }
+
+        public override List<string> GetInputNames()
+        {
+            return new List<string> { InputDataSetName };
+        }
+
+        public override IKalaQlOperation Clone()
+        {
+            return new Op_Interpolate(null, Name, InputDataSetName, Mode, ConstantValue);
+        }
+
+        public override string ToLine()
+        {
+            return $"InPo {Name}: {InputDataSetName} {Mode} {ConstantValue}";
         }
     }
 }

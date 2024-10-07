@@ -3,12 +3,13 @@ using FKala.Core.Interfaces;
 using FKala.Core.KalaQl.Windowing;
 using FKala.Core.Logic;
 using FKala.Core.Model;
+using System.Xml.Linq;
 
 namespace FKala.Core.KalaQl
 {
     public class Op_Aggregate : Op_Base, IKalaQlOperation
     {
-        public string Name { get; }
+        public override string Name { get; }
         public string InputDataSetName { get; }
         public Window WindowTemplate { get; }
         public AggregateFunction AggregateFunc { get; }
@@ -140,6 +141,21 @@ namespace FKala.Core.KalaQl
                     if (EmptyWindows || closingDataPoint.Value != null) yield return closingDataPoint;
                 }
             }
+        }
+
+        public override List<string> GetInputNames()
+        {
+            return new List<string> { InputDataSetName };
+        }
+
+        public override IKalaQlOperation Clone()
+        {
+            return new Op_Aggregate(null, Name, InputDataSetName, WindowTemplate, AggregateFunc, EmptyWindows, UseMaterializing);
+        }
+
+        public override string ToLine()
+        {
+            throw new NotImplementedException();
         }
     }
 }

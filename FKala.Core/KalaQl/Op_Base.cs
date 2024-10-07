@@ -12,6 +12,7 @@ namespace FKala.Core.KalaQl
     {
         public bool hasExecuted { get; protected set; }
         public string? Line { get; }
+        public abstract string Name { get; }
 
         public Op_Base(string? line)
         {
@@ -26,5 +27,10 @@ namespace FKala.Core.KalaQl
         {
             return hasExecuted;
         }
+
+        public abstract List<string> GetInputNames();
+        public abstract IKalaQlOperation Clone();
+
+        public abstract string ToLine();
     }
 }

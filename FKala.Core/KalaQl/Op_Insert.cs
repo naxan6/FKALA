@@ -10,7 +10,7 @@ namespace FKala.Core.KalaQl
 {
     public class Op_Insert : Op_Base, IKalaQlOperation
     {
-        public string Name { get; }
+        public override string Name { get; }
         public string InputDataSetName { get; }
         public string TargetMeasure { get; }
 
@@ -72,6 +72,21 @@ namespace FKala.Core.KalaQl
                 Source = Name,
                 ValueText = $"Inserted {count} datapoints into {TargetMeasure}"
             };
+        }
+
+        public override List<string> GetInputNames()
+        {
+            return new List<string>() { InputDataSetName };
+        }
+
+        public override IKalaQlOperation Clone()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override string ToLine()
+        {
+            throw new NotImplementedException();
         }
     }
 }

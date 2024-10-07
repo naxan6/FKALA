@@ -6,9 +6,11 @@ namespace FKala.Core.KalaQl
 {
     public class Op_Publish : Op_Base, IKalaQlOperation
     {
+        
         public List<string> NamesToPublish { get; private set; }
         public PublishMode PublishMode { get; }
         public int Limit { get; private set; }
+        public override string Name => "FINAL";
 
         public Op_Publish(string? line, List<string> namesToPublish, PublishMode mode) : base(line)
         {
@@ -157,6 +159,21 @@ namespace FKala.Core.KalaQl
         public override string ToString()
         {
             return $"Op_Publish: {string.Join(",", NamesToPublish)}";
+        }
+
+        public override List<string> GetInputNames()
+        {
+            return NamesToPublish;
+        }
+
+        public override IKalaQlOperation Clone()
+        {
+            return new Op_Publish(null, NamesToPublish, PublishMode);
+        }
+
+        public override string ToLine()
+        {
+            return $"Publ \"{ string.Join(",", NamesToPublish) }\" { (PublishMode == PublishMode.CombinedResultset ? "Table" : "MultipleResultsets") } ";
         }
     }
 }

@@ -438,7 +438,7 @@ namespace FKala.Core
         public async IAsyncEnumerable<Dictionary<string, object?>> SortRawFiles(string measurement, KalaQlContext context)
         {
             var q = new KalaQuery()
-                .Add(new Op_BaseQuery("SortRawFiles", "toSort", measurement, DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefined.NoCache, false))
+                .Add(new Op_Load("SortRawFiles", "toSort", measurement, DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefined.NoCache, false))
                 .Add(new Op_Publish("SortRawFiles", new List<string>() { "toSort" }, PublishMode.MultipleResultsets));
             var localresult = q.Execute(context.DataLayer).ResultSets!.First().Resultset;
 
@@ -462,5 +462,17 @@ namespace FKala.Core
             this.Dispose();
         }
 
+        public bool DoesMeasurementExist(string measurement)
+        {
+            (string measurementPathPart, string measurementPath) = GetMeasurementDirectory(measurement);
+            return Directory.Exists(measurementPath);
+        }
+
+        public void WriteMatViewFile(string viewName, List<string> lines)
+        {
+            (string measurementPathPart, string measurementPath) = GetMeasurementDirectory(viewName);
+            var viewDefFile = Path.Combine(measurementPath, "viewdef.txt");
+            File.WriteAllLines(viewDefFile, lines);
+        }
     }
 }
