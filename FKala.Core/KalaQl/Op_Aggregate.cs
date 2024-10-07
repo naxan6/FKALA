@@ -155,7 +155,7 @@ namespace FKala.Core.KalaQl
 
         public override string ToLine()
         {
-            throw new NotImplementedException();
+            return $"Aggr {Name}: {InputDataSetName} {WindowTemplate.Mode}_{AggregateFunc} {(EmptyWindows ? "EmptyWindows" : "")}";
         }
     }
 }

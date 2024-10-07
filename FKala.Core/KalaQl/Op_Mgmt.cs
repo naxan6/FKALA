@@ -13,7 +13,7 @@ namespace FKala.Core.KalaQl
     {
         public MgmtAction MgmtAction { get; }
 
-        public override string Name => throw new NotImplementedException();
+        public override string Name => "_NONE_MGMT";
 
         public string Params;
 
@@ -304,7 +304,7 @@ namespace FKala.Core.KalaQl
 
         public override List<string> GetInputNames()
         {
-            throw new NotImplementedException();
+            return new List<string>();
         }
 
         public override IKalaQlOperation Clone()
@@ -314,7 +314,7 @@ namespace FKala.Core.KalaQl
 
         public override string ToLine()
         {
-            throw new NotImplementedException();
+            return base.Line;
         }
     }
 }

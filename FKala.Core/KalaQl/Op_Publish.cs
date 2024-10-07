@@ -10,7 +10,7 @@ namespace FKala.Core.KalaQl
         public List<string> NamesToPublish { get; private set; }
         public PublishMode PublishMode { get; }
         public int Limit { get; private set; }
-        public override string Name => "FINAL";
+        public override string Name => "_NONE_PUBLISH";
 
         public Op_Publish(string? line, List<string> namesToPublish, PublishMode mode) : base(line)
         {

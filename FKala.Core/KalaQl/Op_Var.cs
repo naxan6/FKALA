@@ -7,7 +7,7 @@ namespace FKala.Core.KalaQl
         public string VarName { get; }
         public string VarValue { get; }
 
-        public override string Name => throw new NotImplementedException();
+        public override string Name => VarName;
 
         public Op_Var(string line, string VarName, string VarValue) : base(line)
         {
@@ -39,17 +39,17 @@ namespace FKala.Core.KalaQl
 
         public override List<string> GetInputNames()
         {
-            throw new NotImplementedException();
+            return new List<string>();
         }
 
         public override IKalaQlOperation Clone()
         {
-            throw new NotImplementedException();
+            return new Op_Var(null, this.VarName, this.VarValue);
         }
 
         public override string ToLine()
         {
-            throw new NotImplementedException();
+            return $"Var {VarName} \"{VarValue}\"";
         }
     }
 }

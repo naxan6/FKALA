@@ -7,7 +7,7 @@ namespace FKala.Core.KalaQl
         // see https://nodatime.org/TimeZones
         public string TzId { get; }
 
-        public override string Name => throw new NotImplementedException();
+        public override string Name => "_NONE_TZ";
 
         public Op_AlignTimezone(string? line, string timezone) : base(line)
         {
@@ -34,17 +34,17 @@ namespace FKala.Core.KalaQl
 
         public override List<string> GetInputNames()
         {
-            throw new NotImplementedException();
+            return new List<string>();
         }
 
         public override IKalaQlOperation Clone()
         {
-            throw new NotImplementedException();
+            return new Op_AlignTimezone(Line, TzId);
         }
 
         public override string ToLine()
         {
-            throw new NotImplementedException();
+            return $"AlTz {TzId}";
         }
     }
 }

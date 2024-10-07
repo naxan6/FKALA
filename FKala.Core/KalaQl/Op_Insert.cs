@@ -81,12 +81,12 @@ namespace FKala.Core.KalaQl
 
         public override IKalaQlOperation Clone()
         {
-            throw new NotImplementedException();
+            return new Op_Insert(Line, Name, InputDataSetName, TargetMeasure);
         }
 
         public override string ToLine()
         {
-            throw new NotImplementedException();
+            return $"Insert {Name}: {InputDataSetName} {TargetMeasure}";
         }
     }
 }
