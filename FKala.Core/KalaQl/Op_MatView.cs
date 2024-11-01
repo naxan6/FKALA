@@ -131,13 +131,16 @@ namespace FKala.Core.KalaQl
             var dataPointsEnumerator = enumerable.GetEnumerator();
 
             int count = 0;
+            DateTime newestSeen = DateTime.MinValue;
             foreach (var dp in enumerable)
             {
+                newestSeen = dp.StartTime > newestSeen ? dp.StartTime : newestSeen;
                 context.DataLayer.Insert(ViewName, dp, $"Op_MatView <{ViewName}>");
                 count++;
             }
-
+             
             List<string> lines = q.AsLines();
+            lines.Insert(0, newestSeen.ToString("yyyy-MM-ddTHH:mm:ss.fffffff"));
             context.DataLayer.WriteMatViewFile(ViewName, lines);
         }
 

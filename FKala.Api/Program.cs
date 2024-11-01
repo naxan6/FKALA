@@ -5,6 +5,8 @@ using FKala.Api.Worker;
 using FKala.Core;
 using FKala.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Quartz;
+using Quartz.AspNetCore;
 using System.Runtime;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,6 +29,18 @@ builder.Services.AddOptions<MqttSettings>().Configure((MqttSettings options, ICo
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddQuartz(q =>
+{
+    
+});
+
+// ASP.NET Core hosting
+builder.Services.AddQuartzServer(options =>
+{
+    // when shutting down we want jobs to complete gracefully
+    options.WaitForJobsToComplete = true;
+});
 
 builder.Logging.AddConsole();
 

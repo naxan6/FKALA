@@ -49,6 +49,7 @@ namespace FKala.Core.KalaQl
                 foreach (var item in syncedResult)
                 {
                     row["time"] = syncedResult.Key.Item1;
+                    row["until"] = syncedResult.Key.Item2;
                     if (item.DataPoint.Value.HasValue)
                     {
                         row[item.Result.Name] = item.DataPoint.Value;
@@ -121,6 +122,7 @@ namespace FKala.Core.KalaQl
                     foreach (var item in syncedResult)
                     {
                         row["time"] = syncedResult.Key.Item1;
+                        row["until"] = syncedResult.Key.Item2;
                         if (item.DataPoint.Value.HasValue)
                         {
                             row[item.Result.Name] = item.DataPoint.Value;

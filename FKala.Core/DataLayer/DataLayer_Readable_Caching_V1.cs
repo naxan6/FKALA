@@ -234,15 +234,15 @@ namespace FKala.Core
             {
                 string filePath = GetInsertTargetFilepath(measurement, datetime_yyyy_MM_ddTHH_mm_ss_fffffff);
                 if (IsDelayedInsert(measurement, datetime_yyyy_MM_ddTHH_mm_ss_fffffff, null))
-                {                    
+                {
                     DateOnly dt = new DateOnly(int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(0, 4)), int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(5, 2)), int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(8, 2)));
                     CachingLayer.Mark2Invalidate(measurement, dt);
-                } 
+                }
                 else
                 {
                     filePath = StorageAccess.SetSortMark(filePath, true);
                 }
-                
+
                 BufferedWriterSvc.DoWrite(filePath, (writer) =>
                 {
                     // Format the line to write
@@ -473,6 +473,44 @@ namespace FKala.Core
             (string measurementPathPart, string measurementPath) = GetMeasurementDirectory(viewName);
             var viewDefFile = Path.Combine(measurementPath, "viewdef.txt");
             File.WriteAllLines(viewDefFile, lines);
+        }
+
+        public List<MatView> LoadMatViews()
+        {
+            EnumerationOptions optionFindFilesRecursive = new EnumerationOptions()
+            {
+                BufferSize = 131072,
+                RecurseSubdirectories = true,
+                ReturnSpecialDirectories = false,
+                AttributesToSkip = FileAttributes.Hidden
+            };
+            string filter = "viewdef.txt";
+            var matViewFiles = Directory.GetFileSystemEntries(DataDirectory, filter, optionFindFilesRecursive);
+            var ret = matViewFiles.Select(f => new MatView(f)).ToList();
+            return ret;
+
+        }
+
+        public class MatView
+        {
+            public string Query { get; set; }
+            public string ViewdefFilePath { get; }
+            public DateTime NewestContent = DateTime.MinValue;
+
+            public MatView(string viewdefFilePath)
+            {
+                ViewdefFilePath = viewdefFilePath;
+                this.Read();
+            }
+
+            private void Read()
+            {
+                var lines = File.ReadAllLines(ViewdefFilePath);
+                DateTime.TryParseExact(lines.First(), "yyyy-MM-ddTHH:mm:ss.fffffff", CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var result);
+                this.NewestContent = result;
+
+                this.Query = string.Join("\r\n", lines[2..]);
+            }
         }
     }
 }
