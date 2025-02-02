@@ -15,4 +15,8 @@
     <PackageReference Include="NodaTime" Version="3.1.12" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="KalaQl\QueryParser\" />
+  </ItemGroup>
+
 </Project>

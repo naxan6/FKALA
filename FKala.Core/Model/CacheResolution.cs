@@ -18,7 +18,7 @@ namespace FKala.Core.Model
 
         public override string ToString()
         {
-            return $"{Resolution}_{AggregateFunction}_{(ForceRebuild ? "ForceRebuild" : "")}{(IncrementalRefresh ? "IncrementalRefresh" : "")}";
+            return $"{Resolution}_{AggregateFunction}{(ForceRebuild ? "_ForceRebuild" : "")}{(IncrementalRefresh ? "_IncrementalRefresh" : "")}";
         }
 
     }
