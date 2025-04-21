@@ -49,7 +49,7 @@ namespace FKala.Core.KalaQl
 
         public override string ToLine()
         {
-            return $"Var {VarName} \"{VarValue}\"";
+            return $"Var {VarName}: {VarValue}";
         }
     }
 }

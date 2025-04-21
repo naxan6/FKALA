@@ -153,9 +153,48 @@ namespace FKala.Core.KalaQl
             return new Op_Aggregate(null, Name, InputDataSetName, WindowTemplate, AggregateFunc, EmptyWindows, UseMaterializing);
         }
 
-        public override string ToLine()
+    public override string ToLine()
+    {
+        string windowStr;
+        
+        // Vergleiche das WindowTemplate mit den statischen Vorlagen
+        if (WindowTemplate.Mode == WindowMode.Aligned1Minute)
+            windowStr = "Aligned_1Minute";
+        else if (WindowTemplate.Mode == WindowMode.Aligned5Minutes)
+            windowStr = "Aligned_5Minutes";
+        else if (WindowTemplate.Mode == WindowMode.Aligned15Minutes)
+            windowStr = "Aligned_15Minutes";
+        else if (WindowTemplate.Mode == WindowMode.AlignedHour)
+            windowStr = "Aligned_1Hour";
+        else if (WindowTemplate.Mode == WindowMode.AlignedDay)
+            windowStr = "Aligned_1Day";
+        else if (WindowTemplate.Mode == WindowMode.AlignedWeek)
+            windowStr = "Aligned_1Week";
+        else if (WindowTemplate.Mode == WindowMode.AlignedMonth)
+            windowStr = "Aligned_1Month";
+        else if (WindowTemplate.Mode == WindowMode.AlignedYearStartAtHalf)
+            windowStr = "Aligned_1YearStartAtHalf";
+        else if (WindowTemplate.Mode == WindowMode.AlignedYear)
+            windowStr = "Aligned_1Year";
+        else if (WindowTemplate.Mode == WindowMode.UnalignedMonth)
+            windowStr = "Unaligned_1Month";
+        else if (WindowTemplate.Mode == WindowMode.UnalignedYear)
+            windowStr = "Unaligned_1Year";
+        else if (WindowTemplate.Mode == WindowMode.FixedIntervall)
         {
-            return $"Aggr {Name}: {InputDataSetName} {WindowTemplate.Mode} {AggregateFunc} {(EmptyWindows ? "EmptyWindows" : "")}";
+            // Für FixedIntervall das Intervall ausgeben
+            if (WindowTemplate.Interval == TimeSpan.MaxValue)
+                windowStr = "Infinite";
+            else
+                windowStr = WindowTemplate.Interval.ToString();
         }
+        else
+        {
+            // Fallback für unbekannte Modi
+            windowStr = WindowTemplate.Mode.ToString();
+        }
+        
+        return $"Aggregate {Name}: {InputDataSetName} {windowStr} {AggregateFunc}{(EmptyWindows ? " EmptyWindows" : "")}";
+    }
     }
 }

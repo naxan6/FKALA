@@ -14,7 +14,7 @@ namespace FKala.Core.KalaQl
     {
         public bool hasExecuted { get; protected set; }
         public string? Line { get; protected set; }
-        public abstract string Name { get; set; }
+        public virtual string Name { get; } = string.Empty;
 
         public Op_Base() { }
         public Op_Base(string? line)
@@ -35,8 +35,16 @@ namespace FKala.Core.KalaQl
         public abstract IKalaQlOperation Clone();
 
         public abstract string ToLine();
-        public abstract string Verb();
-        public abstract Op_Base FromLine(string line, List<string> fields);
+        
+        public virtual string Verb()
+        {
+            throw new NotImplementedException();
+        }
+        
+        public virtual Op_Base FromLine(string line, List<string> fields)
+        {
+            throw new NotImplementedException();
+        }
 
         protected DateTime ParseDateTime(string v)
         {

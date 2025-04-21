@@ -13,11 +13,13 @@ namespace FKala.Core.KalaQl
 {
     public class Op_Load : Op_Base, IKalaQlOperation
     {
-        public override string Name { get; set; }
+        private string _name = string.Empty;
+        public override string Name => _name;
         public string Measurement { get; private set; }
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
         public CacheResolution CacheResolution { get; private set; }
+        public string RawCacheResolution { get; set; }
         public bool NewestOnly { get; private set; }
         public bool DoSortRawFiles { get; private set; }
         public bool DontInvalidateCache_ForUseWhileCacheRebuild { get; set; } = false;
@@ -25,7 +27,7 @@ namespace FKala.Core.KalaQl
         public Op_Load() { }
         public Op_Load(string? line, string name, string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly = false) : base(line)
         {
-            this.Name = name;
+            this._name = name;
             this.Measurement = measurement;
             this.StartTime = startTime;
             this.EndTime = endTime;
@@ -84,7 +86,14 @@ namespace FKala.Core.KalaQl
 
         public override string ToLine()
         {
-            return $"Load {Name}: {Measurement} {StartTime.ToString("s")} {EndTime.ToString("s")} {this.CacheResolution}";
+            if (NewestOnly)
+            {
+                return $"Load {Name}: {Measurement} NewestOnly";
+            }
+            else
+            {
+                return $"Load {Name}: {Measurement} {StartTime:yyyy-MM-ddTHH:mm:ssZ} {EndTime:yyyy-MM-ddTHH:mm:ssZ} {this.RawCacheResolution}";
+            }
         }
 
         public override string Verb()
@@ -95,7 +104,7 @@ namespace FKala.Core.KalaQl
         public override Op_Base FromLine(string line, List<string> fields)
         {
             this.Line = line;
-            this.Name = fields[1].Trim(':');
+            this._name = fields[1].Trim(':');
             this.Measurement = fields[2];
             this.StartTime = ParseDateTime(fields[3]);
             this.EndTime = ParseDateTime(fields[4]);
@@ -111,6 +120,7 @@ namespace FKala.Core.KalaQl
 
         private CacheResolution ParseCacheResolution(string v)
         {
+            this.RawCacheResolution = v;
             v = v.Trim();
 
             var parts = v.Split('_');

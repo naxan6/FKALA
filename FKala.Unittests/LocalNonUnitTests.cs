@@ -9,7 +9,7 @@ using System.Security.Principal;
 namespace FKala.Unittests
 {
     //[TestClass]
-    public class KalaQl
+    public class KalaQlTests
     {
         string StoragePath = "\\\\naxds2\\docker\\fkala";
 

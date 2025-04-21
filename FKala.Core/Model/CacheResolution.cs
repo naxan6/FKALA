@@ -15,6 +15,9 @@ namespace FKala.Core.Model
 
         public bool ForceRebuild;
         public bool IncrementalRefresh;
+        
+        // Speichert die ursprüngliche Fenstergröße, wenn die Resolution aus einem "AUTO(...)"-String erstellt wurde
+        public long? OriginalAutoWindowSize { get; set; }
 
         public override string ToString()
         {
