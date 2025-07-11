@@ -50,9 +50,10 @@ namespace FKala.Core.KalaQl
             else if (MgmtAction == MgmtAction.FsChk)
             {
                 Params = Params.Trim('"');
-                var paramParts = Params.Split(",");
+                var paramParts = Params.Split(" ");
+                var measurement = paramParts.Length > 0 ? paramParts[0] : null;
                 context.Result = new KalaResult();
-                context.Result.StreamResult = FsChk(context, paramParts)!;
+                context.Result.StreamResult = FsChk(context, measurement);
                 this.hasExecuted = true;
             }
             else if (MgmtAction == MgmtAction.Copy)
@@ -242,57 +243,48 @@ namespace FKala.Core.KalaQl
             }
         }
 
-        public IEnumerable<Dictionary<string, object?>> FsChk(KalaQlContext context, IEnumerable<string> measurements)
+#pragma warning disable CS1998 // Bei der asynchronen Methode fehlen "await"-Operatoren. Die Methode wird synchron ausgeführt.
+        public async IAsyncEnumerable<Dictionary<string, object?>> FsChk(KalaQlContext context, string? measurement = null)
+#pragma warning restore CS1998 // Bei der asynchronen Methode fehlen "await"-Operatoren. Die Methode wird synchron ausgeführt.
         {
-            // Die übergebenen oder alle
-            if (measurements == null || !measurements.Any() || string.IsNullOrEmpty(measurements.First()))
+            List<string> measurements;
+            if (!string.IsNullOrWhiteSpace(measurement))
             {
+                measurements = [measurement];
+
+            } else {
                 measurements = context.DataLayer.LoadMeasurementList();
-            }
+            }            
+
             List<string> chkResults = new List<string>();
 
             var total = measurements.Count();
             int progress = 0;
             int count = 0;
-            foreach (var measurement in measurements)
+            foreach (var currentMeasurement in measurements)
             {
                 List<string> measureErrors = new List<string>();
                 count++;
                 progress = (int)(100.0 * (1.0 * count / total));
 
                 KalaResult? result = null;
-                while (true)
+                try
                 {
-                    try
+                    var q = new KalaQuery()
+                        .Add(new Op_Load("SortRawFiles", "toSort", currentMeasurement, DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefined.NoCache, false))
+                        .Add(new Op_Publish("SortRawFiles", new List<string>() { "toSort" }, PublishMode.MultipleResultsets));
+                    result = q.Execute(context.DataLayer);
+                    var localresult = result.ResultSets!.First().Resultset;
+                    foreach (var r in localresult) // iterate to load everything
                     {
-                        var q = new KalaQuery()
-                                                .Add(new Op_Load("SortRawFiles", "toSort", measurement, DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefined.NoCache, false))
-                                                .Add(new Op_Publish("SortRawFiles", new List<string>() { "toSort" }, PublishMode.MultipleResultsets));
-                        result = q.Execute(context.DataLayer);
-                        if (result.Exceptions.Any())
-                        {
-                            throw result.Exceptions.First();
-                        }
-                        result.ConsumeResultSetsNoOutput();
-                        // var localresult = result.ResultSets!.First().Resultset;
-                        // foreach (var r in localresult) // iterate to load everything
-                        // {
-                        //     var t = r.StartTime;
-                        //     Pools.DataPoint.Return(r);
-                        // }
+                        var t = r.StartTime;
+                        Pools.DataPoint.Return(r);
                     }
-                    catch (UnexpectedlyUnsortedException uuex)
-                    {
-                        StorageAccess.UnMarkFileAsSorted(uuex.File);
-                        continue;
-                    }
-                    catch (Exception ex)
-                    {
-                        measureErrors.Add(ex.ToString());
-                    }
-                    break;
                 }
-
+                catch (Exception ex)
+                {
+                    measureErrors.Add(ex.ToString());
+                }
                 bool hasErrors = false;
                 if (measureErrors.Any())
                 {
@@ -302,7 +294,7 @@ namespace FKala.Core.KalaQl
                         var retRow = new Dictionary<string, object?>
                         {
                             { "status", $"error" },
-                            { "measurement", $"{measurement}" },
+                            { "measurement", $"{currentMeasurement}" },
                             { "progress", $"({progress}% {count}/{total})" },
                             { "msg", $"{err}" }
 
@@ -320,7 +312,7 @@ namespace FKala.Core.KalaQl
                         var retRow = new Dictionary<string, object?>
                         {
                             { "status", $"error" },
-                            { "measurement", $"{measurement}" },
+                            { "measurement", $"{currentMeasurement}" },
                             { "progress", $"({progress}% {count}/{total})" },
                             { "error", $"{err}" }
                         };
@@ -334,13 +326,13 @@ namespace FKala.Core.KalaQl
                     var retRow = new Dictionary<string, object?>
                         {
                             { "status", $"Ok" },
-                            { "measurement", $"{measurement}" },
-                            { "progress", $"({progress}% {count}/{total})" }
+                            { "measurement", $"{currentMeasurement}" },
+                            { "progress", $"({progress}% {count}/{total})" }                            
                         };
                     yield return retRow;
                 }
 
-                Console.WriteLine($"Checked measurement {measurement}.");
+                Console.WriteLine($"Checked measurement {currentMeasurement}.");
 
             }
             context.Result = new KalaResult();
