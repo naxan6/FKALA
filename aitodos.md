@@ -1,10 +1,12 @@
-Diese Datei ist aus folgender Anfrage entstanden:
-1. Miss die Code Coverage mit task "test_with_coverage" (siehe tasks.json) und gib die Coverage in diese aitodos.md Datei aus.
-2. Die Unittests sollen in neue Testdateien AI_<Thema>_Tests.cs aufgenommen werden.
-3. Die Unittests sollen in der bereits verwendeten Technik geschrieben werden.
-4. Schreibe und aktualisiere Deinen Plan in aitodo.md für Dich selber.
-5. Du musst zum Erreichen des Ziels in dieser Datei im Bereich "AI selbstersteller Kontext" zwischendurch alle wichtigen Erkenntnisse hinterlegen, z.B. wenn Du herausgefunden hast, wie ein Befehls-Aufruf richtig funktioniert, welches Testframework im Einsatz ist, architekturell interessante Informationen oder ähnliches, um das in einer späteren Iteration dann hieraus einfach einzulesen ohne wieder alles aufwändig neu zu ermitteln.
-6. WICHTIG: Es darf immer nur MAXIMAL ein einzelner Unittest ergänzt werden, dann müssen die Unittests wieder durchgeführt werden!!!
+Deine langfristigen Aufgaben:
+1. Schreibe und aktualisiere sofort immer Deinen Plan und Fortschritt in dieser Datei aitodos.md für Dich selber (für spätere Läufe).
+2. Stelleals erstes sicher, dass die Unittests durchlaufen. Wewenn Fehler auftreten, dann beheben! Dabei liegen die Fehler IMMER IM UNITTEST  und nicht im getesteten Code!
+3. Dann miss die Code Coverage mit task "test_with_coverage" (siehe tasks.json) und gib die Coverage in diese aitodos.md Datei aus.
+4. Erhöhe die Testabdeckung, plane dazu, welche nächsten 3 Testfälle Du erstellen willst.
+5. Die Unittests sollen in neue Testdateien AI_<Thema>_Tests.cs aufgenommen werden.
+6. Die Unittests sollen in der bereits verwendeten Technik geschrieben werden.
+7. Du musst zum Erreichen des Ziels in dieser Datei im Bereich "AI selbstersteller Kontext" zwischendurch alle wichtigen Erkenntnisse hinterlegen, z.B. wenn Du herausgefunden hast, wie ein Befehls-Aufruf richtig funktioniert, welches Testframework im Einsatz ist, architekturell interessante Informationen oder ähnliches, um das in einer späteren Iteration dann hieraus einfach einzulesen ohne wieder alles aufwändig neu zu ermitteln.
+7. WICHTIG: Es darf JEWEILS IMMER NUR MAXIMAL ein einzelner Unittest IN EINEM SCHRIIT ergänzt werden, dann müssen die Unittests wieder neu durchgeführt werden und grün laufen!!!
 
 # AI selbstersteller Kontext:
 #############################################################
@@ -19,9 +21,9 @@ Diese Datei ist aus folgender Anfrage entstanden:
 ## Code Coverage Ergebnisse (13.07.2025)
 
 ### Gesamtabdeckung
-- Gesamtabdeckung: 41.8%
-- Abgedeckte Zeilen: 1921
-- Nicht abgedeckte Zeilen: 2664
+- Gesamtabdeckung: 43.3%
+- Abgedeckte Zeilen: 1987
+- Nicht abgedeckte Zeilen: 2598
 - Coverable Zeilen: 4585
 - Gesamtzeilen: 7895
 
@@ -31,9 +33,9 @@ FKala.Core: 41.8%
 - FKala.Core.DataLayer_Readable_Caching_V1: 63.7%
 - FKala.Core.DataLayer.Cache.Cache_Base: 86.2%
 - FKala.Core.DataLayer.Cache.Cache_Hourly: 71.1%
-- FKala.Core.DataLayer.Cache.Cache_Minutely: 11.1%
-- FKala.Core.DataLayer.Cache.Cache_5Minutely: 11.1%
-- FKala.Core.DataLayer.Cache.Cache_15Minutely: 11.1%
+- FKala.Core.DataLayer.Cache.Cache_Minutely: 60%
+- FKala.Core.DataLayer.Cache.Cache_5Minutely: 60%
+- FKala.Core.DataLayer.Cache.Cache_15Minutely: 60%
 - FKala.Core.DataLayers.StorageAccess: 48.4%
 - FKala.Core.KalaQl.KalaQuery: 93.1%
 - FKala.Core.KalaQl.KalaResult: 100%
@@ -49,7 +51,8 @@ FKala.Core: 41.8%
 3. Überprüfen Sie die Logic-Klassen auf fehlende Testfälle
 
 # TODO Liste:
-- [x] Aktualisiere Code Coverage Ergebnisse nach jedem Testlauf
+- [ ] Vor jeder Ergänzung eines Unittests zuerst UNittests durchführen und ggf. fixen (im Unittest, denn der Logikcode ist immer richtig!)!
+- [ ] Aktualisiere Code Coverage Ergebnisse nach jedem Testlauf
 - [ ] Erstelle Tests für Cache_15Minutely Klasse
 - [ ] Erstelle Tests für Cache_5Minutely Klasse
 - [ ] Erstelle Tests für Cache_Minutely Klasse

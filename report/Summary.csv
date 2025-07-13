@@ -1,24 +1,24 @@
 Summary
-Generated on:;13.07.2025 - 21:29:34
+Generated on:;13.07.2025 - 23:03:10
 Parser:;Cobertura
 Assemblies:;1
 Classes:;78
 Files:;56
-Line coverage:;41.8%
-Covered lines:;1921
-Uncovered lines:;2664
+Line coverage:;43.3%
+Covered lines:;1987
+Uncovered lines:;2598
 Coverable lines:;4585
 Total lines:;7895
 
-FKala.Core;41.8%
+FKala.Core;43.3%
 
 FileSystemHelper;76.9%
 FKala.Core.DataLayer_Readable_Caching_V1;63.7%
-FKala.Core.DataLayer.Cache.Cache_15Minutely;11.1%
-FKala.Core.DataLayer.Cache.Cache_5Minutely;11.1%
+FKala.Core.DataLayer.Cache.Cache_15Minutely;60%
+FKala.Core.DataLayer.Cache.Cache_5Minutely;60%
 FKala.Core.DataLayer.Cache.Cache_Base;86.2%
 FKala.Core.DataLayer.Cache.Cache_Hourly;71.1%
-FKala.Core.DataLayer.Cache.Cache_Minutely;11.1%
+FKala.Core.DataLayer.Cache.Cache_Minutely;60%
 FKala.Core.DataLayer.Cache.CachingLayer;62.2%
 FKala.Core.DataLayer.Infrastructure.BufferedWriter;93.1%
 FKala.Core.DataLayer.Infrastructure.BufferedWriterService;75.3%
