@@ -41,5 +41,7 @@ namespace FKala.Core.Interfaces
         string GetInsertTargetFilepath(string measurement, ReadOnlySpan<char> yyyy_MM_dd);
         bool DoesMeasurementExist(string name);
         void WriteMatViewFile(string viewName, List<string> lines);
+        List<DataLayer_Readable_Caching_V1.MatView> LoadMatViews();
+        void DeleteMeasurementAndMatViewDefinition(string measurementName);
     }
 }

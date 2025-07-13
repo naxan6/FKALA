@@ -118,7 +118,7 @@ namespace FKala.Core.KalaQl
                 if (trans != this)
                 {
                     q.Add(myTrans);
-                }
+                } 
             }
             q.Add(new Op_Publish("noline", new List<string>() { InputDataSetName }, PublishMode.MultipleResultsets));
 

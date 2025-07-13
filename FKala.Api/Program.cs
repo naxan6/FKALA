@@ -2,6 +2,7 @@ using FKala.Api.Controller;
 using FKala.Api.InputFormatter;
 using FKala.Api.Settings;
 using FKala.Api.Worker;
+using FKala.Api.Jobs; // Hinzugefügt
 using FKala.Core;
 using FKala.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -32,7 +33,22 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddQuartz(q =>
 {
-    
+    // Sicherstellen, dass die DI Job Factory verwendet wird
+    q.UseMicrosoftDependencyInjectionJobFactory();
+
+    // MatViewRefreshJob registrieren
+    var jobKey = new JobKey(nameof(MatViewRefreshJob));
+    q.AddJob<MatViewRefreshJob>(opts => opts.WithIdentity(jobKey));
+
+    // Trigger für den MatViewRefreshJob hinzufügen (z.B. täglich um 2 Uhr nachts)
+    // Cron-Syntax: Sekunde Minute Stunde TagMonat Monat Wochentag [Jahr]
+    // "0 0 2 * * ?" bedeutet: Um 02:00:00 Uhr jeden Tag
+    q.AddTrigger(opts => opts
+        .ForJob(jobKey)
+        .WithIdentity($"{nameof(MatViewRefreshJob)}-trigger")
+        .WithCronSchedule("0 0 2 * * ?") // Täglich um 2:00 Uhr morgens
+        // Alternativ für Tests alle 5 Minuten: .WithCronSchedule("0 */5 * * * ?") 
+        );
 });
 
 // ASP.NET Core hosting
@@ -125,6 +141,3 @@ Task task = Task.Run(async () =>
 });
 
 app.Run();
-
-
-

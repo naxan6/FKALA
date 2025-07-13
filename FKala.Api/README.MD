@@ -1,4 +1,13 @@
 
+curl -X 'PUT' \
+  'http://naxds2:20080/api/Insert' \
+  -H 'accept: */*' \
+  -H 'Content-Type: text/plain' \
+  -d 'jsts/Heizöltankung/stringValue1 2024-12-10T13:00:00.0000000 Tankung Stadler 3000l'
+
+jsts/Heizöltankung/int1 2024-12-10T13:00:00.0000000 3000
+jsts/Heizöltankung/stringValue1 2024-12-10T13:00:00.0000000 Tankung Stadler 3000l
+
 View e.g. in https://dillinger.io/
 
 # F Kala

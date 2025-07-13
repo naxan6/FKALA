@@ -12,7 +12,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-using System.Globalization;
+using System.Globalization; // Bereits vorhanden, aber zur Sicherheit
+using System.IO; // Hinzugefügt
 using System.Linq;
 using System.Runtime.Intrinsics.Arm;
 using System.Text;
@@ -471,6 +472,7 @@ namespace FKala.Core
         public void WriteMatViewFile(string viewName, List<string> lines)
         {
             (string measurementPathPart, string measurementPath) = GetMeasurementDirectory(viewName);
+            Directory.CreateDirectory(measurementPath); // Sicherstellen, dass das Verzeichnis existiert
             var viewDefFile = Path.Combine(measurementPath, "viewdef.txt");
             File.WriteAllLines(viewDefFile, lines);
         }
@@ -482,18 +484,44 @@ namespace FKala.Core
                 BufferSize = 131072,
                 RecurseSubdirectories = true,
                 ReturnSpecialDirectories = false,
-                AttributesToSkip = FileAttributes.Hidden
+                AttributesToSkip = FileAttributes.Hidden | FileAttributes.System // System hinzugefügt
             };
             string filter = "viewdef.txt";
-            var matViewFiles = Directory.GetFileSystemEntries(DataDirectory, filter, optionFindFilesRecursive);
+            // Nur Dateien suchen, nicht Verzeichnisse, die zufällig so heißen
+            var matViewFiles = Directory.GetFiles(DataDirectory, filter, optionFindFilesRecursive);
             var ret = matViewFiles.Select(f => new MatView(f)).ToList();
             return ret;
+        }
 
+        public void DeleteMeasurementAndMatViewDefinition(string measurementName)
+        {
+            measurementName = PathSanitizer.SanitizePath(measurementName);
+            (string measurementPathPart, string measurementPath) = GetMeasurementDirectory(measurementName);
+
+            if (Directory.Exists(measurementPath))
+            {
+                try
+                {
+                    Directory.Delete(measurementPath, true); // Rekursives Löschen
+                    // Optional: Logging
+                    // this.CachingLayer.InvalidateMeasurementCache(measurementName); // Falls Caching betroffen ist
+                }
+                catch (IOException ex)
+                {
+                    // Fehlerbehandlung, z.B. Loggen oder spezifischere Exception werfen
+                    throw new InvalidOperationException($"Could not delete measurement directory '{measurementPath}'. It might be in use or access denied.", ex);
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    throw new InvalidOperationException($"Access denied while trying to delete measurement directory '{measurementPath}'.", ex);
+                }
+            }
+            // Optional: Loggen, falls das Verzeichnis nicht existiert
         }
 
         public class MatView
         {
-            public string Query { get; set; }
+            public string Query { get; set; } = string.Empty; // Standardwert
             public string ViewdefFilePath { get; }
             public DateTime NewestContent = DateTime.MinValue;
 
@@ -505,11 +533,27 @@ namespace FKala.Core
 
             private void Read()
             {
-                var lines = File.ReadAllLines(ViewdefFilePath);
-                DateTime.TryParseExact(lines.First(), "yyyy-MM-ddTHH:mm:ss.fffffff", CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var result);
-                this.NewestContent = result;
+                if (!File.Exists(ViewdefFilePath))
+                {
+                    // Datei existiert nicht, Query bleibt leer, NewestContent bleibt MinValue
+                    return;
+                }
 
-                this.Query = string.Join("\r\n", lines[2..]);
+                var lines = File.ReadAllLines(ViewdefFilePath);
+                if (lines.Length > 0)
+                {
+                    DateTime.TryParseExact(lines[0], "yyyy-MM-ddTHH:mm:ss.fffffff", CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var result);
+                    this.NewestContent = result; // result ist MinValue bei Parse-Fehler, was ok ist
+                }
+
+                if (lines.Length >= 3) // Zeitstempel, Leerzeile, dann Query
+                {
+                    // Query beginnt ab der dritten Zeile (Index 2)
+                    this.Query = string.Join(Environment.NewLine, lines.Skip(2));
+                }
+                // Wenn lines.Length == 2 (Timestamp + Leerzeile), ist Query string.Empty (Standardwert)
+                // Wenn lines.Length == 1 (nur Timestamp), ist Query string.Empty
+                // Wenn lines.Length == 0 (leere Datei), ist Query string.Empty
             }
         }
     }

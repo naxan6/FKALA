@@ -175,7 +175,12 @@ namespace FKala.Core.KalaQl
 
         public override string ToLine()
         {
-            return $"Publ \"{ string.Join(",", NamesToPublish) }\" { (PublishMode == PublishMode.CombinedResultset ? "Table" : "MultipleResultsets") } ";
+            // Anpassung, um den Erwartungen der ParserTests zu entsprechen
+            string namesString = string.Join(", ", NamesToPublish); // Komma und Leerzeichen als Trenner
+            string modeString = PublishMode == PublishMode.CombinedResultset ? "CombinedResultset" : "MultipleResultsets";
+            // Das Leerzeichen am Ende wurde in der ursprünglichen Version von ToLine() hinzugefügt,
+            // aber die Tests erwarten es nicht.
+            return $"Publish {namesString} {modeString}";
         }
     }
 }

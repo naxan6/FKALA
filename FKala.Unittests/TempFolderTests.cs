@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO; // Hinzugefügt für Pfadoperationen
+using FKala.Core; // Hinzugefügt für DataLayer_Readable_Caching_V1.MatView
 
 namespace FKala.Unittests
 {
@@ -175,6 +177,48 @@ namespace FKala.Unittests
             var resultset = result.ResultTable;
             resultset.Should().NotBeNull();
             resultset!.Count().Should().Be(140);
+        }
+
+        [TestMethod]
+        public void DataLayer_MatView_CreateLoadDelete()
+        {
+            // Arrange
+            var dataLayer = DataFaker.TestDataLayer;
+            string viewName = "testMatView_CreateLoadDelete";
+            string measurementPath = Path.Combine(dataLayer.DataDirectory, viewName);
+            string viewDefFilePath = Path.Combine(measurementPath, "viewdef.txt");
+
+            var queryLines = new List<string>
+            {
+                DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffffff"), // Timestamp-Zeile
+                "", // Leerzeile
+                "Load input_m1: m1 2024-01-01T00:00:00Z 2024-01-02T00:00:00Z NoCache",
+                "MatView output_mv: input_m1 " + viewName,
+                "Publ output_mv Table"
+            };
+
+            // Act & Assert - Create
+            dataLayer.WriteMatViewFile(viewName, queryLines);
+            Assert.IsTrue(Directory.Exists(measurementPath), "Measurement directory should exist after WriteMatViewFile.");
+            Assert.IsTrue(File.Exists(viewDefFilePath), "viewdef.txt should exist after WriteMatViewFile.");
+
+            // Act & Assert - Load
+            var loadedMatViews = dataLayer.LoadMatViews();
+            var loadedMatView = loadedMatViews.FirstOrDefault(mv => mv.ViewdefFilePath != null && new DirectoryInfo(mv.ViewdefFilePath).Parent?.Name == viewName);
+            
+            Assert.IsNotNull(loadedMatView, $"MatView '{viewName}' should be loaded.");
+            Assert.AreEqual(viewDefFilePath, loadedMatView.ViewdefFilePath); // loadedMatView ist hier nicht null
+            string expectedQuery = string.Join(Environment.NewLine, queryLines.Skip(2));
+            Assert.AreEqual(expectedQuery, loadedMatView.Query, "Loaded MatView query should match written query.");
+
+            // Act & Assert - Delete
+            dataLayer.DeleteMeasurementAndMatViewDefinition(viewName);
+            Assert.IsFalse(Directory.Exists(measurementPath), "Measurement directory should NOT exist after DeleteMeasurementAndMatViewDefinition.");
+            Assert.IsFalse(File.Exists(viewDefFilePath), "viewdef.txt should NOT exist after DeleteMeasurementAndMatViewDefinition.");
+
+            loadedMatViews = dataLayer.LoadMatViews();
+            loadedMatView = loadedMatViews.FirstOrDefault(mv => mv.ViewdefFilePath != null && new DirectoryInfo(mv.ViewdefFilePath).Parent?.Name == viewName);
+            Assert.IsNull(loadedMatView, $"MatView '{viewName}' should NOT be loaded after deletion.");
         }
     }
 }
