@@ -4,6 +4,7 @@ using FKala.Core.KalaQl;
 using System.Collections.Generic;
 using FKala.Core.Model;
 using System;
+using FKala.Core.Interfaces;
 
 namespace FKala.Unittests
 {
@@ -66,7 +67,7 @@ namespace FKala.Unittests
             Assert.IsNotNull(result);
             Assert.IsInstanceOfType(result, typeof(Op_AlignTimezone));
             var alignOp = (Op_AlignTimezone)result;
-            Assert.AreEqual("Europe/Berlin", alignOp.Timezone);
+            Assert.AreEqual("Europe/Berlin", alignOp.TzId);
         }
 
         [TestMethod]
@@ -87,7 +88,7 @@ namespace FKala.Unittests
             Assert.IsInstanceOfType(result, typeof(Op_Var));
             var varOp = (Op_Var)result;
             Assert.AreEqual("testVar", varOp.Name);
-            Assert.AreEqual("testValue", varOp.Value);
+            Assert.AreEqual("testValue", varOp.VarValue);
         }
 
         [TestMethod]

@@ -3,6 +3,8 @@ using FKala.Core.KalaQl.QueryParser;
 using System.Collections.Generic;
 using FKala.Core.Model;
 using System;
+using FKala.Core.KalaQl;
+using FKala.Core.KalaQl.QueryParser;
 
 namespace FKala.Unittests
 {
@@ -28,7 +30,7 @@ namespace FKala.Unittests
             var jsonQueryOp = (Op_JsonQuery)result;
             Assert.AreEqual("testName", jsonQueryOp.Name);
             Assert.AreEqual("testMeasure", jsonQueryOp.Measurement);
-            Assert.AreEqual("$.data.value", jsonQueryOp.JsonPath);
+            Assert.AreEqual("$.data.value", jsonQueryOp.FieldPath);
         }
 
         [TestMethod]
@@ -50,7 +52,7 @@ namespace FKala.Unittests
             Assert.IsInstanceOfType(result, typeof(Op_Aggregate));
             var aggregateOp = (Op_Aggregate)result;
             Assert.AreEqual("testName", aggregateOp.Name);
-            Assert.AreEqual("testInput", aggregateOp.Input);
+            Assert.AreEqual("testInput", aggregateOp.InputDataSetName);
             Assert.IsTrue(aggregateOp.EmptyWindows);
         }
 
@@ -72,9 +74,9 @@ namespace FKala.Unittests
             Assert.IsInstanceOfType(result, typeof(Op_Interpolate));
             var interpolateOp = (Op_Interpolate)result;
             Assert.AreEqual("testName", interpolateOp.Name);
-            Assert.AreEqual("testInput", interpolateOp.Input);
-            Assert.AreEqual(InterpolationMode.forwards, interpolateOp.InterpolationMode);
-            Assert.AreEqual(10.5m, interpolateOp.DefaultValue);
+            Assert.AreEqual("testInput", interpolateOp.InputDataSetName);
+            Assert.AreEqual(InterpolationMode.forwards, interpolateOp.Mode);
+            Assert.AreEqual(10.5m, interpolateOp.ConstantValue);
         }
 
         [TestMethod]
@@ -95,8 +97,8 @@ namespace FKala.Unittests
             Assert.IsInstanceOfType(result, typeof(Op_MatView));
             var matViewOp = (Op_MatView)result;
             Assert.AreEqual("testName", matViewOp.Name);
-            Assert.AreEqual("testInput", matViewOp.Input);
-            Assert.AreEqual("testMeasurement", matViewOp.Measurement);
+            Assert.AreEqual("testInput", matViewOp.InputDataSetName);
+            Assert.AreEqual("testMeasurement", matViewOp.ViewName);
         }
 
         [TestMethod]
@@ -110,15 +112,15 @@ namespace FKala.Unittests
             Assert.IsFalse(parser.CanParse("Other"));
 
             // Test parsing an insert command
-            var fields = new List<string> { "Insert", "testName:", "testMeasurement", "testValue" };
-            var result = parser.Parse("Insert testName: testMeasurement testValue", fields);
+            var fields = new List<string> { "Insert", "testName:", "testValue", "testMeasurement"};
+            var result = parser.Parse("Insert testName: testValue testMeasurement", fields);
 
             Assert.IsNotNull(result);
             Assert.IsInstanceOfType(result, typeof(Op_Insert));
             var insertOp = (Op_Insert)result;
             Assert.AreEqual("testName", insertOp.Name);
-            Assert.AreEqual("testMeasurement", insertOp.Measurement);
-            Assert.AreEqual("testValue", insertOp.Value);
+            Assert.AreEqual("testMeasurement", insertOp.TargetMeasure);
+            Assert.AreEqual("testValue", insertOp.InputDataSetName);
         }
 
         [TestMethod]
@@ -139,7 +141,7 @@ namespace FKala.Unittests
             Assert.IsInstanceOfType(result, typeof(Op_Expresso));
             var expressoOp = (Op_Expresso)result;
             Assert.AreEqual("testName", expressoOp.Name);
-            Assert.AreEqual("testExpression", expressoOp.Expression);
+            Assert.AreEqual("testExpression", expressoOp.Expresso);
         }
 
         [TestMethod]
@@ -160,9 +162,9 @@ namespace FKala.Unittests
             Assert.IsNotNull(result);
             Assert.IsInstanceOfType(result, typeof(Op_Publish));
             var publishOp = (Op_Publish)result;
-            Assert.AreEqual(2, publishOp.Inputs.Count);
-            Assert.AreEqual("input1", publishOp.Inputs[0]);
-            Assert.AreEqual("input2", publishOp.Inputs[1]);
+            Assert.AreEqual(2, publishOp.NamesToPublish.Count);
+            Assert.AreEqual("input1", publishOp.NamesToPublish[0]);
+            Assert.AreEqual("input2", publishOp.NamesToPublish[1]);
             Assert.AreEqual(PublishMode.MultipleResultsets, publishOp.PublishMode);
         }
     }

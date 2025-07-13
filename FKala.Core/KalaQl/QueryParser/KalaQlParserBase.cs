@@ -303,7 +303,7 @@ namespace FKala.Core.KalaQl.QueryParser
             }
             else
             {
-                return decimal.Parse(v);
+                return decimal.Parse(v, NumberStyles.Any, CultureInfo.InvariantCulture);
             }
         }
 
