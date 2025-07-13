@@ -1,0 +1,8 @@
+{
+  "dotnet.test.exclude": [
+    "**/bin/**",
+    "**/obj/**"
+  ],
+  "dotnet.test.discovery.parallel": true,
+  "dotnet.test.discovery.enumerateTestModules": true
+}

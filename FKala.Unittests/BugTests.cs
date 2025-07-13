@@ -57,7 +57,10 @@ Publ aVar1,aVar2 Table");
         {            
             var localPath = FileSystemHelper.ConvertToLocalPath(@".\Testdata\defectdata");
             var localCachePath = FileSystemHelper.ConvertToLocalPath(@".\Testdata\defectdata\cache");
-            Directory.Delete(localCachePath, true);
+            if (Directory.Exists(localCachePath))
+            {
+                Directory.Delete(localCachePath, true);
+            }
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
             sw.Start();

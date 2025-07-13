@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": ".NET Core Test or Start Debugging",
+      "type": "docker",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "netCore": {
+        "appTypeId": "AspNetCore"
+      },
+      "justMyCode": false
+    }
+  ]
+}
