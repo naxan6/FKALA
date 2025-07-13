@@ -15,6 +15,16 @@
         "isDefault": true
       },
       "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "test_with_coverage",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "test",
+        "--collect:\"XPlat Code Coverage\""
+      ],
+      "detail": "Enables code coverage collection using coverlet"
     }
   ]
 }
