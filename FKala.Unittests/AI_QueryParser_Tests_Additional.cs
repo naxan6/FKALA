@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using FKala.Core.Model;
 using System;
 using FKala.Core.KalaQl;
-using FKala.Core.KalaQl.QueryParser;
 
 namespace FKala.Unittests
 {
