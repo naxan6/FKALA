@@ -15,9 +15,7 @@ namespace FKala.Unittests
     [TestClass]
     public class TempFolderTests
     {
-#pragma warning disable CS8618 // Ein Non-Nullable-Feld muss beim Beenden des Konstruktors einen Wert ungleich NULL enthalten. Fügen Sie ggf. den „erforderlichen“ Modifizierer hinzu, oder deklarieren Sie den Modifizierer als NULL-Werte zulassend.
-        static DataFaker DataFaker;
-#pragma warning restore CS8618 // Ein Non-Nullable-Feld muss beim Beenden des Konstruktors einen Wert ungleich NULL enthalten. Fügen Sie ggf. den „erforderlichen“ Modifizierer hinzu, oder deklarieren Sie den Modifizierer als NULL-Werte zulassend.
+        static DataFaker DataFaker = new DataFaker();
 
         [ClassInitialize]
         public static void Initialize(TestContext context)
@@ -35,7 +33,7 @@ namespace FKala.Unittests
         public void DataLayer_LoadData_CheckBorders()
         {
             // Act
-            var resultset = DataFaker.TestDataLayer.LoadData("m1", new DateTime(2024, 03, 01), new DateTime(2024, 03, 15), CacheResolutionPredefined.NoCache, false, new KalaQlContext(null, DataFaker.TestDataLayer), false);
+            var resultset = DataFaker.TestDataLayer.LoadData("m1", new DateTime(2024, 03, 01), new DateTime(2024, 03, 15), CacheResolutionPredefined.NoCache, false, new KalaQlContext(null!, DataFaker.TestDataLayer), false);
 
             resultset = resultset.ToList(); // persist result
 
@@ -50,7 +48,7 @@ namespace FKala.Unittests
             Assert.AreEqual(0.457086396616458m, resultset.Last().Value);
 
             // Assert 2
-            var resultsetAll = DataFaker.TestDataLayer.LoadData("m1", new DateTime(0001, 01, 01), new DateTime(9999, 12, 31), CacheResolutionPredefined.NoCache, false, new KalaQlContext(null, DataFaker.TestDataLayer), false);
+            var resultsetAll = DataFaker.TestDataLayer.LoadData("m1", new DateTime(0001, 01, 01), new DateTime(9999, 12, 31), CacheResolutionPredefined.NoCache, false, new KalaQlContext(null!, DataFaker.TestDataLayer), false);
             resultsetAll = resultsetAll.ToList();
             resultsetAll.First().StartTime.Should().Be(new DateTime(2024, 01, 01, 0, 0, 13).AddTicks(5443658));
             Assert.AreEqual(0.248668584157093m, resultsetAll.First().Value);

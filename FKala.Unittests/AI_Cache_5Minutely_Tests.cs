@@ -27,7 +27,7 @@ namespace FKala.Unittests
         public void CacheSubdir_ShouldReturnCorrectDirectoryName()
         {
             // Act
-            var result = _cache5Minutely.CacheSubdir;
+            var result = _cache5Minutely!.CacheSubdir;
 
             // Assert
             result.Should().Be("5Minutely");
@@ -37,7 +37,7 @@ namespace FKala.Unittests
         public void GetTimeFormat_ShouldReturnCorrectFormat()
         {
             // Act
-            var result = _cache5Minutely.GetTimeFormat();
+            var result = _cache5Minutely!.GetTimeFormat();
 
             // Assert
             result.Should().Be("MM-ddTHH:mm");
@@ -47,7 +47,7 @@ namespace FKala.Unittests
         public void Window_ShouldHaveCorrectWindowSize()
         {
             // Act
-            var result = _cache5Minutely.Window;
+            var result = _cache5Minutely!.Window;
 
             // Assert
             result.Should().NotBeNull();
@@ -63,7 +63,7 @@ namespace FKala.Unittests
             const string line = "06-15T23:26 55.654105";
 
             // Act
-            var result = _cache5Minutely.ReadLine(fileYear, line);
+            var result = _cache5Minutely!.ReadLine(fileYear, line);
 
             // Assert
             result.Should().NotBeNull();
@@ -80,7 +80,7 @@ namespace FKala.Unittests
             string? line = null;
 
             // Act
-            Action act = () => _cache5Minutely.ReadLine(fileYear, line);
+            Action act = () => _cache5Minutely!.ReadLine(fileYear, line);
 
             // Assert
             act.Should().Throw<ArgumentException>();
@@ -95,7 +95,7 @@ namespace FKala.Unittests
             DataPoint? newestInRaw = null;
 
             // Act
-            var result = _cache5Minutely.ShouldUpdateFromWhere(cacheYear, newestInCache, newestInRaw);
+            var result = _cache5Minutely!.ShouldUpdateFromWhere(cacheYear, newestInCache, newestInRaw);
 
             // Assert
             result.Should().Be(DateTime.MaxValue);
@@ -110,7 +110,7 @@ namespace FKala.Unittests
             var newestInRaw = new DataPoint { StartTime = DateTime.UtcNow.AddMinutes(-10) };
 
             // Act
-            var result = _cache5Minutely.ShouldUpdateFromWhere(cacheYear, newestInCache, newestInRaw);
+            var result = _cache5Minutely!.ShouldUpdateFromWhere(cacheYear, newestInCache, newestInRaw);
 
             // Assert
             result.Should().Be(DateTime.MaxValue);
@@ -125,7 +125,7 @@ namespace FKala.Unittests
             var newestInRaw = new DataPoint { StartTime = new DateTime(2024, 1, 1, 11, 55, 0, DateTimeKind.Utc) };
 
             // Act
-            var result = _cache5Minutely.ShouldUpdateFromWhere(cacheYear, newestInCache, newestInRaw);
+            var result = _cache5Minutely!.ShouldUpdateFromWhere(cacheYear, newestInCache, newestInRaw);
 
             // Assert
             result.Should().Be(DateTime.MaxValue);

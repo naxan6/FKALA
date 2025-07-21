@@ -152,12 +152,12 @@ namespace FKala.Unittests
 
             public override IKalaQlOperation Clone()
             {
-                return new Op_Test(this.Line);
+                return new Op_Test(this.Line!);
             }
 
             public override string ToLine()
             {
-                return this.Line;
+                return this.Line!;
             }
         }
     }

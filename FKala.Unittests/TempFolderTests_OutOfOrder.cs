@@ -9,9 +9,7 @@ namespace FKala.Unittests
     [TestClass]
     public class TempFolderTests_OutOfOrder
     {
-#pragma warning disable CS8618 // Ein Non-Nullable-Feld muss beim Beenden des Konstruktors einen Wert ungleich NULL enthalten. Fügen Sie ggf. den „erforderlichen“ Modifizierer hinzu, oder deklarieren Sie den Modifizierer als NULL-Werte zulassend.
-        static DataFaker DataFaker;
-#pragma warning restore CS8618 // Ein Non-Nullable-Feld muss beim Beenden des Konstruktors einen Wert ungleich NULL enthalten. Fügen Sie ggf. den „erforderlichen“ Modifizierer hinzu, oder deklarieren Sie den Modifizierer als NULL-Werte zulassend.
+        static DataFaker DataFaker = new DataFaker();
 
         [ClassInitialize]
         public static void Initialize(TestContext context)
@@ -32,7 +30,7 @@ namespace FKala.Unittests
         public void DataLayer_LoadData_CheckBorders()
         {
             // Act
-            var resultset = DataFaker.TestDataLayer.LoadData("m1", new DateTime(2024, 03, 01), new DateTime(2024, 03, 15), CacheResolutionPredefined.NoCache, false, new KalaQlContext(null, DataFaker.TestDataLayer), false);
+            var resultset = DataFaker.TestDataLayer.LoadData("m1", new DateTime(2024, 03, 01), new DateTime(2024, 03, 15), CacheResolutionPredefined.NoCache, false, new KalaQlContext(null!, DataFaker.TestDataLayer), false);
 
 
             var resultlist = resultset.ToList();
@@ -47,7 +45,7 @@ namespace FKala.Unittests
             }
 
             // Assert 2
-            var resultsetAll = DataFaker.TestDataLayer.LoadData("m1", new DateTime(0001, 01, 01), new DateTime(9999, 12, 31), CacheResolutionPredefined.NoCache, false, new KalaQlContext(null, DataFaker.TestDataLayer), false);
+            var resultsetAll = DataFaker.TestDataLayer.LoadData("m1", new DateTime(0001, 01, 01), new DateTime(9999, 12, 31), CacheResolutionPredefined.NoCache, false, new KalaQlContext(null!, DataFaker.TestDataLayer), false);
             var resultlistAll = resultsetAll.ToList();
             using (new AssertionScope())
             {
