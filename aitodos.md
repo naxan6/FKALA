@@ -11,7 +11,8 @@
 -7. Du musst zum Erreichen des Ziels in dieser Datei im Bereich "AI selbstersteller Kontext" zwischendurch alle wichtigen Erkenntnisse hinterlegen, z.B. wenn Du herausgefunden hast, wie ein Befehls-Aufruf richtig funktioniert, welches Testframework im Einsatz ist, architekturell interessante Informationen oder ähnliches, um das in einer späteren Iteration dann hieraus einfach einzulesen ohne wieder alles aufwändig neu zu ermitteln.
 -7. WICHTIG: Es darf JEWEILS IMMER NUR MAXIMAL ein einzelner Unittest IN EINEM SCHRIIT ergänzt werden, dann müssen die Unittests wieder neu durchgeführt werden und grün laufen!!!
 -8. Für Dateiänderungen immer apply_diff, search_and_replace and insert_content bevorzugen gegenüber write_to_file!
-9. Halt apply_diff so klein wie möglich. ersetze nicht unnötig ungeänderte Zeilen!
+-9. Halte apply_diff, search_and_replace und insert_content Aufrufe so minimal wie möglich. Ersetze nur zu ändernde Zeilen!
+-10. Bereinige stests Build-Warnings (Clean-Code!)
 
 ## Testframework: MsTest
 ## Code Coverage
@@ -23,22 +24,22 @@
 
 ## Code Coverage Ergebnisse (23.07.2025)
 
-- Gesamtabdeckung: 51.7% (51.7%)
-- Abgedeckte Zeilen: 2371
-- Nicht abgedeckte Zeilen: 2214
+- Gesamtabdeckung: 56.1% (56.1%)
+- Abgedeckte Zeilen: 2573
+- Nicht abgedeckte Zeilen: 2012
 - Coverable Zeilen: 4585
 - Gesamtzeilen: 7895
 
 ### Klassen mit niedriger Abdeckung (< 50%):
 - Op_Expresso: 88.3% - Expression-Operationen (verbessert von 25.8%)
-- Op_Insert: 37.5% - Insert-Operationen
-- Op_Interpolate: 12.7% - Interpolation-Operationen
-- Op_JsonQuery: 13.5% - JSON Query-Operationen
-- Op_MatView: 8% - Materialized View-Operationen
+- Op_MatView: 18.7% - Materialized View-Operationen (verbessert von 8%)
 - Op_Mgmt: 45.2% - Management-Operationen (verbessert von 4.1%)
+- Op_AlignTimezone: 48% - AlignTimezone-Operationen
+- Op_Var: 60% - Variable-Operationen
+- Op_Publish: 54.4% - Publish-Operationen
 
 ## ToDo Liste
 
-- [ ] Führe Unit Tests aus und überprüfe Coverage
-- [ ] Identifiziere Klassen oder Methoden mit niedriger Abdeckung und schreibe einen Test dazu
-- [ ] Aktualisiere Code Coverage Bericht
+- [x] Führe Unit Tests aus und überprüfe Coverage
+- [x] Identifiziere Klassen oder Methoden mit niedriger Abdeckung und schreibe einen Test dazu
+- [x] Aktualisiere Code Coverage Bericht
