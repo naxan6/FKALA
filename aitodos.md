@@ -1,6 +1,7 @@
 # AITODOS
 
 -Deine langfristigen Aufgaben:
+-0. ToDo Liste ganz unten auf "nicht asugeführt" zurücksetzen
 -1. Schreibe und aktualisiere sofort immer Deinen Plan und Fortschritt in dieser Datei aitodos.md für Dich selber (für spätere Läufe).
 -2. Stelle als erstes sicher, dass die Unittests durchlaufen. Dies machst Du indem du sie ausführst!! Wenn Fehler auftreten, dann beheben! Dabei liegen die Fehler IMMER IM UNITTEST und nicht im getesteten Code!
 -3. Dann miss die Code Coverage (Aufruf siehe unten) und gib die Coverage in diese aitodos.md Datei aus.
@@ -19,16 +20,24 @@
   reportgenerator.exe -reports:C:\git\FKALA\FKala.Unittests\TestResults\b57a6e6f-cd26-4def-92de-1c9951b2aff7\coverage.cobertura.xml -targetdir:.\report -reporttype:csvsummary
   (Hinweis: reportgenerator.exe ist global installiert)
 
-## Code Coverage Ergebnisse (20.07.2025)
+## Code Coverage Ergebnisse (23.07.2025)
 
-- Gesamtabdeckung: 45.6%
-- Abgedeckte Zeilen: 2091
-- Nicht abgedeckte Zeilen: 2494
+- Gesamtabdeckung: 47.1% (47.1%)
+- Abgedeckte Zeilen: 2164
+- Nicht abgedeckte Zeilen: 2421
 - Coverable Zeilen: 4585
 - Gesamtzeilen: 7895
 
+### Klassen mit niedriger Abdeckung (< 50%):
+- Op_Expresso: 20.8% - Expression-Operationen
+- Op_Insert: 16% - Insert-Operationen
+- Op_Interpolate: 12.7% - Interpolation-Operationen
+- Op_JsonQuery: 13.5% - JSON Query-Operationen
+- Op_MatView: 8% - Materialized View-Operationen
+- Op_Mgmt: 4.1% - Management-Operationen
+
 ## ToDo Liste
 
-- [ ] Führe Unit Tests aus und überprüfe Coverage
-- [ ] Identifiziere Klassen oder Methoden mit niedriger Abdeckung und schreibe einen Test dazu
-- [ ] Aktualisiere Code Coverage Bericht
+- [x] Führe Unit Tests aus und überprüfe Coverage
+- [x] Identifiziere Klassen oder Methoden mit niedriger Abdeckung und schreibe einen Test dazu
+- [x] Aktualisiere Code Coverage Bericht
