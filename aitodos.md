@@ -23,19 +23,19 @@
 
 ## Code Coverage Ergebnisse (23.07.2025)
 
-- Gesamtabdeckung: 47.5% (47.5%)
-- Abgedeckte Zeilen: 2182
-- Nicht abgedeckte Zeilen: 2403
+- Gesamtabdeckung: 51.7% (51.7%)
+- Abgedeckte Zeilen: 2371
+- Nicht abgedeckte Zeilen: 2214
 - Coverable Zeilen: 4585
 - Gesamtzeilen: 7895
 
 ### Klassen mit niedriger Abdeckung (< 50%):
-- Op_Expresso: 25.8% - Expression-Operationen (verbessert von 20.8%)
+- Op_Expresso: 88.3% - Expression-Operationen (verbessert von 25.8%)
 - Op_Insert: 37.5% - Insert-Operationen
 - Op_Interpolate: 12.7% - Interpolation-Operationen
 - Op_JsonQuery: 13.5% - JSON Query-Operationen
 - Op_MatView: 8% - Materialized View-Operationen
-- Op_Mgmt: 4.1% - Management-Operationen
+- Op_Mgmt: 45.2% - Management-Operationen (verbessert von 4.1%)
 
 ## ToDo Liste
 
