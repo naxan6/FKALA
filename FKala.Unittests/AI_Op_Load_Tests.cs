@@ -40,10 +40,10 @@ namespace FKala.Unittests
         public void Op_Load_CanExecute_ReturnsTrue()
         {
             // Arrange
-            var opLoad = new Op_Load();
+            var opLoad = new Op_Load("", "", "", new DateTime(), new DateTime(), CacheResolutionPredefined.NoCache, false);
 
             // Act & Assert
-            Assert.IsTrue(opLoad.CanExecute(null));
+            Assert.IsTrue(opLoad.CanExecute(null!));
         }
 
         [TestCategory("AI")]
@@ -81,7 +81,7 @@ namespace FKala.Unittests
             DateTime startTime = DateTime.Parse("2024-01-01T00:00:00Z");
             DateTime endTime = DateTime.Parse("2024-01-01T01:00:00Z");
             CacheResolution cacheResolution = new CacheResolution { Resolution = Resolution.Minutely };
-            var opLoad = new Op_Load(null, name, measurement, startTime, endTime, cacheResolution);
+            var opLoad = new Op_Load("line", name, measurement, startTime, endTime, cacheResolution);
 
             // Act
             string result = opLoad.ToLine();
@@ -99,7 +99,7 @@ namespace FKala.Unittests
         {
             // Arrange
             string name = "testName";
-            var opLoad = new Op_Load(null, name, "testMeasurement", DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefined.NoCache, true);
+            var opLoad = new Op_Load("line", name, "testMeasurement", DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefined.NoCache, true);
 
             // Act
             string result = opLoad.ToLine();
@@ -115,7 +115,7 @@ namespace FKala.Unittests
         {
             // Arrange
             string line = "Load testName: testMeasurement 2024-01-01T00:00:00Z 2024-01-01T01:00:00Z FiveMinutely_WAvg";
-            var opLoad = new Op_Load();
+            var opLoad = new Op_Load(line, "", "", new DateTime(), new DateTime(),CacheResolutionPredefined.NoCache, false);
 
             // Act
             var result = opLoad.FromLine(line, new List<string> { "Load", "testName:", "testMeasurement", "2024-01-01T00:00:00Z", "2024-01-01T01:00:00Z", "FiveMinutely_WAvg" });
@@ -124,19 +124,6 @@ namespace FKala.Unittests
             Assert.IsInstanceOfType(result, typeof(Op_Load));
             Assert.AreEqual("testName", result.Name);
             Assert.AreEqual("testMeasurement", ((Op_Load)result).Measurement);
-        }
-
-        [TestCategory("AI")]
-        [TestMethod]
-        public void Op_Load_ParseCacheResolution_ReturnsCorrectCacheResolution()
-        {
-            // Arrange
-            string resolutionString = "FiveMinutely_WAvg";
-            var opLoad = new Op_Load();
-
-            // Act
-            // Skip this test as ParseCacheResolution is protected
-            return;
         }
     }
 }

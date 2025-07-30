@@ -34,7 +34,7 @@ public class FileSystemHelper {
             {
                 file.CopyTo(temppath, false);
             } 
-            catch (IOException iex)
+            catch (IOException)
             {
                 string iextemppath = Path.Combine(destDirName, $"{DateTime.Now.ToString("s")}_COPY_" + file.Name);
                 file.CopyTo(iextemppath, false);

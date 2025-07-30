@@ -21,7 +21,7 @@ namespace FKala.Unittests.KalaQl
             decimal? constantValue = 100;
 
             // Act
-            var opInterpolate = new Op_Interpolate(null, name, inputDataSet, mode, constantValue);
+            var opInterpolate = new Op_Interpolate("line", name, inputDataSet, mode, constantValue);
 
             // Assert
             Assert.AreEqual(name, opInterpolate.Name);
@@ -34,7 +34,7 @@ namespace FKala.Unittests.KalaQl
         public void Op_Interpolate_ToLine_ReturnsCorrectFormat()
         {
             // Arrange
-            var opInterpolate = new Op_Interpolate(null, "result", "input1", InterpolationMode.forwards, 100);
+            var opInterpolate = new Op_Interpolate("line", "result", "input1", InterpolationMode.forwards, 100);
 
             // Act
             var line = opInterpolate.ToLine();
@@ -47,7 +47,7 @@ namespace FKala.Unittests.KalaQl
         public void Op_Interpolate_Clone_ReturnsNewInstance()
         {
             // Arrange
-            var opInterpolate = new Op_Interpolate(null, "test", "input1", InterpolationMode.backwards, 50);
+            var opInterpolate = new Op_Interpolate("line", "test", "input1", InterpolationMode.backwards, 50);
 
             // Act
             var cloned = opInterpolate.Clone() as Op_Interpolate;
@@ -65,7 +65,7 @@ namespace FKala.Unittests.KalaQl
         public void Op_Interpolate_GetInputNames_ReturnsCorrectInputName()
         {
             // Arrange
-            var opInterpolate = new Op_Interpolate(null, "test", "input1", InterpolationMode.constant, 0);
+            var opInterpolate = new Op_Interpolate("line", "test", "input1", InterpolationMode.constant, 0);
 
             // Act
             var inputNames = opInterpolate.GetInputNames();
@@ -93,7 +93,7 @@ namespace FKala.Unittests.KalaQl
             };
             context.IntermediateDatasources.Add(inputDataSource);
 
-            var opInterpolate = new Op_Interpolate(null, "result", "input1", InterpolationMode.forwards, 0);
+            var opInterpolate = new Op_Interpolate("line", "result", "input1", InterpolationMode.forwards, 0);
 
             // Act
             var canExecute = opInterpolate.CanExecute(context);
@@ -110,7 +110,7 @@ namespace FKala.Unittests.KalaQl
             var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "FKalaTestData");
             var dataLayer = new DataLayer_Readable_Caching_V1(tempDir);
             var context = new KalaQlContext(kalaQuery, dataLayer);
-            var opInterpolate = new Op_Interpolate(null, "result", "missingInput", InterpolationMode.forwards, 0);
+            var opInterpolate = new Op_Interpolate("line", "result", "missingInput", InterpolationMode.forwards, 0);
 
             // Act
             var canExecute = opInterpolate.CanExecute(context);
@@ -139,7 +139,7 @@ namespace FKala.Unittests.KalaQl
             };
             context.IntermediateDatasources.Add(inputDataSource);
 
-            var opInterpolate = new Op_Interpolate(null, "result", "input1", InterpolationMode.forwards, 0);
+            var opInterpolate = new Op_Interpolate("line", "result", "input1", InterpolationMode.forwards, 0);
 
             // Act
             opInterpolate.Execute(context);
@@ -169,7 +169,7 @@ namespace FKala.Unittests.KalaQl
             };
             context.IntermediateDatasources.Add(inputDataSource);
 
-            var opInterpolate = new Op_Interpolate(null, "result", "input1", InterpolationMode.forwards, 0);
+            var opInterpolate = new Op_Interpolate("line", "result", "input1", InterpolationMode.forwards, 0);
 
             // Act
             opInterpolate.Execute(context);
@@ -203,7 +203,7 @@ namespace FKala.Unittests.KalaQl
             };
             context.IntermediateDatasources.Add(inputDataSource);
 
-            var opInterpolate = new Op_Interpolate(null, "result", "input1", InterpolationMode.backwards, 0);
+            var opInterpolate = new Op_Interpolate("line", "result", "input1", InterpolationMode.backwards, 0);
 
             // Act
             opInterpolate.Execute(context);
@@ -237,7 +237,7 @@ namespace FKala.Unittests.KalaQl
             };
             context.IntermediateDatasources.Add(inputDataSource);
 
-            var opInterpolate = new Op_Interpolate(null, "result", "input1", InterpolationMode.constant, 50);
+            var opInterpolate = new Op_Interpolate("line", "result", "input1", InterpolationMode.constant, 50);
 
             // Act
             opInterpolate.Execute(context);

@@ -16,7 +16,7 @@ namespace FKala.Core.KalaQl
         public bool EmptyWindows { get; }
         public bool UseMaterializing { get; }
 
-        public Op_Aggregate(string? line, string name, string inputDataSet, Window windowTemplate, AggregateFunction aggregate, bool emptyWindows, bool useMaterializing = true) : base(line)
+        public Op_Aggregate(string line, string name, string inputDataSet, Window windowTemplate, AggregateFunction aggregate, bool emptyWindows, bool useMaterializing = true) : base(line)
         {
             Name = name;
             InputDataSetName = inputDataSet;
@@ -150,7 +150,7 @@ namespace FKala.Core.KalaQl
 
         public override IKalaQlOperation Clone()
         {
-            return new Op_Aggregate(null, Name, InputDataSetName, WindowTemplate, AggregateFunc, EmptyWindows, UseMaterializing);
+            return new Op_Aggregate(base.Line, Name, InputDataSetName, WindowTemplate, AggregateFunc, EmptyWindows, UseMaterializing);
         }
 
     public override string ToLine()

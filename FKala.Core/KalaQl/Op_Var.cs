@@ -44,7 +44,7 @@ namespace FKala.Core.KalaQl
 
         public override IKalaQlOperation Clone()
         {
-            return new Op_Var(null, this.VarName, this.VarValue);
+            return new Op_Var(base.Line, this.VarName, this.VarValue);
         }
 
         public override string ToLine()

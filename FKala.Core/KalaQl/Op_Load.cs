@@ -19,13 +19,12 @@ namespace FKala.Core.KalaQl
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
         public CacheResolution CacheResolution { get; private set; }
-        public string RawCacheResolution { get; set; }
+        public string? RawCacheResolution { get; set; }
         public bool NewestOnly { get; private set; }
         public bool DoSortRawFiles { get; private set; }
         public bool DontInvalidateCache_ForUseWhileCacheRebuild { get; set; } = false;
-
-        public Op_Load() { }
-        public Op_Load(string? line, string name, string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly = false) : base(line)
+        
+        public Op_Load(string line, string name, string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly = false) : base(line)
         {
             this._name = name;
             this.Measurement = measurement;
@@ -81,7 +80,7 @@ namespace FKala.Core.KalaQl
 
         public override IKalaQlOperation Clone()
         {
-            return new Op_Load(null, this.Name, this.Measurement, this.StartTime, this.EndTime, this.CacheResolution, this.NewestOnly);
+            return new Op_Load(base.Line, this.Name, this.Measurement, this.StartTime, this.EndTime, this.CacheResolution, this.NewestOnly);
         }
 
         public override string ToLine()

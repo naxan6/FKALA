@@ -46,7 +46,7 @@ namespace FKala.Api.Jobs
                 foreach (var matViewDef in matViewDefinitions)
                 {
                     // ViewName ist der Name des Ordners, in dem viewdef.txt liegt
-                    string viewName = new DirectoryInfo(matViewDef.ViewdefFilePath).Parent.Name;
+                    string viewName = new DirectoryInfo(matViewDef.ViewdefFilePath).Parent!.Name;
                     _logger.LogInformation("Beginne Verarbeitung von MatView: {ViewName}", viewName);
 
                     try

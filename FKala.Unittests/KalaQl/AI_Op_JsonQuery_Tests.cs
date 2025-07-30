@@ -31,7 +31,7 @@ namespace FKala.Unittests.KalaQl
             bool newestOnly = false;
 
             // Act
-            var opJsonQuery = new Op_JsonQuery(null, name, measurement, fieldPath, startTime, endTime, cacheResolution, newestOnly);
+            var opJsonQuery = new Op_JsonQuery("line", name, measurement, fieldPath, startTime, endTime, cacheResolution, newestOnly);
 
             // Assert
             Assert.AreEqual(name, opJsonQuery.Name);
@@ -53,7 +53,7 @@ namespace FKala.Unittests.KalaQl
                 AggregateFunction = AggregateFunction.None,
                 ForceRebuild = false
             };
-            var opJsonQuery = new Op_JsonQuery(null, "result", "measurement", "path/field", new DateTime(2023, 1, 1), new DateTime(2023, 1, 2), cacheResolution);
+            var opJsonQuery = new Op_JsonQuery("line", "result", "measurement", "path/field", new DateTime(2023, 1, 1), new DateTime(2023, 1, 2), cacheResolution);
 
             // Act
             var line = opJsonQuery.ToLine();
@@ -72,7 +72,7 @@ namespace FKala.Unittests.KalaQl
                 AggregateFunction = AggregateFunction.None,
                 ForceRebuild = false
             };
-            var opJsonQuery = new Op_JsonQuery(null, "test", "measurement", "path/field", new DateTime(2023, 1, 1), new DateTime(2023, 1, 2), cacheResolution);
+            var opJsonQuery = new Op_JsonQuery("line", "test", "measurement", "path/field", new DateTime(2023, 1, 1), new DateTime(2023, 1, 2), cacheResolution);
 
             // Act
             var cloned = opJsonQuery.Clone() as Op_JsonQuery;
@@ -99,7 +99,7 @@ namespace FKala.Unittests.KalaQl
                 AggregateFunction = AggregateFunction.None,
                 ForceRebuild = false
             };
-            var opJsonQuery = new Op_JsonQuery(null, "test", "measurement", "path/field", new DateTime(2023, 1, 1), new DateTime(2023, 1, 2), cacheResolution);
+            var opJsonQuery = new Op_JsonQuery("line", "test", "measurement", "path/field", new DateTime(2023, 1, 1), new DateTime(2023, 1, 2), cacheResolution);
 
             // Act
             var inputNames = opJsonQuery.GetInputNames();
@@ -119,7 +119,7 @@ namespace FKala.Unittests.KalaQl
                 AggregateFunction = AggregateFunction.None,
                 ForceRebuild = false
             };
-            var opJsonQuery = new Op_JsonQuery(null, "test", "measurement", "path/field", new DateTime(2023, 1, 1), new DateTime(2023, 1, 2), cacheResolution);
+            var opJsonQuery = new Op_JsonQuery("line", "test", "measurement", "path/field", new DateTime(2023, 1, 1), new DateTime(2023, 1, 2), cacheResolution);
             var kalaQuery = new KalaQuery();
             var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "FKalaTestData");
             var dataLayer = new DataLayer_Readable_Caching_V1(tempDir);
@@ -142,7 +142,7 @@ namespace FKala.Unittests.KalaQl
                 AggregateFunction = AggregateFunction.None,
                 ForceRebuild = false
             };
-            var opJsonQuery = new Op_JsonQuery(null, "test", "measurement", "path/field", new DateTime(2023, 1, 1), new DateTime(2023, 1, 2), cacheResolution);
+            var opJsonQuery = new Op_JsonQuery("line", "test", "measurement", "path/field", new DateTime(2023, 1, 1), new DateTime(2023, 1, 2), cacheResolution);
             var dataPoints = new List<DataPoint>
             {
                 new DataPoint
@@ -169,7 +169,7 @@ namespace FKala.Unittests.KalaQl
                 AggregateFunction = AggregateFunction.None,
                 ForceRebuild = false
             };
-            var opJsonQuery = new Op_JsonQuery(null, "test", "measurement", "path/field[0]", new DateTime(2023, 1, 1), new DateTime(2023, 1, 2), cacheResolution);
+            var opJsonQuery = new Op_JsonQuery("line", "test", "measurement", "path/field[0]", new DateTime(2023, 1, 1), new DateTime(2023, 1, 2), cacheResolution);
             var dataPoints = new List<DataPoint>
             {
                 new DataPoint
@@ -196,7 +196,7 @@ namespace FKala.Unittests.KalaQl
                 AggregateFunction = AggregateFunction.None,
                 ForceRebuild = false
             };
-            var opJsonQuery = new Op_JsonQuery(null, "test", "measurement", "path/field/subfield", new DateTime(2023, 1, 1), new DateTime(2023, 1, 2), cacheResolution);
+            var opJsonQuery = new Op_JsonQuery("line", "test", "measurement", "path/field/subfield", new DateTime(2023, 1, 1), new DateTime(2023, 1, 2), cacheResolution);
             var dataPoints = new List<DataPoint>
             {
                 new DataPoint
@@ -223,7 +223,7 @@ namespace FKala.Unittests.KalaQl
                 AggregateFunction = AggregateFunction.None,
                 ForceRebuild = false
             };
-            var opJsonQuery = new Op_JsonQuery(null, "test", "measurement", "path/field", new DateTime(2023, 1, 1), new DateTime(2023, 1, 2), cacheResolution);
+            var opJsonQuery = new Op_JsonQuery("line", "test", "measurement", "path/field", new DateTime(2023, 1, 1), new DateTime(2023, 1, 2), cacheResolution);
             var dataPoints = new List<DataPoint>
             {
                 new DataPoint

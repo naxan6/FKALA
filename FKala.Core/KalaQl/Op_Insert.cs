@@ -15,7 +15,7 @@ namespace FKala.Core.KalaQl
         public string TargetMeasure { get; }
 
 
-        public Op_Insert(string? line, string name, string inputDataSet, string targetMeasure) : base(line)
+        public Op_Insert(string line, string name, string inputDataSet, string targetMeasure) : base(line)
         {
             Name = name;
             InputDataSetName = inputDataSet;

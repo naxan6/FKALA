@@ -20,7 +20,7 @@ namespace FKala.Unittests.KalaQl
             string viewName = "viewName";
 
             // Act
-            var opMatView = new Op_MatView(null, name, inputDataSet, viewName);
+            var opMatView = new Op_MatView("line", name, inputDataSet, viewName);
 
             // Assert
             Assert.AreEqual(name, opMatView.Name);
@@ -32,7 +32,7 @@ namespace FKala.Unittests.KalaQl
         public void Op_MatView_ToLine_ReturnsCorrectFormat()
         {
             // Arrange
-            var opMatView = new Op_MatView(null, "result", "inputDataSet", "viewName");
+            var opMatView = new Op_MatView("line", "result", "inputDataSet", "viewName");
 
             // Act
             var line = opMatView.ToLine();
@@ -45,7 +45,7 @@ namespace FKala.Unittests.KalaQl
         public void Op_MatView_Clone_ReturnsNewInstance()
         {
             // Arrange
-            var opMatView = new Op_MatView(null, "test", "inputDataSet", "viewName");
+            var opMatView = new Op_MatView("line", "test", "inputDataSet", "viewName");
 
             // Act
             var cloned = opMatView.Clone() as Op_MatView;
@@ -76,7 +76,7 @@ namespace FKala.Unittests.KalaQl
             };
             context.IntermediateDatasources.Add(inputDataSource);
 
-            var opMatView = new Op_MatView(null, "test", "inputDataSet", "viewName");
+            var opMatView = new Op_MatView("line", "test", "inputDataSet", "viewName");
 
             // Act
             var canExecute = opMatView.CanExecute(context);
@@ -93,7 +93,7 @@ namespace FKala.Unittests.KalaQl
             var tempDir = Path.Combine(Path.GetTempPath(), "FKalaTestData");
             var dataLayer = new DataLayer_Readable_Caching_V1(tempDir);
             var context = new KalaQlContext(kalaQuery, dataLayer);
-            var opMatView = new Op_MatView(null, "test", "inputDataSet", "viewName");
+            var opMatView = new Op_MatView("line", "test", "inputDataSet", "viewName");
 
             // Act
             var canExecute = opMatView.CanExecute(context);
@@ -106,7 +106,7 @@ namespace FKala.Unittests.KalaQl
         public void Op_MatView_GetInputNames_ShouldReturnInputDataSetName()
         {
             // Arrange
-            var opMatView = new Op_MatView(null, "test", "inputDataSet", "viewName");
+            var opMatView = new Op_MatView("line", "test", "inputDataSet", "viewName");
 
             // Act
             var inputNames = opMatView.GetInputNames();

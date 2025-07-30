@@ -12,7 +12,7 @@ namespace FKala.Core.KalaQl
         public int Limit { get; private set; }
         public override string Name => "_NONE_PUBLISH";
 
-        public Op_Publish(string? line, List<string> namesToPublish, PublishMode mode) : base(line)
+        public Op_Publish(string line, List<string> namesToPublish, PublishMode mode) : base(line)
         {
             this.NamesToPublish = namesToPublish;
             this.PublishMode = mode;
@@ -24,7 +24,7 @@ namespace FKala.Core.KalaQl
             return NamesToPublish.All(name => context.IntermediateDatasources.Any(x => x.Name == name));
         }
 
-        public async IAsyncEnumerable<Dictionary<string, object?>> ExecuteStreaming(KalaQlContext context)
+        public IEnumerable<Dictionary<string, object?>> ExecuteStreaming(KalaQlContext context)
         {
             var resultsets = context.IntermediateDatasources
             .Where(x => NamesToPublish.Any(ntp => ntp == x.Name))
@@ -38,7 +38,7 @@ namespace FKala.Core.KalaQl
                 receivedDatapoint.Add(key, false);
             }            
             int count = 0;
-            await foreach (var syncedResult in synced.AsAsyncEnumerable())
+            foreach (var syncedResult in synced)
             {
                 if (count++ >= Limit) // limit result to 50000 datapoints
                 {
@@ -95,7 +95,7 @@ namespace FKala.Core.KalaQl
             {
                 context.Result = new KalaResult()
                 {
-                    StreamResult = ExecuteStreaming(context)
+                    StreamResult = ExecuteStreaming(context)!
                 };
                 hasExecuted = true;
                 
@@ -109,7 +109,7 @@ namespace FKala.Core.KalaQl
                 {
                     receivedDatapoint.Add(key, false);
                 }
-                List<Dictionary<string, object?>> resultRows = new List<Dictionary<string, object?>>();
+                List<Dictionary<string, object>> resultRows = new List<Dictionary<string, object>>();
                 int count = 0;
                 foreach (var syncedResult in synced)
                 {
@@ -117,7 +117,7 @@ namespace FKala.Core.KalaQl
                     {
                         break;
                     };
-                    Dictionary<string, object?> row = new Dictionary<string, object?>();
+                    Dictionary<string, object> row = new Dictionary<string, object>();
                     
                     foreach (var item in syncedResult)
                     {
@@ -129,7 +129,7 @@ namespace FKala.Core.KalaQl
                         }
                         else
                         {
-                            row[item.Result.Name] = item.DataPoint.ValueText;
+                            row[item.Result.Name] = item.DataPoint.ValueText!;
                         }
                         if (row[item.Result.Name] != null)
                         {
@@ -140,7 +140,7 @@ namespace FKala.Core.KalaQl
                     {
                         if (!receivedDatapoint[key])
                         {
-                            row[key] = null;
+                            row[key] = "<NULL>";
                             receivedDatapoint[key] = false;
                         }
                         
@@ -170,7 +170,7 @@ namespace FKala.Core.KalaQl
 
         public override IKalaQlOperation Clone()
         {
-            return new Op_Publish(null, NamesToPublish, PublishMode);
+            return new Op_Publish(base.Line, NamesToPublish, PublishMode);
         }
 
         public override string ToLine()

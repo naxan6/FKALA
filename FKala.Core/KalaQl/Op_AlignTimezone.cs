@@ -9,7 +9,7 @@ namespace FKala.Core.KalaQl
 
         public override string Name => "_NONE_TZ";
 
-        public Op_AlignTimezone(string? line, string timezone) : base(line)
+        public Op_AlignTimezone(string line, string timezone) : base(line)
         {
 
             this.TzId = timezone;            

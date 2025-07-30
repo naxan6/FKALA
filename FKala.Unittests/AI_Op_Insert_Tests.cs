@@ -47,7 +47,7 @@ namespace FKala.Unittests
             };
             context.IntermediateDatasources.Add(inputData);
             
-            var opInsert = new Op_Insert(null, "test", "existingInput", "testMeasure");
+            var opInsert = new Op_Insert("line", "test", "existingInput", "testMeasure");
 
             // Act
             bool canExecute = opInsert.CanExecute(context);
@@ -64,7 +64,7 @@ namespace FKala.Unittests
             var mockDataLayer = new Mock<IDataLayer>();
             var kalaQuery = new KalaQuery();
             var context = new KalaQlContext(kalaQuery, mockDataLayer.Object);
-            var opInsert = new Op_Insert(null, "test", "nonExistingInput", "testMeasure");
+            var opInsert = new Op_Insert("line", "test", "nonExistingInput", "testMeasure");
 
             // Act
             bool canExecute = opInsert.CanExecute(context);
@@ -78,7 +78,7 @@ namespace FKala.Unittests
         public void Op_Insert_GetInputNames_ReturnsCorrectInput()
         {
             // Arrange
-            var opInsert = new Op_Insert(null, "test", "testInput", "testMeasure");
+            var opInsert = new Op_Insert("line", "test", "testInput", "testMeasure");
 
             // Act
             var inputNames = opInsert.GetInputNames();
@@ -95,7 +95,7 @@ namespace FKala.Unittests
             var original = new Op_Insert("test line", "testName", "testInput", "testMeasure");
 
             // Act
-            var cloned = original.Clone() as Op_Insert;
+            var cloned = (Op_Insert) original.Clone();
 
             // Assert
             Assert.AreNotSame(original, cloned);
@@ -109,7 +109,7 @@ namespace FKala.Unittests
         public void Op_Insert_ToLine_ReturnsCorrectFormat()
         {
             // Arrange
-            var opInsert = new Op_Insert(null, "testName", "testInput", "testMeasure");
+            var opInsert = new Op_Insert("line", "testName", "testInput", "testMeasure");
 
             // Act
             string result = opInsert.ToLine();

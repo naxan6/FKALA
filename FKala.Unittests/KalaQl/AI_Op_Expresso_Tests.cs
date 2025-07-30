@@ -19,7 +19,7 @@ namespace FKala.Unittests.KalaQl
             string expresso = "input1.Value + input2.Value";
 
             // Act
-            var opExpresso = new Op_Expresso(null, name, expresso);
+            var opExpresso = new Op_Expresso("line", name, expresso);
 
             // Assert
             Assert.AreEqual(name, opExpresso.Name);
@@ -31,7 +31,7 @@ namespace FKala.Unittests.KalaQl
         public void Op_Expresso_ToLine_ReturnsCorrectFormat()
         {
             // Arrange
-            var opExpresso = new Op_Expresso(null, "result", "input1.Value * 2");
+            var opExpresso = new Op_Expresso("line", "result", "input1.Value * 2");
 
             // Act
             var line = opExpresso.ToLine();
@@ -44,7 +44,7 @@ namespace FKala.Unittests.KalaQl
         public void Op_Expresso_Clone_ReturnsNewInstance()
         {
             // Arrange
-            var opExpresso = new Op_Expresso(null, "test", "input.Value");
+            var opExpresso = new Op_Expresso("line", "test", "input.Value");
 
             // Act
             var cloned = opExpresso.Clone() as Op_Expresso;
@@ -60,7 +60,7 @@ namespace FKala.Unittests.KalaQl
         public void Op_Expresso_NameProperty_IsCorrectlySet()
         {
             // Arrange & Act
-            var opExpresso = new Op_Expresso(null, "testName", "input.Value");
+            var opExpresso = new Op_Expresso("line", "testName", "input.Value");
 
             // Assert
             Assert.AreEqual("testName", opExpresso.Name);
@@ -71,7 +71,7 @@ namespace FKala.Unittests.KalaQl
         {
             // Arrange & Act
             string expression = "input.Value + 100";
-            var opExpresso = new Op_Expresso(null, "test", expression);
+            var opExpresso = new Op_Expresso("line", "test", expression);
 
             // Assert
             Assert.AreEqual(expression, opExpresso.Expresso);
@@ -95,7 +95,7 @@ namespace FKala.Unittests.KalaQl
             };
             context.IntermediateDatasources.Add(inputDataSource);
 
-            var opExpresso = new Op_Expresso(null, "result", "input1.Value * 2");
+            var opExpresso = new Op_Expresso("line", "result", "input1.Value * 2");
 
             // Act
             opExpresso.Execute(context);
@@ -123,7 +123,7 @@ namespace FKala.Unittests.KalaQl
             };
             context.IntermediateDatasources.Add(inputDataSource);
 
-            var opExpresso = new Op_Expresso(null, "result", "input1.Value * 2");
+            var opExpresso = new Op_Expresso("line", "result", "input1.Value * 2");
             var dataSources = new List<ResultPromise> { inputDataSource };
 
             // Act
@@ -152,7 +152,7 @@ namespace FKala.Unittests.KalaQl
             };
             context.IntermediateDatasources.Add(inputDataSource);
 
-            var opExpresso = new Op_Expresso(null, "result", "skip");
+            var opExpresso = new Op_Expresso("line", "result", "skip");
 
             // Act
             var results = opExpresso.ExecuteInternal(context, new List<ResultPromise> { inputDataSource }).ToList();
@@ -179,7 +179,7 @@ namespace FKala.Unittests.KalaQl
             };
             context.IntermediateDatasources.Add(inputDataSource);
 
-            var opExpresso = new Op_Expresso(null, "result", "input1.Value * 2");
+            var opExpresso = new Op_Expresso("line", "result", "input1.Value * 2");
 
             // Act
             var canExecute = opExpresso.CanExecute(context);
@@ -196,7 +196,7 @@ namespace FKala.Unittests.KalaQl
             var tempDir = Path.Combine(Path.GetTempPath(), "FKalaTestData");
             var dataLayer = new DataLayer_Readable_Caching_V1(tempDir);
             var context = new KalaQlContext(kalaQuery, dataLayer);
-            var opExpresso = new Op_Expresso(null, "result", "input1.Value * 2");
+            var opExpresso = new Op_Expresso("line", "result", "input1.Value * 2");
 
             // Act
             var canExecute = opExpresso.CanExecute(context);

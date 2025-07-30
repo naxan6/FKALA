@@ -3,20 +3,8 @@ using FKala.Core;
 using FKala.Core.KalaQl;
 using FKala.Core.KalaQl.Windowing;
 using FKala.Core.Model;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using FKala.Core.Logic;
 using FluentAssertions.Execution;
-using System.Diagnostics;
-using System.Diagnostics.Metrics;
-using System.Runtime.CompilerServices;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using FKala.Core.Migrations.Influx;
-using FKala.Core.Migration;
-using Microsoft.VisualStudio.TestPlatform.Utilities;
 
 namespace FKala.Unittests
 {
@@ -34,7 +22,7 @@ namespace FKala.Unittests
             DataLayer_Readable_Caching_V1 dl = new DataLayer_Readable_Caching_V1(@"./Testdata/UTC_CET_CEST/");
 
             var query = KalaQuery.Start()
-                .Add(new Op_Load(null, "overDst", "UTC_CET_CEST_Load",
+                .Add(new Op_Load("line", "overDst", "UTC_CET_CEST_Load",
                         new DateTime(2024, 03, 30, 0, 0, 0, DateTimeKind.Utc),
                         new DateTime(2024, 03, 31, 23, 0, 0, DateTimeKind.Utc),
                     new CacheResolution()
@@ -44,7 +32,7 @@ namespace FKala.Unittests
                         ForceRebuild = true
                     }
                 ))
-                .Add(new Op_Publish(null, new List<string>() { "overDst" }, PublishMode.CombinedResultset));
+                .Add(new Op_Publish("line", new List<string>() { "overDst" }, PublishMode.CombinedResultset));
 
 
             var testResult = query.Execute(dl);
@@ -61,7 +49,7 @@ namespace FKala.Unittests
             DataLayer_Readable_Caching_V1 dl = new DataLayer_Readable_Caching_V1(@".\Testdata\UTC_CET_CEST\");
 
             var query = KalaQuery.Start()
-                .Add(new Op_Load(null, "overDst", "UTC_CET_CEST_Load",
+                .Add(new Op_Load("line", "overDst", "UTC_CET_CEST_Load",
                         new DateTime(2024, 03, 28, 23, 0, 0, DateTimeKind.Utc),
                         new DateTime(2024, 03, 30, 23, 0, 0, DateTimeKind.Utc),
                     new CacheResolution()
@@ -71,10 +59,10 @@ namespace FKala.Unittests
                         ForceRebuild = true
                     }
                 ))
-                .Add(new Op_AlignTimezone(null, "Europe/Berlin"))
-                .Add(new Op_Aggregate(null, "EndOfLocalDaily", "overDst", Window.Aligned_1Day, AggregateFunction.Last, true))
-                //.Add(new Op_Aggregate(null, "SumUp", "EndOfLocalDaily", Window.Infinite, AggregateFunction.Sum, true))
-                .Add(new Op_Publish(null, new List<string>() { "EndOfLocalDaily" }, PublishMode.CombinedResultset));
+                .Add(new Op_AlignTimezone("line", "Europe/Berlin"))
+                .Add(new Op_Aggregate("line", "EndOfLocalDaily", "overDst", Window.Aligned_1Day, AggregateFunction.Last, true))
+                //.Add(new Op_Aggregate("line", "SumUp", "EndOfLocalDaily", Window.Infinite, AggregateFunction.Sum, true))
+                .Add(new Op_Publish("line", new List<string>() { "EndOfLocalDaily" }, PublishMode.CombinedResultset));
 
 
             var testResult = query.Execute(dl);
@@ -103,7 +91,7 @@ namespace FKala.Unittests
             DataLayer_Readable_Caching_V1 dl = new DataLayer_Readable_Caching_V1(@".\Testdata\UTC_CET_CEST\");
 
             var query = KalaQuery.Start()
-                .Add(new Op_Load(null, "overDst", "UTC_CET_CEST_Load",
+                .Add(new Op_Load("line", "overDst", "UTC_CET_CEST_Load",
                         new DateTime(2024, 03, 29, 0, 0, 0, DateTimeKind.Utc),
                         new DateTime(2024, 03, 31, 22, 00, 00, DateTimeKind.Utc),
                     new CacheResolution()
@@ -113,10 +101,10 @@ namespace FKala.Unittests
                         ForceRebuild = true
                     }
                 ))
-                .Add(new Op_AlignTimezone(null, "Europe/Berlin"))
-                .Add(new Op_Aggregate(null, "EndOfLocalDaily", "overDst", Window.Aligned_1Day, AggregateFunction.Last, true))
-                .Add(new Op_Aggregate(null, "SumUp", "EndOfLocalDaily", Window.Infinite, AggregateFunction.Sum, true))
-                .Add(new Op_Publish(null, new List<string>() { "EndOfLocalDaily" }, PublishMode.CombinedResultset));
+                .Add(new Op_AlignTimezone("line", "Europe/Berlin"))
+                .Add(new Op_Aggregate("line", "EndOfLocalDaily", "overDst", Window.Aligned_1Day, AggregateFunction.Last, true))
+                .Add(new Op_Aggregate("line", "SumUp", "EndOfLocalDaily", Window.Infinite, AggregateFunction.Sum, true))
+                .Add(new Op_Publish("line", new List<string>() { "EndOfLocalDaily" }, PublishMode.CombinedResultset));
 
 
             var testResult = query.Execute(dl);

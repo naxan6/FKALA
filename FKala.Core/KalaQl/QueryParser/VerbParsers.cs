@@ -626,7 +626,7 @@ namespace FKala.Core.KalaQl.QueryParser
             }
             else
             {
-                return value.ToString();
+                return value.ToString()!;
             }
         }
     }

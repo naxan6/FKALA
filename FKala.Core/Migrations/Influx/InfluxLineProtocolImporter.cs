@@ -30,7 +30,7 @@ namespace FKala.Core.Migration
         StringBuilder sb = new StringBuilder();
 
 #pragma warning disable CS1998 // Bei der asynchronen Methode fehlen "await"-Operatoren. Die Methode wird synchron ausgeführt.
-        public async IAsyncEnumerable<Dictionary<string, object?>> Import(string stringParams)
+        public IEnumerable<Dictionary<string, object?>> Import(string stringParams)
 #pragma warning restore CS1998 // Bei der asynchronen Methode fehlen "await"-Operatoren. Die Methode wird synchron ausgeführt.
         {
             var parts = stringParams.Split(";");

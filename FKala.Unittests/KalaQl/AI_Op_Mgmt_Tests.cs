@@ -43,7 +43,7 @@ namespace FKala.Unittests.KalaQl
         }
 
         [TestMethod]
-        public async Task Op_Mgmt_Execute_LoadMeasures_ReturnsExpectedResult()
+        public void Op_Mgmt_Execute_LoadMeasures_ReturnsExpectedResult()
         {
             // Arrange
             var kalaQuery = new KalaQuery();
@@ -62,7 +62,7 @@ namespace FKala.Unittests.KalaQl
         }
 
         [TestMethod]
-        public async Task Op_Mgmt_Execute_SortAllRaw_ReturnsExpectedResult()
+        public void Op_Mgmt_Execute_SortAllRaw_ReturnsExpectedResult()
         {
             // Arrange
             var kalaQuery = new KalaQuery();
@@ -81,7 +81,7 @@ namespace FKala.Unittests.KalaQl
         }
 
         [TestMethod]
-        public async Task Op_Mgmt_Execute_FsChk_ReturnsExpectedResult()
+        public void Op_Mgmt_Execute_FsChk_ReturnsExpectedResult()
         {
             // Arrange
             var kalaQuery = new KalaQuery();
@@ -100,7 +100,7 @@ namespace FKala.Unittests.KalaQl
         }
 
         [TestMethod]
-        public async Task Op_Mgmt_Execute_Copy_ReturnsExpectedResult()
+        public void Op_Mgmt_Execute_Copy_ReturnsExpectedResult()
         {
             // Arrange
             var kalaQuery = new KalaQuery();
@@ -119,7 +119,7 @@ namespace FKala.Unittests.KalaQl
         }
 
         [TestMethod]
-        public async Task Op_Mgmt_Execute_Rename_ReturnsExpectedResult()
+        public void Op_Mgmt_Execute_Rename_ReturnsExpectedResult()
         {
             // Arrange
             var kalaQuery = new KalaQuery();
@@ -138,7 +138,7 @@ namespace FKala.Unittests.KalaQl
         }
 
         [TestMethod]
-        public async Task Op_Mgmt_Execute_Blacklist_ReturnsExpectedResult()
+        public void Op_Mgmt_Execute_Blacklist_ReturnsExpectedResult()
         {
             // Arrange
             var kalaQuery = new KalaQuery();
@@ -157,7 +157,7 @@ namespace FKala.Unittests.KalaQl
         }
 
         [TestMethod]
-        public async Task Op_Mgmt_Execute_UnBlacklist_ReturnsExpectedResult()
+        public void Op_Mgmt_Execute_UnBlacklist_ReturnsExpectedResult()
         {
             // Arrange
             var kalaQuery = new KalaQuery();
@@ -176,7 +176,7 @@ namespace FKala.Unittests.KalaQl
         }
 
         [TestMethod]
-        public async Task Op_Mgmt_Execute_ImportInflux_ReturnsExpectedResult()
+        public void Op_Mgmt_Execute_ImportInflux_ReturnsExpectedResult()
         {
             // Arrange
             var kalaQuery = new KalaQuery();
@@ -195,7 +195,7 @@ namespace FKala.Unittests.KalaQl
         }
 
         [TestMethod]
-        public async Task Op_Mgmt_Execute_ImportMariaDbTstsfe_ReturnsExpectedResult()
+        public void Op_Mgmt_Execute_ImportMariaDbTstsfe_ReturnsExpectedResult()
         {
             // Arrange
             var kalaQuery = new KalaQuery();
@@ -214,7 +214,7 @@ namespace FKala.Unittests.KalaQl
         }
 
         [TestMethod]
-        public async Task Op_Mgmt_Execute_BenchmarkIo_ReturnsExpectedResult()
+        public void Op_Mgmt_Execute_BenchmarkIo_ReturnsExpectedResult()
         {
             // Arrange
             var kalaQuery = new KalaQuery();

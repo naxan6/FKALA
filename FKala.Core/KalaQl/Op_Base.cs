@@ -13,11 +13,10 @@ namespace FKala.Core.KalaQl
     public abstract class Op_Base : IKalaQlOperation
     {
         public bool hasExecuted { get; protected set; }
-        public string? Line { get; protected set; }
+        public string Line { get; protected set; }
         public virtual string Name { get; } = string.Empty;
-
-        public Op_Base() { }
-        public Op_Base(string? line)
+        
+        public Op_Base(string line)
         {
             this.Line = line;
         }

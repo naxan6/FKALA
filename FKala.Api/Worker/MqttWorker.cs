@@ -12,10 +12,10 @@ namespace FKala.Api.Worker;
 public class MqttWorker : IHostedService, IDisposable
 {
 
-    private IMqttClient mqttClient;
-    private IMqttClientOptions mqttOptions;
+    private IMqttClient? mqttClient;
+    private IMqttClientOptions? mqttOptions;
     private readonly MqttSettings settings;
-    private readonly IDataLayer fkalaDataLayer;
+    private readonly IDataLayer? fkalaDataLayer;
 
     public MqttWorker(IOptions<MqttSettings> settings, IDataLayer fkalaDataLayer)
     {
@@ -81,13 +81,13 @@ public class MqttWorker : IHostedService, IDisposable
                 if (!this.IsTopicBlacklisted(topic))
                 {
                     var fkalaData = $"{topic.Replace(' ', '_')} {DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {payload}";
-                    this.fkalaDataLayer.Insert(fkalaData);
+                    this.fkalaDataLayer!.Insert(fkalaData);
                     // Console.WriteLine($"Received message from topic '{topic}': {payload}");
                 }
                     
             });
 
-            await mqttClient.ConnectAsync(mqttOptions, cancellationToken);
+            await mqttClient!.ConnectAsync(mqttOptions, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -101,7 +101,7 @@ public class MqttWorker : IHostedService, IDisposable
 
         if (mqttClient != null) 
         {
-            await mqttClient.DisconnectAsync(cancellationToken);
+            await mqttClient!.DisconnectAsync(cancellationToken);
         }
     }
 

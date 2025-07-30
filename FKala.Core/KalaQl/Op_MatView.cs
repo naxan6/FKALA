@@ -17,7 +17,7 @@ namespace FKala.Core.KalaQl
         public string ViewName { get; }
 
 
-        public Op_MatView(string? line, string name, string inputDataSet, string viewName) : base(line)
+        public Op_MatView(string line, string name, string inputDataSet, string viewName) : base(line)
         {
             Name = name;
             InputDataSetName = inputDataSet;
@@ -84,7 +84,7 @@ namespace FKala.Core.KalaQl
                 Console.WriteLine("MaterializeAvail");
             }
             var transInputs = GetAllIntermediateDatasourcesTransitive(context);
-            Op_Load timeFilter = transInputs.First(ti => ti is Op_Load) as Op_Load;
+            Op_Load timeFilter = (Op_Load)transInputs.First(ti => ti is Op_Load);
             return ReadFromMaterialization(context, timeFilter.StartTime, timeFilter.EndTime); // - but timefiltered!! hack: use timefilter from first found Op_Load
         }
 
@@ -94,7 +94,7 @@ namespace FKala.Core.KalaQl
                 .Add(new Op_Load("noline", "matq", ViewName, startTime, endTime, CacheResolutionPredefined.NoCache, false))
                 .Add(new Op_Publish("noline", new List<string>() { "matq" }, PublishMode.MultipleResultsets));
             KalaResult matRes = matQ.Execute(context.DataLayer);
-            return matRes.ResultSets.First().Resultset;
+            return matRes.ResultSets!.First().Resultset;
         }
 
         private bool MaterializationIsAvailable(KalaQlContext context)
@@ -111,7 +111,7 @@ namespace FKala.Core.KalaQl
                 var myTrans = trans.Clone();
                 if (myTrans is Op_Load)
                 {
-                    var load = (myTrans as Op_Load);
+                    var load = (Op_Load)myTrans;
                     load.StartTime = DateTime.MinValue;
                     load.EndTime = DateTime.MaxValue;
                 }
@@ -125,7 +125,7 @@ namespace FKala.Core.KalaQl
             
 
             KalaResult matRes = q.Execute(context.DataLayer);
-            var enumerable = matRes.ResultSets.First().Resultset;
+            var enumerable = matRes.ResultSets!.First().Resultset;
 
             //var enumerable = input.ResultsetFactory();
             var dataPointsEnumerator = enumerable.GetEnumerator();
@@ -151,7 +151,7 @@ namespace FKala.Core.KalaQl
 
         public override IKalaQlOperation Clone()
         {
-            return new Op_MatView(null, Name, InputDataSetName, ViewName); 
+            return new Op_MatView(base.Line, Name, InputDataSetName, ViewName); 
         }
 
         public override string ToLine()

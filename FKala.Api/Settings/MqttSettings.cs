@@ -5,7 +5,7 @@ namespace FKala.Api.Settings
     public class MqttSettings {
         public const string ConfigurationSection = "Mqtt";
 
-        public string Url { get; set; }
+        public string? Url { get; set; }
 
         public int? Port { get; set; }
         

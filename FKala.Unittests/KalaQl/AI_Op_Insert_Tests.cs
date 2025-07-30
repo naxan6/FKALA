@@ -20,7 +20,7 @@ namespace FKala.Unittests.KalaQl
             string targetMeasure = "targetMeasure";
 
             // Act
-            var opInsert = new Op_Insert(null, name, inputDataSet, targetMeasure);
+            var opInsert = new Op_Insert("line", name, inputDataSet, targetMeasure);
 
             // Assert
             Assert.AreEqual(name, opInsert.Name);
@@ -32,7 +32,7 @@ namespace FKala.Unittests.KalaQl
         public void Op_Insert_ToLine_ReturnsCorrectFormat()
         {
             // Arrange
-            var opInsert = new Op_Insert(null, "result", "input1", "targetMeasure");
+            var opInsert = new Op_Insert("line", "result", "input1", "targetMeasure");
 
             // Act
             var line = opInsert.ToLine();
@@ -45,7 +45,7 @@ namespace FKala.Unittests.KalaQl
         public void Op_Insert_Clone_ReturnsNewInstance()
         {
             // Arrange
-            var opInsert = new Op_Insert(null, "test", "input1", "targetMeasure");
+            var opInsert = new Op_Insert("line", "test", "input1", "targetMeasure");
 
             // Act
             var cloned = opInsert.Clone() as Op_Insert;
@@ -62,7 +62,7 @@ namespace FKala.Unittests.KalaQl
         public void Op_Insert_GetInputNames_ReturnsCorrectInputName()
         {
             // Arrange
-            var opInsert = new Op_Insert(null, "test", "input1", "targetMeasure");
+            var opInsert = new Op_Insert("line", "test", "input1", "targetMeasure");
 
             // Act
             var inputNames = opInsert.GetInputNames();
@@ -90,7 +90,7 @@ namespace FKala.Unittests.KalaQl
             };
             context.IntermediateDatasources.Add(inputDataSource);
 
-            var opInsert = new Op_Insert(null, "result", "input1", "targetMeasure");
+            var opInsert = new Op_Insert("line", "result", "input1", "targetMeasure");
 
             // Act
             var canExecute = opInsert.CanExecute(context);
@@ -107,7 +107,7 @@ namespace FKala.Unittests.KalaQl
             var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "FKalaTestData");
             var dataLayer = new DataLayer_Readable_Caching_V1(tempDir);
             var context = new KalaQlContext(kalaQuery, dataLayer);
-            var opInsert = new Op_Insert(null, "result", "missingInput", "targetMeasure");
+            var opInsert = new Op_Insert("line", "result", "missingInput", "targetMeasure");
 
             // Act
             var canExecute = opInsert.CanExecute(context);
@@ -135,7 +135,7 @@ namespace FKala.Unittests.KalaQl
             };
             context.IntermediateDatasources.Add(inputDataSource);
 
-            var opInsert = new Op_Insert(null, "result", "input1", "targetMeasure");
+            var opInsert = new Op_Insert("line", "result", "input1", "targetMeasure");
 
             // Act
             opInsert.Execute(context);
@@ -164,7 +164,7 @@ namespace FKala.Unittests.KalaQl
             };
             context.IntermediateDatasources.Add(inputDataSource);
 
-            var opInsert = new Op_Insert(null, "result", "input1", "targetMeasure");
+            var opInsert = new Op_Insert("line", "result", "input1", "targetMeasure");
 
             // Act
             opInsert.Execute(context);

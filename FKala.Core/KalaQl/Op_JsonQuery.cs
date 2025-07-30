@@ -23,7 +23,7 @@ namespace FKala.Core.KalaQl
         public string FieldPath { get; }
         public bool DontInvalidateCache_ForUseWhileCacheRebuild { get; set; } = false;
 
-        public Op_JsonQuery(string? line, string name, string measurement, string fieldPath, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly = false) : base(line)
+        public Op_JsonQuery(string line, string name, string measurement, string fieldPath, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly = false) : base(line)
         {
             this.Name = name;
             this.Measurement = measurement;
@@ -65,7 +65,7 @@ namespace FKala.Core.KalaQl
             this.hasExecuted = true;
         }
 
-        public IEnumerable<DataPoint> ReadJson(IEnumerable<DataPoint> jsonEnum, string[]? pathParts)
+        public IEnumerable<DataPoint> ReadJson(IEnumerable<DataPoint> jsonEnum, string[] pathParts)
         {
             int index = -1;
             if (pathParts[pathParts.Length - 1].EndsWith("]"))
@@ -74,28 +74,28 @@ namespace FKala.Core.KalaQl
                 pathParts[pathParts.Length - 1] = ps[0];
                 index = int.Parse(ps[1].TrimEnd(']'));
             }
-            foreach (var item in jsonEnum)
+            foreach (DataPoint item in jsonEnum)
             {
-                var jsonDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(item.ValueText);
+                var jsonDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(item.ValueText!);
                 foreach (var pathPart in pathParts)
                 {
-                    if (jsonDict.ContainsKey(pathPart))
+                    if (jsonDict!.ContainsKey(pathPart))
                     {
                         object jsonDictEntry = jsonDict[pathPart];
                         if (jsonDictEntry is JToken)
                         {
-                            if ((jsonDictEntry as JToken).Type == JTokenType.Object)
+                            if ((jsonDictEntry as JToken)!.Type == JTokenType.Object)
                             {
-                                jsonDict = (jsonDictEntry as JObject).ToObject<Dictionary<string, object>>();
+                                jsonDict = (jsonDictEntry as JObject)!.ToObject<Dictionary<string, object>>();
                             }
-                            else if ((jsonDictEntry as JToken).Type == JTokenType.Array)
+                            else if ((jsonDictEntry as JToken)!.Type == JTokenType.Array)
                             {
                                 var jarray = (jsonDictEntry as JArray);
                                 var dp = Pools.DataPoint.Get();
                                 dp.StartTime = item.StartTime;
                                 dp.EndTime = item.EndTime;
                                 dp.Source = item.Source;
-                                dp.ValueText = jarray.ToList()[index].ToString();
+                                dp.ValueText = jarray!.ToList()[index].ToString();
                                 yield return dp;
                             }
                         }
@@ -132,7 +132,7 @@ namespace FKala.Core.KalaQl
 
         public override IKalaQlOperation Clone()
         {
-            return new Op_JsonQuery(null, Name, Measurement, FieldPath, StartTime, EndTime, CacheResolution, NewestOnly);
+            return new Op_JsonQuery(base.Line, Name, Measurement, FieldPath, StartTime, EndTime, CacheResolution, NewestOnly);
         }
 
         public override string ToLine()

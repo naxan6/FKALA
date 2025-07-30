@@ -31,7 +31,7 @@ namespace FKala.Api.Controller
 
         // GET api/string
         [HttpGet]
-        public IAsyncEnumerable<Dictionary<string, object?>> QueryGet([FromQuery] string input)
+        public IAsyncEnumerable<Dictionary<string, object>> QueryGet([FromQuery] string input)
         {
             if (string.IsNullOrEmpty(input))
             {
@@ -48,7 +48,7 @@ namespace FKala.Api.Controller
         [HttpPost]
         [Consumes("text/plain")]
         //[SwaggerRequestBody("Weather forecast data", Required = true)]
-        public async IAsyncEnumerable<Dictionary<string, object?>>  QueryPost([FromBody] string input)
+        public async IAsyncEnumerable<Dictionary<string, object>>  QueryPost([FromBody] string input)
         {
             if (string.IsNullOrEmpty(input))
             {
@@ -72,7 +72,7 @@ namespace FKala.Api.Controller
 
         }
 
-        private IAsyncEnumerable<Dictionary<string, object?>> DoQuery(string query)
+        private IAsyncEnumerable<Dictionary<string, object>> DoQuery(string query)
         {
             try
             {
@@ -103,40 +103,40 @@ namespace FKala.Api.Controller
                 }
                 else if (result?.StreamResult != null)
                 {
-                    return result.StreamResult;
+                    return result.StreamResult.AsAsyncEnumerable();
                 }
                 else if (result?.ResultTable != null)
                 {
                     return result.ResultTable.AsAsyncEnumerable();
                 }
-                return new List<Dictionary<string, object?>>().AsAsyncEnumerable();
+                return new List<Dictionary<string, object>>().AsAsyncEnumerable();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw;
-                Logger.LogError(ex, "Exception");
-                List<string> exres = new List<string>();
-                exres.Add("ex: " + ex.Message);
-                exres.Add("stack: " + $"{ex.StackTrace}");
-                Exception? ie = ex.InnerException;
-                while (ie != null)
-                {
-                    exres.Add("iex " + ex.Message);
-                    exres.Add("iexstack: " + $"{ex.StackTrace}");
-                    ie = ex.InnerException;
-                }
-                var retRow = new Dictionary<string, object?>
-                        {
-                            { "query", $"{query}" },
-                            { "status", $"exception" },
-                            { "msg", $"{String.Join(", ", exres)}" }
+                // Logger.LogError(ex, "Exception");
+                // List<string> exres = new List<string>();
+                // exres.Add("ex: " + ex.Message);
+                // exres.Add("stack: " + $"{ex.StackTrace}");
+                // Exception? ie = ex.InnerException;
+                // while (ie != null)
+                // {
+                //     exres.Add("iex " + ex.Message);
+                //     exres.Add("iexstack: " + $"{ex.StackTrace}");
+                //     ie = ex.InnerException;
+                // }
+                // var retRow = new Dictionary<string, object?>
+                //         {
+                //             { "query", $"{query}" },
+                //             { "status", $"exception" },
+                //             { "msg", $"{String.Join(", ", exres)}" }
 
-                        };
-                var ret = new List<Dictionary<string, object?>>
-                {
-                    retRow
-                };
-                return ret.AsAsyncEnumerable();
+                //         };
+                // var ret = new List<Dictionary<string, object?>>
+                // {
+                //     retRow
+                // };
+                // return ret.AsAsyncEnumerable();
             }
         }
 

@@ -21,23 +21,23 @@ namespace FKala.Core.Interfaces
         void Insert(string kalaLinedata, string? source = null);
         List<int> LoadAvailableYears(string measurement);
         List<string> LoadMeasurementList();
-        IEnumerable<DataPoint?> LoadNewestDatapoint(string measurement, KalaQl.KalaQlContext context);
+        IEnumerable<DataPoint?> LoadNewestDatapoint(string measurement);
         BufferedWriterService BufferedWriterSvc { get; }
 
-        IAsyncEnumerable<Dictionary<string, object>> CopyFilesFromMeasurementToMeasurement(string measurement, string targetmeasurement, KalaQlContext context);
-        IAsyncEnumerable<Dictionary<string, object>> MoveMeasurement(string measurementOld, string measurementNew, KalaQlContext context);
-        IAsyncEnumerable<Dictionary<string, object>> Cleanup(string measurement, KalaQlContext context);
+        IEnumerable<Dictionary<string, object>> CopyFilesFromMeasurementToMeasurement(string measurement, string targetmeasurement, KalaQlContext context);
+        IEnumerable<Dictionary<string, object>> MoveMeasurement(string measurementOld, string measurementNew, KalaQlContext context);
+        IEnumerable<Dictionary<string, object>> Cleanup(string measurement, KalaQlContext context);
         void Flush();
         void Flush(string filePath);
 
         int ReadBuffer { get; }
         int WriteBuffer { get; }
 
-        IAsyncEnumerable<Dictionary<string, object?>> Blacklist(string measurement);
-        IAsyncEnumerable<Dictionary<string, object?>> UnBlacklist(string measurement);
+        IEnumerable<Dictionary<string, object?>> Blacklist(string measurement);
+        IEnumerable<Dictionary<string, object?>> UnBlacklist(string measurement);
         bool IsBlacklisted(string filePath, bool checkOnDisk);
         void InsertError(string err);
-        IAsyncEnumerable<Dictionary<string, object?>> SortRawFiles(string measurement, KalaQlContext context);
+        IEnumerable<Dictionary<string, object?>> SortRawFiles(string measurement, KalaQlContext context);
         string GetInsertTargetFilepath(string measurement, ReadOnlySpan<char> yyyy_MM_dd);
         bool DoesMeasurementExist(string name);
         void WriteMatViewFile(string viewName, List<string> lines);

@@ -34,7 +34,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddQuartz(q =>
 {
     // Sicherstellen, dass die DI Job Factory verwendet wird
-    q.UseMicrosoftDependencyInjectionJobFactory();
+    // The DI job factory is used by default. No extra call is needed.
+    // q.UseMicrosoftDependencyInjectionJobFactory();
 
     // MatViewRefreshJob registrieren
     var jobKey = new JobKey(nameof(MatViewRefreshJob));
@@ -62,8 +63,8 @@ builder.Logging.AddConsole();
 
 var storagePath = builder.Configuration["DataStorage"] ?? "C:\\fkala";
 
-var readBuffer = !string.IsNullOrEmpty(builder.Configuration["ReadBuffer"]) ? int.Parse(builder.Configuration["ReadBuffer"]) : 16384;
-var writeBuffer = !string.IsNullOrEmpty(builder.Configuration["WriteBuffer"]) ? int.Parse(builder.Configuration["WriteBuffer"]) : 32768;
+var readBuffer = !string.IsNullOrEmpty(builder.Configuration["ReadBuffer"]) ? int.Parse(builder.Configuration["ReadBuffer"] ?? "none") : 16384;
+var writeBuffer = !string.IsNullOrEmpty(builder.Configuration["WriteBuffer"]) ? int.Parse(builder.Configuration["WriteBuffer"]?? "none") : 32768;
 
 var dl = new DataLayer_Readable_Caching_V1(storagePath, readBuffer, writeBuffer);
 builder.Services.AddSingleton<IDataLayer>(dl);
