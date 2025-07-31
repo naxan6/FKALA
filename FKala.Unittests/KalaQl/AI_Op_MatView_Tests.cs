@@ -1,3 +1,4 @@
+using FKala.Core.DataLayer.Infrastructure;
 using FKala.Core.KalaQl;
 using FKala.Core.Model;
 using FKala.Core;
@@ -114,6 +115,65 @@ namespace FKala.Unittests.KalaQl
             // Assert
             Assert.AreEqual(1, inputNames.Count);
             Assert.AreEqual("inputDataSet", inputNames[0]);
+        }
+
+        [TestMethod]
+        public void Op_MatView_NameProperty_IsCorrectlySet()
+        {
+            // Arrange & Act
+            var opMatView = new Op_MatView("line", "testName", "input", "view");
+
+            // Assert
+            Assert.AreEqual("testName", opMatView.Name);
+        }
+
+        [TestMethod]
+        public void Op_MatView_InputDataSetNameProperty_IsCorrectlySet()
+        {
+            // Arrange & Act
+            var opMatView = new Op_MatView("line", "name", "inputDataSet", "view");
+
+            // Assert
+            Assert.AreEqual("inputDataSet", opMatView.InputDataSetName);
+        }
+
+        [TestMethod]
+        public void Op_MatView_ViewNameProperty_IsCorrectlySet()
+        {
+            // Arrange & Act
+            var opMatView = new Op_MatView("line", "name", "input", "viewName");
+
+            // Assert
+            Assert.AreEqual("viewName", opMatView.ViewName);
+        }
+		
+		[TestMethod]
+        public void Op_MatView_Execute_ShouldAddResultPromiseToContext()
+        {
+            // Arrange
+            var kalaQuery = new KalaQuery();
+            var tempDir = Path.Combine(Path.GetTempPath(), "FKalaTestData");
+            var dataLayer = new DataLayer_Readable_Caching_V1(tempDir);
+            var context = new KalaQlContext(kalaQuery, dataLayer);
+            
+            // Create input datasource
+            var inputDataSource = new ResultPromise
+            {
+                Name = "inputDataSet",
+                ResultsetFactory = () => new List<DataPoint>
+                {
+                    new DataPoint { Value = 10 }
+                }
+            };
+            context.IntermediateDatasources.Add(inputDataSource);
+
+            var opMatView = new Op_MatView("line", "resultName", "inputDataSet", "viewName");
+			
+			// Act
+            opMatView.Execute(context);
+			
+			// Assert - Check that the result was added to IntermediateDatasources
+			Assert.IsTrue(context.IntermediateDatasources.Any(ds => ds.Name == "resultName"));
         }
     }
 }
