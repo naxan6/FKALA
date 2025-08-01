@@ -37,6 +37,8 @@ Anschließend können die Abhängigkeiten mit folgendem Befehl installiert werde
 dotnet restore
 ```
 
+Für Docker-Installationen siehe [Docker-Konfiguration](docker-konfiguration.md).
+
 ## Erste Schritte
 
 1. Starten Sie den Server:
