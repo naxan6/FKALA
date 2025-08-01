@@ -48,4 +48,12 @@ The current approach includes:
 3. Integration tests ensuring components work together correctly
 4. Edge case testing for error conditions and boundary scenarios
 5. Use of DataFaker utility to generate realistic test data with configurable distributions
+
+## Test Coverage Findings (as of 2025-07-31)
+Based on code coverage analysis, several classes require additional unit tests:
+- Classes with 0% coverage: IEnumerableExtensions, Benchmarker, Msg, Fast, FileFromEndProcessor
+- Classes with very low coverage (<30%): Various KalaQl parser components and migration classes
+- Classes with medium-low coverage (<50%): Op_AlignTimezone, AlignTimezoneParser
+
+These findings should be addressed to improve system reliability.
 </content>

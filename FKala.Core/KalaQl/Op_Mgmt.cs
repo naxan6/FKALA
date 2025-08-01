@@ -6,6 +6,7 @@ using FKala.Core.Model;
 using FKala.Migrate.MariaDb;
 using System.Diagnostics.Metrics;
 using System.Runtime.Intrinsics.Arm;
+using System;
 
 namespace FKala.Core.KalaQl
 {
@@ -203,7 +204,6 @@ namespace FKala.Core.KalaQl
         }
 
         public IEnumerable<Dictionary<string, object?>> FsChk(KalaQlContext context)
-#pragma warning restore CS1998 // Bei der asynchronen Methode fehlen "await"-Operatoren. Die Methode wird synchron ausgeführt.
         {
             var measurements = context.DataLayer.LoadMeasurementList();
             List<string> chkResults = new List<string>();

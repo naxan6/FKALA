@@ -1,16 +1,16 @@
 Summary
-Generated on:;31.07.2025 - 19:37:13
+Generated on:;31.07.2025 - 20:04:15
 Parser:;Cobertura
 Assemblies:;1
 Classes:;78
 Files:;56
-Line coverage:;56.5%
-Covered lines:;2582
-Uncovered lines:;1987
+Line coverage:;57%
+Covered lines:;2608
+Uncovered lines:;1961
 Coverable lines:;4569
 Total lines:;7887
 
-FKala.Core;56.5%
+FKala.Core;57%
 
 FileSystemHelper;76.9%
 FKala.Core.DataLayer_Readable_Caching_V1;66.4%
@@ -24,13 +24,13 @@ FKala.Core.DataLayer.Infrastructure.BufferedWriter;93.1%
 FKala.Core.DataLayer.Infrastructure.BufferedWriterService;75.3%
 FKala.Core.DataLayer.Infrastructure.DatFileParser;85.1%
 FKala.Core.DataLayer.Infrastructure.DpPolicy;100%
-FKala.Core.DataLayer.Infrastructure.IEnumerableExtensions;0%
+FKala.Core.DataLayer.Infrastructure.IEnumerableExtensions;100%
 FKala.Core.DataLayer.Infrastructure.LockManager;100%
 FKala.Core.DataLayer.Infrastructure.Pools;100%
 FKala.Core.DataLayers.StorageAccess;48.9%
 FKala.Core.DataLayers.UnexpectedlyUnsortedException;33.3%
-FKala.Core.Helper.Benchmarker;0%
-FKala.Core.Helper.Msg;0%
+FKala.Core.Helper.Benchmarker;1.5%
+FKala.Core.Helper.Msg;100%
 FKala.Core.KalaQl.KalaQlContext;59%
 FKala.Core.KalaQl.KalaQuery;93.1%
 FKala.Core.KalaQl.KalaResult;100%
@@ -75,7 +75,7 @@ FKala.Core.KalaQl.ResultPromise;100%
 FKala.Core.KalaQl.Windowing.Window;58.1%
 FKala.Core.Logic.DatasetsCombiner2;95.3%
 FKala.Core.Logic.EnumerableHelpers;100%
-FKala.Core.Logic.Fast;0%
+FKala.Core.Logic.Fast;100%
 FKala.Core.Logic.FileFromEndProcessor;0%
 FKala.Core.Logic.KalaJson;100%
 FKala.Core.Logic.LastLineReader;92.1%

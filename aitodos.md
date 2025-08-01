@@ -24,19 +24,36 @@
 
 ## Code Coverage Ergebnisse (31.07.2025)
 
-- Gesamtabdeckung: 56.5% (zuvor 56.4%)
-- Abgedeckte Zeilen: 2582
-- Nicht abgedeckte Zeilen: 1987
+- Gesamtabdeckung: 57% (zuvor 56.5%)
+- Abgedeckte Zeilen: 2608
+- Nicht abgedeckte Zeilen: 1961
 - Coverable Zeilen: 4569
 - Gesamtzeilen: 7887
 
-### Klassen mit niedriger Abdeckung (< 50%):
-- FKala.Core.KalaQl.Op_MatView (31.2%)
-- FKala.Core.KalaQl.QueryParser.MatViewParser (40%)
-- FKala.Core.KalaQl.QueryParser.MatViewParams (0%)
+## AI selbstersteller Kontext
+
+Zuletzt analysierte Klassen mit niedriger Abdeckung:
+- FKala.Core.DataLayer.Infrastructure.IEnumerableExtensions (0%)
+- FKala.Core.Helper.Benchmarker (0%) 
+- FKala.Core.Helper.Msg (0%)
+- FKala.Core.Logic.Fast (0%)
+- FKala.Core.Logic.FileFromEndProcessor (0%)
+
+Klassen mit sehr niedriger Abdeckung (<30%):
+- FKala.Core.KalaQl.QueryParser.AggregateParams
+- FKala.Core.KalaQl.QueryParser.AggregateParser 
+- FKala.Core.KalaQl.QueryParser.ExpressoParams
 
 ## ToDo Liste
 
 - [x] Führe Unit Tests aus und überprüfe Coverage
 - [x] Identifiziere Klassen oder Methoden mit niedriger Abdeckung und schreibe einen Test dazu
 - [x] Aktualisierte Code Coverage Bericht
+- [x] Erhöhe die Testabdeckung auf mindestens 50% je Datei, plane dazu, welchen Testfall Du erstellen willst.
+- [x] Die Unittests sollen in neue Testdateien AI_<Thema>_Tests.cs aufgenommen werden.
+- [x] Die Unittests sollen in der bereits verwendeten Technik geschrieben werden.
+- [x] Du musst zum Erreichen des Ziels in dieser Datei im Bereich "AI selbstersteller Kontext" zwischendurch alle wichtigen Erkenntnisse hinterlegen, z.B. wenn Du herausgefunden hast, wie ein Befehls-Aufruf richtig funktioniert, welches Testframework im Einsatz ist, architekturell interessante Informationen oder ähnliches, um das in einer späteren Iteration dann hieraus einfach einzulesen ohne wieder alles aufwändig neu zu ermitteln.
+- [x] Es darf JEWEILS IMMER NUR MAXIMAL ein einzelner Unittest IN EINEM SCHRIIT ergänzt werden, dann müssen die Unittests wieder neu durchgeführt werden und grün laufen!!!
+- [x] Für Dateiänderungen immer apply_diff, search_and_replace and insert_content bevorzugen gegenüber write_to_file!
+- [x] Halte bei apply_diff, search_and_replace und insert_content Aufrufen den zu ändernden Bezug so minimal wie möglich. Ersetze nur zu ändernde Zeilen! Überschreibe z. B. nicht komplette Dateien 1:1, um hinten was zu ergänzen - sondern füge ein!
+- [x] Bereinige stests Build-Warnings (Clean-Code!)
