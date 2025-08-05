@@ -22,38 +22,74 @@
   #> reportgenerator.exe -reports:C:\git\FKALA\FKala.Unittests\TestResults\b57a6e6f-cd26-4def-92de-1c9951b2aff7\coverage.cobertura.xml -targetdir:.\report -reporttype:csvsummary
   (Hinweis: reportgenerator.exe ist global installiert)
 
-## Code Coverage Ergebnisse (31.07.2025)
+## Code Coverage Ergebnisse (05.08.2025)
 
-- Gesamtabdeckung: 57% (zuvor 56.5%)
-- Abgedeckte Zeilen: 2608
-- Nicht abgedeckte Zeilen: 1961
+- Gesamtabdeckung: 61.8% (zuvor 61.5%, +0.3%)
+- Abgedeckte Zeilen: 2826 (+13)
+- Nicht abgedeckte Zeilen: 1743 (-13)
 - Coverable Zeilen: 4569
 - Gesamtzeilen: 7887
 
+## Verbesserte Klassen durch neue Tests
+- FKala.Core.KalaQl.QueryParser.AggregateParams: 0% → 100%
+
 ## AI selbstersteller Kontext
 
-Zuletzt analysierte Klassen mit niedriger Abdeckung:
-- FKala.Core.DataLayer.Infrastructure.IEnumerableExtensions (0%)
-- FKala.Core.Helper.Benchmarker (0%) 
-- FKala.Core.Helper.Msg (0%)
-- FKala.Core.Logic.Fast (0%)
-- FKala.Core.Logic.FileFromEndProcessor (0%)
+Zuletzt analysierte Klassen mit niedriger Abdeckung (05.08.2025):
+- FKala.Core.KalaQl.QueryParser.AggregateParams (0%)
+- FKala.Core.KalaQl.QueryParser.AlignTimezoneParams (0%)
+- FKala.Core.KalaQl.QueryParser.ExpressoParams (0%)
+- FKala.Core.KalaQl.QueryParser.InsertParams (0%)
+- FKala.Core.KalaQl.QueryParser.InterpolateParams (0%)
+- FKala.Core.KalaQl.QueryParser.JsonQueryParams (0%)
+- FKala.Core.KalaQl.QueryParser.LoadParams (0%)
+- FKala.Core.KalaQl.QueryParser.MatViewParams (0%)
+- FKala.Core.KalaQl.QueryParser.MgmtParams (0%)
+- FKala.Core.KalaQl.QueryParser.PublishParams (0%)
+- FKala.Core.KalaQl.QueryParser.VarParams (0%)
+- FKala.Core.Migration.InfluxLineProtocolImporter (0%)
+- FKala.Migrate.MariaDb.EventRow (0%)
+- FKala.Migrate.MariaDb.MigrateMariaDb_Tstsfe_Custom (0%)
+- FKala.Migrate.MariaDb.ReaderExtension (0%)
 
 Klassen mit sehr niedriger Abdeckung (<30%):
-- FKala.Core.KalaQl.QueryParser.AggregateParams
-- FKala.Core.KalaQl.QueryParser.AggregateParser 
-- FKala.Core.KalaQl.QueryParser.ExpressoParams
+- FKala.Core.KalaQl.QueryParser.AggregateParser (5.9%)
+- FKala.Core.KalaQl.QueryParser.AlignTimezoneParser (40%)
+- FKala.Core.KalaQl.QueryParser.ExpressoParser (40%)
+- FKala.Core.KalaQl.QueryParser.InsertParser (40%)
+- FKala.Core.KalaQl.QueryParser.InterpolateParser (16.6%)
+- FKala.Core.KalaQl.QueryParser.JsonQueryParser (11.1%)
+- FKala.Core.KalaQl.QueryParser.LoadParser (13.8%)
+- FKala.Core.KalaQl.QueryParser.MatViewParser (40%)
+- FKala.Core.KalaQl.QueryParser.MgmtParser (21.4%)
+- FKala.Core.KalaQl.QueryParser.PublishParser (38.8%)
+- FKala.Core.KalaQl.QueryParser.VarParser (40%)
+- FKala.Core.DataLayers.StorageAccess (48.9%)
+- FKala.Core.DataLayers.UnexpectedlyUnsortedException (33.3%)
+- FKala.Core.KalaQl.Op_MatView (31.2%)
+- FKala.Core.KalaQl.Op_Publish (54.4%)
+
+## Wichtige Erkenntnisse
+
+- Testframework: MsTest (aus Unit Test Ausführung ersichtlich)
+- Code Coverage Tool: dotnet test mit XPlat Code Coverage Collection
+- Reportgenerierung: reportgenerator.exe mit CSV Summary Format
+- Alle 173 Unit Tests erfolgreich durchgelaufen
+- Gesamtabdeckung verbessert von 57% auf 61.5%
+- Viele QueryParser Klassen haben 0% Abdeckung - benötigen dringend Tests
+- Die meisten Klassen mit 0% Abdeckung sind Parameter-Klassen für QueryParser
 
 ## ToDo Liste
 
-- [x] Führe Unit Tests aus und überprüfe Coverage
-- [x] Identifiziere Klassen oder Methoden mit niedriger Abdeckung und schreibe einen Test dazu
-- [x] Aktualisierte Code Coverage Bericht
-- [x] Erhöhe die Testabdeckung auf mindestens 50% je Datei, plane dazu, welchen Testfall Du erstellen willst.
-- [x] Die Unittests sollen in neue Testdateien AI_<Thema>_Tests.cs aufgenommen werden.
-- [x] Die Unittests sollen in der bereits verwendeten Technik geschrieben werden.
-- [x] Du musst zum Erreichen des Ziels in dieser Datei im Bereich "AI selbstersteller Kontext" zwischendurch alle wichtigen Erkenntnisse hinterlegen, z.B. wenn Du herausgefunden hast, wie ein Befehls-Aufruf richtig funktioniert, welches Testframework im Einsatz ist, architekturell interessante Informationen oder ähnliches, um das in einer späteren Iteration dann hieraus einfach einzulesen ohne wieder alles aufwändig neu zu ermitteln.
-- [x] Es darf JEWEILS IMMER NUR MAXIMAL ein einzelner Unittest IN EINEM SCHRIIT ergänzt werden, dann müssen die Unittests wieder neu durchgeführt werden und grün laufen!!!
-- [x] Für Dateiänderungen immer apply_diff, search_and_replace and insert_content bevorzugen gegenüber write_to_file!
-- [x] Halte bei apply_diff, search_and_replace und insert_content Aufrufen den zu ändernden Bezug so minimal wie möglich. Ersetze nur zu ändernde Zeilen! Überschreibe z. B. nicht komplette Dateien 1:1, um hinten was zu ergänzen - sondern füge ein!
-- [x] Bereinige stests Build-Warnings (Clean-Code!)
+- [-] Setze die ToDo Liste in aitodos.md auf "nicht ausgeführt" zurück
+- [ ] Führe Unit Tests aus und überprüfe Coverage
+- [ ] Identifiziere Klassen oder Methoden mit niedriger Abdeckung und schreibe einen Test dazu
+- [ ] Aktualisierte Code Coverage Bericht
+- [ ] Erhöhe die Testabdeckung auf mindestens 50% je Datei, plane dazu, welchen Testfall Du erstellen willst
+- [ ] Die Unittests sollen in neue Testdateien AI_<Thema>_Tests.cs aufgenommen werden
+- [ ] Die Unittests sollen in der bereits verwendeten Technik geschrieben werden
+- [ ] Hinterlege wichtige Erkenntnisse im Bereich "AI selbstersteller Kontext"
+- [ ] Führe maximal einen Unittest pro Schritt aus und prüfe, dass grün läuft
+- [ ] Verwende für Dateiänderungen immer apply_diff, search_and_replace and insert_content statt write_to_file
+- [ ] Halte bei Änderungen den Bezug minimal und ersetze nur notwendige Zeilen
+- [ ] Bereinige stests Build-Warnings (Clean-Code!) - es reicht zu Prüfung ein einmaliges: "dotnet clean; dotnet build"

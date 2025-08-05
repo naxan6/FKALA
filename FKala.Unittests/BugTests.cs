@@ -8,7 +8,6 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
 using FKala.Core.Interfaces;
-using System.Runtime.Intrinsics.X86;
 
 namespace FKala.Unittests
 {
