@@ -27,14 +27,14 @@ namespace FKala.Api.Jobs
 
         public async Task Execute(IJobExecutionContext context)
         {
-            _logger.LogInformation("Starte nächtlichen MatView Refresh Job um {time}", DateTimeOffset.Now);
+            _logger.LogInformation("Starte nächtlichen MatView Refresh Job um {Time}", DateTimeOffset.Now);
 
             try
             {
                 // Expliziter Typ für Klarheit, da LoadMatViews() List<DataLayer_Readable_Caching_V1.MatView> zurückgibt
                 var matViewDefinitions = _dataLayer.LoadMatViews(); 
                 
-                _logger.LogInformation("{count} MatView-Definitionen gefunden.", matViewDefinitions.Count);
+                _logger.LogInformation("{Count} MatView-Definitionen gefunden.", matViewDefinitions.Count);
 
                 if (!matViewDefinitions.Any())
                 {
@@ -54,10 +54,9 @@ namespace FKala.Api.Jobs
                         // 1. Alte MatView löschen
                         _logger.LogInformation("Lösche alte MatView: {ViewName}", viewName);
                         _dataLayer.DeleteMeasurementAndMatViewDefinition(viewName);
-                        _logger.LogInformation("Alte MatView {ViewName} erfolgreich gelöscht.", viewName);
 
                         // 2. MatView neu erstellen
-                        _logger.LogInformation("Erstelle MatView neu: {ViewName}", viewName);
+                        _logger.LogDebug("Erstelle MatView neu: {ViewName}", viewName);
                         string queryText = matViewDef.Query;
 
                         if (string.IsNullOrWhiteSpace(queryText))
@@ -95,7 +94,7 @@ namespace FKala.Api.Jobs
                 // Hier könnte man überlegen, ob der Job erneut versucht werden soll (Quartz-Konfiguration)
             }
 
-            _logger.LogInformation("Nächtlicher MatView Refresh Job abgeschlossen um {time}", DateTimeOffset.Now);
+            _logger.LogInformation("Nächtlicher MatView Refresh Job abgeschlossen um {Time}", DateTimeOffset.Now);
             await Task.CompletedTask; // IJob erfordert Task Rückgabe
         }
     }
