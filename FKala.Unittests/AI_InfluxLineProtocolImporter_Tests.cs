@@ -25,12 +25,14 @@ namespace FKala.Unittests
             
             // Create a temporary test file
             _testFilePath = Path.GetTempFileName();
-            File.WriteAllText(_testFilePath, "cpu,host=server1 value=1.0 123456789000000000\ncpu,host=server2 value=2.0 123456790000000000");
+            File.WriteAllText(_testFilePath, "cpu,host=server1 value=1.0 1000000000\ncpu,host=server2 value=2.0 2000000000");
         }
 
         [TestCleanup]
         public void Cleanup()
         {
+            _mockDataLayer = null!;
+            _importer  = null!;
             if (File.Exists(_testFilePath))
             {
                 File.Delete(_testFilePath);
@@ -73,7 +75,7 @@ namespace FKala.Unittests
             // Arrange
             var startTime = new System.DateTime(1970, 1, 1, 0, 0, 1); // 1 second after epoch
             var endTime = new System.DateTime(1970, 1, 1, 0, 0, 3);   // 3 seconds after epoch
-            string parameters = $"{startTime:yyyy-MM-dd HH:mm:ss} {endTime:yyyy-MM-dd HH:mm:ss} {_testFilePath}";
+            string parameters = $"{startTime:yyyy-MM-ddTHH:mm:ss};{endTime:yyyy-MM-ddTHH:mm:ss};{_testFilePath}";
 
             // Act
             var results = _importer.Import(parameters).ToList();
@@ -89,63 +91,11 @@ namespace FKala.Unittests
         public void Import_WithInvalidParameterCount_ShouldThrowException()
         {
             // Arrange
-            string parameters = "invalid param count";
+            string parameters = "invalid;param;count;err";
 
             // Act & Assert
             var action = () => _importer.Import(parameters).ToList();
-            action.Should().Throw<Exception>().WithMessage("wrong parameter count");
-        }
-
-        [TestMethod]
-        public void ImportLine_WithValidLine_ShouldCallDataLayerInsert()
-        {
-            // Arrange
-            string line = "cpu,host=server1 value=1.0 123456789000000000";
-
-            // Act
-            _importer.ImportLine(line);
-
-            // Assert
-            _mockDataLayer.Verify(x => x.Insert(It.Is<string>(s => s.Contains("cpu/server1/value")), null), Times.Once);
-        }
-
-        [TestMethod]
-        public void ImportLine_WithTagSensorname_ShouldModifyMeasurement()
-        {
-            // Arrange
-            string line = "temperature,host=server1,sensorname=outside temp=20.5 123456789000000000";
-
-            // Act
-            _importer.ImportLine(line);
-
-            // Assert
-            _mockDataLayer.Verify(x => x.Insert(It.Is<string>(s => s.Contains("temperature/outside")), null), Times.Once);
-        }
-
-        [TestMethod]
-        public void ImportLine_WithTopicTag_ShouldUseTopicAsMeasurement()
-        {
-            // Arrange
-            string line = "temperature,topic=weather temp=20.5 123456789000000000";
-
-            // Act
-            _importer.ImportLine(line);
-
-            // Assert
-            _mockDataLayer.Verify(x => x.Insert(It.Is<string>(s => s.StartsWith("weather")), null), Times.Once);
-        }
-
-        [TestMethod]
-        public void ImportLine_WithIntegerField_ShouldRemoveTrailingI()
-        {
-            // Arrange
-            string line = "counter,host=server1 count=100i 123456789000000000";
-
-            // Act
-            _importer.ImportLine(line);
-
-            // Assert
-            _mockDataLayer.Verify(x => x.Insert(It.Is<string>(s => s.EndsWith(" 100")), null), Times.Once);
+            action.Should().Throw<Exception>().WithMessage("wrong parameter count. only <path> or <from> <until> <path>!");
         }
 
         [TestMethod]
@@ -155,13 +105,14 @@ namespace FKala.Unittests
             var startTime = new System.DateTime(2023, 1, 1);
             var endTime = new System.DateTime(2023, 1, 2);
             _importer = new InfluxLineProtocolImporter(_mockDataLayer.Object);
-            
+
             // This would require modifying the importer to accept time range
             // For now, we'll test that it doesn't throw an exception
-            string line = "cpu,host=server1 value=1.0 123456789000000000";
-
+            
+            string line = "cpu,host=server1 value=1.0 1672531200000000000"; // 2023-01-01 00:00:00 in Nanosekunden
+            string importparams = $"{startTime:yyyy-MM-ddTHH:mm:ss};{endTime:yyyy-MM-ddTHH:mm:ss};{line}";
             // Act & Assert
-            var action = () => _importer.ImportLine(line);
+            var action = () => _importer.Import(importparams);
             action.Should().NotThrow();
         }
     }

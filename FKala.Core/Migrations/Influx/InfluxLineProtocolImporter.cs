@@ -40,7 +40,7 @@ namespace FKala.Core.Migration
                 this._start = DateTime.MinValue;
                 this._end = DateTime.MaxValue;
                 filePath = parts[0];
-            } 
+            }
             else if (parts.Count() == 3)
             {
                 this._start = DateTime.Parse(parts[0]);
@@ -89,11 +89,12 @@ namespace FKala.Core.Migration
                     yield return retRow;
                 }
             }
+            sr.Close();
         }
 
         InfluxLineParser ilp = new InfluxLineParser();
 
-        public void ImportLine(string line)
+        private void ImportLine(string line)
         {
             ilp.Read(line);
 

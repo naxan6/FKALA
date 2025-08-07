@@ -54,7 +54,7 @@ namespace FKala.Unittests
             var context = new KalaQlContext(null!, dataLayer);
 
             // Act
-            var storageAccess = StorageAccess.ForRead("test", "test_part", DateTime.Now, DateTime.Now.AddDays(1), context, false);
+            var storageAccess = StorageAccess.ForRead(_testDirectory, "test_part", DateTime.Now, DateTime.Now.AddDays(1), context, false);
 
             // Assert
             storageAccess.Should().NotBeNull();
@@ -68,7 +68,7 @@ namespace FKala.Unittests
             var endTime = new DateTime(2024, 1, 2);
 
             // Act
-            var result = StorageAccess.ForRead("test", "test_part", startTime, endTime, _context, false);
+            var result = StorageAccess.ForRead(_testDirectory, "test_part", startTime, endTime, _context, false);
 
             // Assert
             result.Should().NotBeNull();
@@ -82,7 +82,7 @@ namespace FKala.Unittests
             var endTime = new DateTime(2024, 1, 2);
 
             // Act
-            var result = StorageAccess.ForReadMultiFile("test", "test_part", startTime, endTime, _context);
+            var result = StorageAccess.ForReadMultiFile(_testDirectory, "test_part", startTime, endTime, _context);
 
             // Assert
             result.Should().NotBeNull();
@@ -96,7 +96,7 @@ namespace FKala.Unittests
             var endTime = new DateTime(2024, 1, 2);
 
             // Act
-            var result = StorageAccess.ForSort("test", "test_part", startTime, endTime, _context);
+            var result = StorageAccess.ForSort(_testDirectory, "test_part", startTime, endTime, _context);
 
             // Assert
             result.Should().NotBeNull();
@@ -106,7 +106,7 @@ namespace FKala.Unittests
         public void ForMerging_ShouldCreateStorageAccessInstance()
         {
             // Act
-            var result = StorageAccess.ForMerging("test", "test_part", _context);
+            var result = StorageAccess.ForMerging(_testDirectory, "test_part", _context);
 
             // Assert
             result.Should().NotBeNull();
@@ -116,7 +116,7 @@ namespace FKala.Unittests
         public void ForCleanup_ShouldCreateStorageAccessInstance()
         {
             // Act
-            var result = StorageAccess.ForCleanup("test", "test_part", _context);
+            var result = StorageAccess.ForCleanup(_testDirectory, "test_part", _context);
 
             // Assert
             result.Should().NotBeNull();
@@ -178,7 +178,7 @@ namespace FKala.Unittests
         public void GetReaders_ShouldReturnEmptyListWhenNoReaders()
         {
             // Arrange
-            var storageAccess = StorageAccess.ForCleanup("test", "test_part", _context);
+            var storageAccess = StorageAccess.ForCleanup(_testDirectory, "test_part", _context);
 
             // Act
             var readers = storageAccess.GetReaders();
@@ -191,7 +191,7 @@ namespace FKala.Unittests
         public void TimeFormat_ShouldReturnCorrectFormat()
         {
             // Arrange
-            var storageAccess = StorageAccess.ForRead("test", "test_part", DateTime.Now, DateTime.Now.AddDays(1), _context, false);
+            var storageAccess = StorageAccess.ForRead(_testDirectory, "test_part", DateTime.Now, DateTime.Now.AddDays(1), _context, false);
 
             // Act
             var timeFormat = storageAccess.TimeFormat;
@@ -208,7 +208,7 @@ namespace FKala.Unittests
             var endTime = new DateTime(2024, 1, 2);
 
             // Act
-            var storageAccess = StorageAccess.ForRead("test", "test_part", startTime, endTime, _context, false);
+            var storageAccess = StorageAccess.ForRead(_testDirectory, "test_part", startTime, endTime, _context, false);
 
             // Assert
             storageAccess.Context.Should().NotBeNull();
@@ -220,17 +220,17 @@ namespace FKala.Unittests
         public void GetReaders_ShouldHandleDifferentStorageAccessTypes()
         {
             // Test ForRead
-            var readAccess = StorageAccess.ForRead("test", "test_part", DateTime.Now, DateTime.Now.AddDays(1), _context, false);
+            var readAccess = StorageAccess.ForRead(_testDirectory, "test_part", DateTime.Now, DateTime.Now.AddDays(1), _context, false);
             var readers1 = readAccess.GetReaders();
             readers1.Should().BeOfType<List<ReaderTuple>>();
 
             // Test ForMerging
-            var mergeAccess = StorageAccess.ForMerging("test", "test_part", _context);
+            var mergeAccess = StorageAccess.ForMerging(_testDirectory, "test_part", _context);
             var readers2 = mergeAccess.GetReaders();
             readers2.Should().BeOfType<List<ReaderTuple>>();
 
             // Test ForCleanup
-            var cleanupAccess = StorageAccess.ForCleanup("test", "test_part", _context);
+            var cleanupAccess = StorageAccess.ForCleanup(_testDirectory, "test_part", _context);
             var readers3 = cleanupAccess.GetReaders();
             readers3.Should().BeOfType<List<ReaderTuple>>();
         }

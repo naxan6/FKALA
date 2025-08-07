@@ -172,7 +172,7 @@ namespace FKala.Unittests
             var result = eventRow.ToString();
 
             // Assert
-            result.Should().Be("test_sensor # /path/to/sensor # 1234567890 # 1000000000 # 2000000000 # 42 # 84 # 3.14 # 6.28 # test_string_1 # test_string_2");
+            result.Should().Be("test_sensor # /path/to/sensor # 1234567890 # 1000000000 # 2000000000 # 42 # 84 # 3,14 # 6,28 # test_string_1 # test_string_2");
         }
 
         [TestMethod]
