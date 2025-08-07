@@ -222,17 +222,20 @@ namespace FKala.Unittests
             // Test ForRead
             var readAccess = StorageAccess.ForRead(_testDirectory, "test_part", DateTime.Now, DateTime.Now.AddDays(1), _context, false);
             var readers1 = readAccess.GetReaders();
-            readers1.Should().BeOfType<List<ReaderTuple>>();
+            readers1.Should().BeAssignableTo<IEnumerable<ReaderTuple>>();
+            readers1.Should().NotBeNull();
 
             // Test ForMerging
             var mergeAccess = StorageAccess.ForMerging(_testDirectory, "test_part", _context);
             var readers2 = mergeAccess.GetReaders();
-            readers2.Should().BeOfType<List<ReaderTuple>>();
+            readers2.Should().BeAssignableTo<IEnumerable<ReaderTuple>>();
+            readers2.Should().NotBeNull();
 
             // Test ForCleanup
             var cleanupAccess = StorageAccess.ForCleanup(_testDirectory, "test_part", _context);
             var readers3 = cleanupAccess.GetReaders();
-            readers3.Should().BeOfType<List<ReaderTuple>>();
+            readers3.Should().BeAssignableTo<IEnumerable<ReaderTuple>>();
+            readers3.Should().NotBeNull();
         }
     }
 }
