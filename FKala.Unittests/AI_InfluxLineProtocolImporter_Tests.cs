@@ -64,7 +64,7 @@ namespace FKala.Unittests
             results.Count.Should().BeGreaterThan(1); // At least one progress message + data points
             
             // Verify that Insert was called for each line
-            _mockDataLayer.Verify(x => x.Insert(It.IsAny<string>()), Times.Exactly(2));
+            _mockDataLayer.Verify(x => x.Insert(It.IsAny<string>(), null), Times.Exactly(2));
         }
 
         [TestMethod]
@@ -82,7 +82,7 @@ namespace FKala.Unittests
             results.Should().NotBeEmpty();
             
             // Verify that Insert was called (both timestamps should be within range)
-            _mockDataLayer.Verify(x => x.Insert(It.IsAny<string>()), Times.Exactly(2));
+            _mockDataLayer.Verify(x => x.Insert(It.IsAny<string>(), null), Times.Exactly(2));
         }
 
         [TestMethod]
@@ -106,7 +106,7 @@ namespace FKala.Unittests
             _importer.ImportLine(line);
 
             // Assert
-            _mockDataLayer.Verify(x => x.Insert(It.Is<string>(s => s.Contains("cpu/server1/value"))), Times.Once);
+            _mockDataLayer.Verify(x => x.Insert(It.Is<string>(s => s.Contains("cpu/server1/value")), null), Times.Once);
         }
 
         [TestMethod]
@@ -119,7 +119,7 @@ namespace FKala.Unittests
             _importer.ImportLine(line);
 
             // Assert
-            _mockDataLayer.Verify(x => x.Insert(It.Is<string>(s => s.Contains("temperature/outside"))), Times.Once);
+            _mockDataLayer.Verify(x => x.Insert(It.Is<string>(s => s.Contains("temperature/outside")), null), Times.Once);
         }
 
         [TestMethod]
@@ -132,7 +132,7 @@ namespace FKala.Unittests
             _importer.ImportLine(line);
 
             // Assert
-            _mockDataLayer.Verify(x => x.Insert(It.Is<string>(s => s.StartsWith("weather"))), Times.Once);
+            _mockDataLayer.Verify(x => x.Insert(It.Is<string>(s => s.StartsWith("weather")), null), Times.Once);
         }
 
         [TestMethod]
@@ -145,7 +145,7 @@ namespace FKala.Unittests
             _importer.ImportLine(line);
 
             // Assert
-            _mockDataLayer.Verify(x => x.Insert(It.Is<string>(s => s.EndsWith(" 100"))), Times.Once);
+            _mockDataLayer.Verify(x => x.Insert(It.Is<string>(s => s.EndsWith(" 100")), null), Times.Once);
         }
 
         [TestMethod]

@@ -162,7 +162,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="cacheResolution">Die zu konvertierende CacheResolution</param>
         /// <returns>Der konvertierte String</returns>
-        private string GetCacheResolutionString(CacheResolution cacheResolution)
+        public string GetCacheResolutionString(CacheResolution cacheResolution)
         {
             // Wenn die OriginalAutoWindowSize-Eigenschaft gesetzt ist, verwenden wir das AUTO-Format
             if (cacheResolution.OriginalAutoWindowSize.HasValue)
@@ -195,7 +195,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// <param name="resolution">Die zu konvertierende Resolution</param>
         /// <param name="cacheResolution">Die CacheResolution, die die Resolution enthält</param>
         /// <returns>Der konvertierte String</returns>
-        private string GetResolutionString(Resolution resolution, CacheResolution cacheResolution)
+        public string GetResolutionString(Resolution resolution, CacheResolution cacheResolution)
         {
             // Wenn die OriginalAutoWindowSize-Eigenschaft gesetzt ist, verwenden wir das AUTO-Format
             if (cacheResolution.OriginalAutoWindowSize.HasValue)
@@ -225,7 +225,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="resolution">Die zu konvertierende Resolution</param>
         /// <returns>Der konvertierte String</returns>
-        private string GetResolutionString(Resolution resolution)
+        internal string GetResolutionString(Resolution resolution)
         {
             switch (resolution)
             {
@@ -249,7 +249,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="aggregateFunction">Die zu konvertierende AggregateFunction</param>
         /// <returns>Der konvertierte String</returns>
-        private string GetAggregateFunctionString(AggregateFunction aggregateFunction)
+        public string GetAggregateFunctionString(AggregateFunction aggregateFunction)
         {
             switch (aggregateFunction)
             {
@@ -335,7 +335,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="cacheResolution">Die zu konvertierende CacheResolution</param>
         /// <returns>Der konvertierte String</returns>
-        private string GetCacheResolutionString(CacheResolution cacheResolution)
+        public string GetCacheResolutionString(CacheResolution cacheResolution)
         {
             if (cacheResolution.Resolution == Resolution.Full)
             {
@@ -361,7 +361,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="resolution">Die zu konvertierende Resolution</param>
         /// <returns>Der konvertierte String</returns>
-        private string GetResolutionString(Resolution resolution)
+        public string GetResolutionString(Resolution resolution)
         {
             switch (resolution)
             {
@@ -383,7 +383,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="aggregateFunction">Die zu konvertierende AggregateFunction</param>
         /// <returns>Der konvertierte String</returns>
-        private string GetAggregateFunctionString(AggregateFunction aggregateFunction)
+        public string GetAggregateFunctionString(AggregateFunction aggregateFunction)
         {
             switch (aggregateFunction)
             {
@@ -524,7 +524,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="aggregateFunction">Die zu konvertierende AggregateFunction</param>
         /// <returns>Der konvertierte String</returns>
-        private string GetAggregateFunctionString(AggregateFunction aggregateFunction)
+        public string GetAggregateFunctionString(AggregateFunction aggregateFunction)
         {
             switch (aggregateFunction)
             {

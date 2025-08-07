@@ -3,6 +3,7 @@ using FluentAssertions;
 using FKala.Core.DataLayers;
 using FKala.Core.KalaQl;
 using FKala.Core.Interfaces;
+using FKala.Core;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -25,10 +26,7 @@ namespace FKala.Unittests
             _mockDataLayer.Setup(x => x.ReadBuffer).Returns(131072);
             _mockDataLayer.Setup(x => x.WriteBuffer).Returns(131072);
             
-            _context = new KalaQlContext
-            {
-                DataLayer = _mockDataLayer.Object
-            };
+            _context = new KalaQlContext(null, _mockDataLayer.Object);
 
             // Create a temporary test directory
             _testDirectory = Path.Combine(Path.GetTempPath(), "StorageAccessTest");
@@ -53,7 +51,7 @@ namespace FKala.Unittests
         {
             // Arrange
             var dataLayer = new Mock<IDataLayer>().Object;
-            var context = new KalaQlContext { DataLayer = dataLayer };
+            var context = new KalaQlContext(null, dataLayer);
 
             // Act
             var storageAccess = StorageAccess.ForRead("test", "test_part", DateTime.Now, DateTime.Now.AddDays(1), context, false);

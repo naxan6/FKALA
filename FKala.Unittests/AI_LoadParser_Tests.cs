@@ -1,6 +1,8 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using FluentAssertions;
 using FKala.Core.KalaQl.QueryParser;
+using FKala.Core.KalaQl;
+using FKala.Core.KalaQl.Windowing;
 using FKala.Core.Model;
 using System.Collections.Generic;
 
@@ -9,7 +11,7 @@ namespace FKala.Unittests
     [TestClass]
     public class AI_LoadParser_Tests
     {
-        private LoadParser _parser;
+        private LoadParser _parser = null!;
 
         [TestInitialize]
         public void Setup()
@@ -59,8 +61,8 @@ namespace FKala.Unittests
             var opLoad = (Op_Load)result;
             opLoad.Name.Should().Be("NAME");
             opLoad.Measurement.Should().Be("measurement");
-            opLoad.From.Should().Be(DateTime.MinValue);
-            opLoad.To.Should().Be(DateTime.MaxValue);
+            opLoad.StartTime.Should().Be(DateTime.MinValue);
+            opLoad.EndTime.Should().Be(DateTime.MaxValue);
             opLoad.CacheResolution.Resolution.Should().Be(Resolution.Full);
             opLoad.NewestOnly.Should().BeTrue();
         }
@@ -81,8 +83,8 @@ namespace FKala.Unittests
             var opLoad = (Op_Load)result;
             opLoad.Name.Should().Be("NAME");
             opLoad.Measurement.Should().Be("measurement");
-            opLoad.From.Should().Be(new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc));
-            opLoad.To.Should().Be(new DateTime(2024, 12, 31, 23, 59, 59, DateTimeKind.Utc));
+            opLoad.StartTime.Should().Be(new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+            opLoad.EndTime.Should().Be(new DateTime(2024, 12, 31, 23, 59, 59, DateTimeKind.Utc));
             opLoad.CacheResolution.Resolution.Should().Be(Resolution.Hourly);
             opLoad.CacheResolution.AggregateFunction.Should().Be(AggregateFunction.Sum);
             opLoad.NewestOnly.Should().BeFalse();
@@ -104,15 +106,7 @@ namespace FKala.Unittests
         public void GenerateLine_WithNewestOnly_ShouldReturnCorrectString()
         {
             // Arrange
-            var parameters = new LoadParams
-            {
-                Name = "NAME",
-                Measurement = "measurement",
-                From = DateTime.MinValue,
-                To = DateTime.MaxValue,
-                CacheResolution = new CacheResolution(Resolution.Full),
-                NewestOnly = true
-            };
+            var parameters = new LoadParams("NAME", "measurement", DateTime.MinValue, DateTime.MaxValue, new CacheResolution { Resolution = Resolution.Full }, true);
 
             // Act
             var result = _parser.GenerateLine(parameters);
@@ -125,14 +119,7 @@ namespace FKala.Unittests
         public void GenerateLine_WithFullParameters_ShouldReturnCorrectString()
         {
             // Arrange
-            var parameters = new LoadParams
-            {
-                Name = "NAME",
-                Measurement = "measurement",
-                From = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                To = new DateTime(2024, 12, 31, 23, 59, 59, DateTimeKind.Utc),
-                CacheResolution = new CacheResolution(Resolution.Hourly, AggregateFunction.Sum)
-            };
+            var parameters = new LoadParams("NAME", "measurement", new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), new DateTime(2024, 12, 31, 23, 59, 59, DateTimeKind.Utc), new CacheResolution { Resolution = Resolution.Hourly, AggregateFunction = AggregateFunction.Sum });
 
             // Act
             var result = _parser.GenerateLine(parameters);
@@ -145,17 +132,7 @@ namespace FKala.Unittests
         public void GenerateLine_WithForceRebuild_ShouldReturnCorrectString()
         {
             // Arrange
-            var parameters = new LoadParams
-            {
-                Name = "NAME",
-                Measurement = "measurement",
-                From = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                To = new DateTime(2024, 12, 31, 23, 59, 59, DateTimeKind.Utc),
-                CacheResolution = new CacheResolution(Resolution.Hourly, AggregateFunction.Sum)
-                {
-                    ForceRebuild = true
-                }
-            };
+            var parameters = new LoadParams("NAME", "measurement", new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), new DateTime(2024, 12, 31, 23, 59, 59, DateTimeKind.Utc), new CacheResolution { Resolution = Resolution.Hourly, AggregateFunction = AggregateFunction.Sum, ForceRebuild = true });
 
             // Act
             var result = _parser.GenerateLine(parameters);
@@ -168,17 +145,7 @@ namespace FKala.Unittests
         public void GenerateLine_WithIncrementalRefresh_ShouldReturnCorrectString()
         {
             // Arrange
-            var parameters = new LoadParams
-            {
-                Name = "NAME",
-                Measurement = "measurement",
-                From = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                To = new DateTime(2024, 12, 31, 23, 59, 59, DateTimeKind.Utc),
-                CacheResolution = new CacheResolution(Resolution.Hourly, AggregateFunction.Sum)
-                {
-                    IncrementalRefresh = true
-                }
-            };
+            var parameters = new LoadParams("NAME", "measurement", new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), new DateTime(2024, 12, 31, 23, 59, 59, DateTimeKind.Utc), new CacheResolution { Resolution = Resolution.Hourly, AggregateFunction = AggregateFunction.Sum, IncrementalRefresh = true });
 
             // Act
             var result = _parser.GenerateLine(parameters);
@@ -191,18 +158,7 @@ namespace FKala.Unittests
         public void GenerateLine_WithBothForceRebuildAndIncrementalRefresh_ShouldReturnCorrectString()
         {
             // Arrange
-            var parameters = new LoadParams
-            {
-                Name = "NAME",
-                Measurement = "measurement",
-                From = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                To = new DateTime(2024, 12, 31, 23, 59, 59, DateTimeKind.Utc),
-                CacheResolution = new CacheResolution(Resolution.Hourly, AggregateFunction.Sum)
-                {
-                    ForceRebuild = true,
-                    IncrementalRefresh = true
-                }
-            };
+            var parameters = new LoadParams("NAME", "measurement", new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), new DateTime(2024, 12, 31, 23, 59, 59, DateTimeKind.Utc), new CacheResolution { Resolution = Resolution.Hourly, AggregateFunction = AggregateFunction.Sum, ForceRebuild = true, IncrementalRefresh = true });
 
             // Act
             var result = _parser.GenerateLine(parameters);
@@ -215,7 +171,7 @@ namespace FKala.Unittests
         public void GetCacheResolutionString_WithFullResolution_ShouldReturnNoCache()
         {
             // Arrange
-            var cacheResolution = new CacheResolution(Resolution.Full);
+            var cacheResolution = new CacheResolution { Resolution = Resolution.Full };
 
             // Act
             var result = _parser.GetCacheResolutionString(cacheResolution);
@@ -228,7 +184,7 @@ namespace FKala.Unittests
         public void GetCacheResolutionString_WithMinutelyResolution_ShouldReturnCorrectString()
         {
             // Arrange
-            var cacheResolution = new CacheResolution(Resolution.Minutely, AggregateFunction.Avg);
+            var cacheResolution = new CacheResolution { Resolution = Resolution.Minutely, AggregateFunction = AggregateFunction.Avg };
 
             // Act
             var result = _parser.GetCacheResolutionString(cacheResolution);
@@ -241,7 +197,7 @@ namespace FKala.Unittests
         public void GetCacheResolutionString_WithFiveMinutelyResolution_ShouldReturnCorrectString()
         {
             // Arrange
-            var cacheResolution = new CacheResolution(Resolution.FiveMinutely, AggregateFunction.Sum);
+            var cacheResolution = new CacheResolution { Resolution = Resolution.FiveMinutely, AggregateFunction = AggregateFunction.Sum };
 
             // Act
             var result = _parser.GetCacheResolutionString(cacheResolution);
@@ -254,10 +210,7 @@ namespace FKala.Unittests
         public void GetCacheResolutionString_WithHourlyResolutionAndForceRebuild_ShouldReturnCorrectString()
         {
             // Arrange
-            var cacheResolution = new CacheResolution(Resolution.Hourly, AggregateFunction.Max)
-            {
-                ForceRebuild = true
-            };
+            var cacheResolution = new CacheResolution { Resolution = Resolution.Hourly, AggregateFunction = AggregateFunction.Max, ForceRebuild = true };
 
             // Act
             var result = _parser.GetCacheResolutionString(cacheResolution);
