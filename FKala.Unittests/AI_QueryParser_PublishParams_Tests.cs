@@ -48,7 +48,7 @@ namespace FKala.Unittests
             var publishMode = PublishMode.CombinedResultset;
 
             // Act
-            var publishParams = new PublishParams(inputs, publishMode);
+            var publishParams = new PublishParams(inputs ?? [], publishMode);
 
             // Assert
             publishParams.Inputs.Should().HaveCount(1);
@@ -60,7 +60,7 @@ namespace FKala.Unittests
         public void Constructor_WithNullInputs_ShouldInitializeProperties()
         {
             // Arrange
-            List<string> inputs = null;
+            List<string>? inputs = null;
             var publishMode = PublishMode.MultipleResultsets;
 
             // Act

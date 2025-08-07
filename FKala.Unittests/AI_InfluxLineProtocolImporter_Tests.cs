@@ -13,9 +13,9 @@ namespace FKala.Unittests
     [TestClass]
     public class AI_InfluxLineProtocolImporter_Tests
     {
-        private Mock<IDataLayer> _mockDataLayer;
-        private InfluxLineProtocolImporter _importer;
-        private string _testFilePath;
+        private Mock<IDataLayer> _mockDataLayer = null!;
+        private InfluxLineProtocolImporter _importer = null!;
+        private string _testFilePath = null!;
 
         [TestInitialize]
         public void Setup()

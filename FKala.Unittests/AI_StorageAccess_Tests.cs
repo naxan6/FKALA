@@ -15,9 +15,9 @@ namespace FKala.Unittests
     [TestClass]
     public class AI_StorageAccess_Tests
     {
-        private Mock<IDataLayer> _mockDataLayer;
-        private KalaQlContext _context;
-        private string _testDirectory;
+        private Mock<IDataLayer> _mockDataLayer = null!;
+        private KalaQlContext _context = null!;
+        private string _testDirectory = null!;
 
         [TestInitialize]
         public void Setup()
@@ -26,7 +26,7 @@ namespace FKala.Unittests
             _mockDataLayer.Setup(x => x.ReadBuffer).Returns(131072);
             _mockDataLayer.Setup(x => x.WriteBuffer).Returns(131072);
             
-            _context = new KalaQlContext(null, _mockDataLayer.Object);
+            _context = new KalaQlContext(null!, _mockDataLayer.Object);
 
             // Create a temporary test directory
             _testDirectory = Path.Combine(Path.GetTempPath(), "StorageAccessTest");
@@ -51,7 +51,7 @@ namespace FKala.Unittests
         {
             // Arrange
             var dataLayer = new Mock<IDataLayer>().Object;
-            var context = new KalaQlContext(null, dataLayer);
+            var context = new KalaQlContext(null!, dataLayer);
 
             // Act
             var storageAccess = StorageAccess.ForRead("test", "test_part", DateTime.Now, DateTime.Now.AddDays(1), context, false);

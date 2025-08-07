@@ -66,7 +66,7 @@ namespace FKala.Unittests
         public void Constructor_WithNullStrings_ShouldInitializeProperties()
         {
             // Arrange & Act
-            var varParams = new VarParams(null, null);
+            var varParams = new VarParams(null!, null!);
 
             // Assert
             varParams.Name.Should().BeNull();
@@ -77,8 +77,8 @@ namespace FKala.Unittests
         public void Constructor_WithMixedNullAndEmptyStrings_ShouldInitializeProperties()
         {
             // Arrange & Act
-            var varParams1 = new VarParams("valid_name", null);
-            var varParams2 = new VarParams(null, "valid_value");
+            var varParams1 = new VarParams("valid_name", null!);
+            var varParams2 = new VarParams(null!, "valid_value");
             var varParams3 = new VarParams("", "valid_value");
             var varParams4 = new VarParams("valid_name", "");
 

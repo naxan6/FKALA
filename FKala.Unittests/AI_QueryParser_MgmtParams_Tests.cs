@@ -45,7 +45,7 @@ namespace FKala.Unittests
         public void Constructor_WithNullParameters_ShouldInitializeProperties()
         {
             // Arrange & Act
-            var mgmtParams = new MgmtParams(MgmtAction.ImportMariaDbTstsfe, null);
+            var mgmtParams = new MgmtParams(MgmtAction.ImportMariaDbTstsfe, null!);
 
             // Assert
             mgmtParams.Action.Should().Be(MgmtAction.ImportMariaDbTstsfe);

@@ -10,7 +10,7 @@ namespace FKala.Unittests
     [TestClass]
     public class AI_MgmtParser_Tests
     {
-        private MgmtParser _parser;
+        private MgmtParser _parser = null!;
 
         [TestInitialize]
         public void Setup()
