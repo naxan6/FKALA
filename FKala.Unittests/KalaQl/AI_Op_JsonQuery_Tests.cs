@@ -152,7 +152,7 @@ namespace FKala.Unittests.KalaQl
             };
 
             // Act
-            var results = opJsonQuery.ReadJson(dataPoints, new[] {"path", "field"}).ToList();
+            var results = Op_JsonQuery.ReadJson(dataPoints, new[] {"path", "field"}).ToList();
 
             // Assert
             Assert.AreEqual(1, results.Count);
@@ -179,7 +179,7 @@ namespace FKala.Unittests.KalaQl
             };
 
             // Act
-            var results = opJsonQuery.ReadJson(dataPoints, new[] {"path", "field[0]"}).ToList();
+            var results = Op_JsonQuery.ReadJson(dataPoints, new[] {"path", "field[0]"}).ToList();
 
             // Assert
             Assert.AreEqual(1, results.Count);
@@ -206,7 +206,7 @@ namespace FKala.Unittests.KalaQl
             };
 
             // Act
-            var results = opJsonQuery.ReadJson(dataPoints, new[] {"path", "field", "subfield"}).ToList();
+            var results = Op_JsonQuery.ReadJson(dataPoints, new[] {"path", "field", "subfield"}).ToList();
 
             // Assert
             Assert.AreEqual(1, results.Count);
@@ -233,7 +233,7 @@ namespace FKala.Unittests.KalaQl
             };
 
             // Act
-            var results = opJsonQuery.ReadJson(dataPoints, new[] {"path", "field"}).ToList();
+            var results = Op_JsonQuery.ReadJson(dataPoints, new[] {"path", "field"}).ToList();
 
             // Assert
             Assert.AreEqual(1, results.Count);

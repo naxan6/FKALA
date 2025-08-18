@@ -46,7 +46,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="parameters">Die Parameter für die Zeile</param>
         /// <returns>Die generierte Zeile</returns>
-        public string GenerateLine(AlignTimezoneParams parameters)
+        public static string GenerateLine(AlignTimezoneParams parameters)
         {
             return $"AlTz {parameters.Timezone}";
         }
@@ -90,7 +90,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="parameters">Die Parameter für die Zeile</param>
         /// <returns>Die generierte Zeile</returns>
-        public string GenerateLine(VarParams parameters)
+        public static string GenerateLine(VarParams parameters)
         {
             return $"Var {parameters.Name}: {parameters.Value}";
         }
@@ -145,7 +145,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="parameters">Die Parameter für die Zeile</param>
         /// <returns>Die generierte Zeile</returns>
-        public string GenerateLine(LoadParams parameters)
+        public static string GenerateLine(LoadParams parameters)
         {
             if (parameters.NewestOnly)
             {
@@ -162,7 +162,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="cacheResolution">Die zu konvertierende CacheResolution</param>
         /// <returns>Der konvertierte String</returns>
-        public string GetCacheResolutionString(CacheResolution cacheResolution)
+        public static string GetCacheResolutionString(CacheResolution cacheResolution)
         {
             // Wenn die OriginalAutoWindowSize-Eigenschaft gesetzt ist, verwenden wir das AUTO-Format
             if (cacheResolution.OriginalAutoWindowSize.HasValue)
@@ -195,7 +195,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// <param name="resolution">Die zu konvertierende Resolution</param>
         /// <param name="cacheResolution">Die CacheResolution, die die Resolution enthält</param>
         /// <returns>Der konvertierte String</returns>
-        public string GetResolutionString(Resolution resolution, CacheResolution cacheResolution)
+        public static string GetResolutionString(Resolution resolution, CacheResolution cacheResolution)
         {
             // Wenn die OriginalAutoWindowSize-Eigenschaft gesetzt ist, verwenden wir das AUTO-Format
             if (cacheResolution.OriginalAutoWindowSize.HasValue)
@@ -225,7 +225,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="resolution">Die zu konvertierende Resolution</param>
         /// <returns>Der konvertierte String</returns>
-        internal string GetResolutionString(Resolution resolution)
+        internal static string GetResolutionString(Resolution resolution)
         {
             switch (resolution)
             {
@@ -249,7 +249,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="aggregateFunction">Die zu konvertierende AggregateFunction</param>
         /// <returns>Der konvertierte String</returns>
-        public string GetAggregateFunctionString(AggregateFunction aggregateFunction)
+        public static string GetAggregateFunctionString(AggregateFunction aggregateFunction)
         {
             switch (aggregateFunction)
             {
@@ -318,7 +318,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="parameters">Die Parameter für die Zeile</param>
         /// <returns>Die generierte Zeile</returns>
-        public string GenerateLine(JsonQueryParams parameters)
+        public static string GenerateLine(JsonQueryParams parameters)
         {
             if (parameters.NewestOnly)
             {
@@ -335,7 +335,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="cacheResolution">Die zu konvertierende CacheResolution</param>
         /// <returns>Der konvertierte String</returns>
-        public string GetCacheResolutionString(CacheResolution cacheResolution)
+        public static string GetCacheResolutionString(CacheResolution cacheResolution)
         {
             if (cacheResolution.Resolution == Resolution.Full)
             {
@@ -361,7 +361,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="resolution">Die zu konvertierende Resolution</param>
         /// <returns>Der konvertierte String</returns>
-        public string GetResolutionString(Resolution resolution)
+        public static string GetResolutionString(Resolution resolution)
         {
             switch (resolution)
             {
@@ -383,7 +383,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="aggregateFunction">Die zu konvertierende AggregateFunction</param>
         /// <returns>Der konvertierte String</returns>
-        public string GetAggregateFunctionString(AggregateFunction aggregateFunction)
+        public static string GetAggregateFunctionString(AggregateFunction aggregateFunction)
         {
             switch (aggregateFunction)
             {
@@ -447,7 +447,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="parameters">Die Parameter für die Zeile</param>
         /// <returns>Die generierte Zeile</returns>
-        public string GenerateLine(AggregateParams parameters)
+        public static string GenerateLine(AggregateParams parameters)
         {
             string result = $"Aggregate {parameters.Name}: {parameters.Input} {GetWindowString(parameters.Window)} {GetAggregateFunctionString(parameters.AggregateFunction)}";
             if (parameters.EmptyWindows)
@@ -462,7 +462,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="window">Das zu konvertierende Window</param>
         /// <returns>Der konvertierte String</returns>
-        private string GetWindowString(Window window)
+        private static string GetWindowString(Window window)
         {
             if (window == Window.Aligned_5Minutes)
             {
@@ -524,7 +524,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="aggregateFunction">Die zu konvertierende AggregateFunction</param>
         /// <returns>Der konvertierte String</returns>
-        public string GetAggregateFunctionString(AggregateFunction aggregateFunction)
+        public static string GetAggregateFunctionString(AggregateFunction aggregateFunction)
         {
             switch (aggregateFunction)
             {
@@ -588,7 +588,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="parameters">Die Parameter für die Zeile</param>
         /// <returns>Die generierte Zeile</returns>
-        public string GenerateLine(InterpolateParams parameters)
+        public static string GenerateLine(InterpolateParams parameters)
         {
             return $"Inpo {parameters.Name}: {parameters.Input} {GetInterpolationModeString(parameters.InterpolationMode)} {GetDecimalNullableString(parameters.DefaultValue)}";
         }
@@ -598,7 +598,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="interpolationMode">Der zu konvertierende InterpolationMode</param>
         /// <returns>Der konvertierte String</returns>
-        private string GetInterpolationModeString(InterpolationMode interpolationMode)
+        private static string GetInterpolationModeString(InterpolationMode interpolationMode)
         {
             switch (interpolationMode)
             {
@@ -618,7 +618,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="value">Der zu konvertierende Decimal?</param>
         /// <returns>Der konvertierte String</returns>
-        private string GetDecimalNullableString(decimal? value)
+        private static string GetDecimalNullableString(decimal? value)
         {
             if (value == null)
             {
@@ -669,7 +669,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="parameters">Die Parameter für die Zeile</param>
         /// <returns>Die generierte Zeile</returns>
-        public string GenerateLine(MatViewParams parameters)
+        public static string GenerateLine(MatViewParams parameters)
         {
             return $"MatView {parameters.Name}: {parameters.Input} {parameters.Measurement}";
         }
@@ -713,7 +713,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="parameters">Die Parameter für die Zeile</param>
         /// <returns>Die generierte Zeile</returns>
-        public string GenerateLine(InsertParams parameters)
+        public static string GenerateLine(InsertParams parameters)
         {
             return $"Insert {parameters.Name}: {parameters.Measurement} {parameters.Value}";
         }
@@ -757,7 +757,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="parameters">Die Parameter für die Zeile</param>
         /// <returns>Die generierte Zeile</returns>
-        public string GenerateLine(ExpressoParams parameters)
+        public static string GenerateLine(ExpressoParams parameters)
         {
             return $"Expr {parameters.Name}: {parameters.Expression.Replace('"', '\'')}";
         }
@@ -817,7 +817,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="publishMode">Der zu konvertierende PublishMode</param>
         /// <returns>Der konvertierte String</returns>
-        private string GetPublishModeString(PublishMode publishMode)
+        private static string GetPublishModeString(PublishMode publishMode)
         {
             switch (publishMode)
             {

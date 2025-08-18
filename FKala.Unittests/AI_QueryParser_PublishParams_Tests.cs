@@ -57,10 +57,10 @@ namespace FKala.Unittests
         }
 
         [TestMethod]
-        public void Constructor_WithNullInputs_ShouldInitializeProperties()
+        public void Constructor_WithNullInputs_ShouldInitializeProperties_DespiteUnexpectedNull()
         {
             // Arrange
-            List<string>? inputs = null;
+            List<string> inputs = null!;
             var publishMode = PublishMode.MultipleResultsets;
 
             // Act

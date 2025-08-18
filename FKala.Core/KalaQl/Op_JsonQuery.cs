@@ -65,7 +65,7 @@ namespace FKala.Core.KalaQl
             this.hasExecuted = true;
         }
 
-        public IEnumerable<DataPoint> ReadJson(IEnumerable<DataPoint> jsonEnum, string[] pathParts)
+        public static IEnumerable<DataPoint> ReadJson(IEnumerable<DataPoint> jsonEnum, string[] pathParts)
         {
             int index = -1;
             if (pathParts[pathParts.Length - 1].EndsWith("]"))

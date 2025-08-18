@@ -113,7 +113,7 @@ namespace FKala.Core.KalaQl
             }
         }
 
-        private IEnumerable<Dictionary<string, object?>>? Bench(string baseDir)
+        private static IEnumerable<Dictionary<string, object?>>? Bench(string baseDir)
         {
             var bm = Benchmarker.Bench(baseDir);
             foreach (var rResult in bm.Reading)
@@ -173,7 +173,7 @@ namespace FKala.Core.KalaQl
         //    }
         //}
 
-        private IEnumerable<Dictionary<string, object>> Copy(string sourceMeasurement, string targetMeasurement, KalaQlContext context)
+        private static IEnumerable<Dictionary<string, object>> Copy(string sourceMeasurement, string targetMeasurement, KalaQlContext context)
         {
             var result = context.DataLayer.CopyFilesFromMeasurementToMeasurement(sourceMeasurement, targetMeasurement, context);
             foreach (var msg in result)
@@ -182,7 +182,7 @@ namespace FKala.Core.KalaQl
             }
             yield break;
         }
-        private IEnumerable<Dictionary<string, object>> Rename(string sourceMeasurement, string targetMeasurement, KalaQlContext context)
+        private static IEnumerable<Dictionary<string, object>> Rename(string sourceMeasurement, string targetMeasurement, KalaQlContext context)
         {
             var result = context.DataLayer.MoveMeasurement(sourceMeasurement, targetMeasurement, context);
             foreach (var msg in result)
@@ -191,7 +191,7 @@ namespace FKala.Core.KalaQl
             }
         }
 
-        private IEnumerable<Dictionary<string, object?>> SortRawFiles(KalaQlContext context)
+        private static IEnumerable<Dictionary<string, object?>> SortRawFiles(KalaQlContext context)
         {
             var result = context.DataLayer.LoadMeasurementList();
             foreach (var measurement in result)

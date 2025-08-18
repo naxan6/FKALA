@@ -39,7 +39,7 @@ namespace FKala.Core.Migrations.Influx
 
             this.measurement = new string(sb.ToArray()).Trim();
         }
-        private void EatNonsense(IEnumerator<char> ce)
+        private static void EatNonsense(IEnumerator<char> ce)
         {
             bool someleft = true;
             char c = ' ';
@@ -203,11 +203,11 @@ namespace FKala.Core.Migrations.Influx
             var ce = input.GetEnumerator();
             ce.MoveNext();
             this.ReadMeasurement(ce);
-            this.EatNonsense(ce);
+            EatNonsense(ce);
             this.ReadTags(ce);
-            this.EatNonsense(ce);
+            EatNonsense(ce);
             this.ReadFields(ce);
-            this.EatNonsense(ce);
+            EatNonsense(ce);
             this.ReadTime(ce);
         }
     }

@@ -33,7 +33,7 @@ namespace FKala.Core.DataLayers
             AttributesToSkip = FileAttributes.Hidden
         };
 
-        public string TimeFormat { get { return "HH:mm:ss.fffffff"; } }
+        public static string TimeFormat { get { return "HH:mm:ss.fffffff"; } }
         private SortedDictionary<DateOnly, ReaderTuple>? TimeSortedStreamReader;
         private ILookup<DateOnly, ReaderTuple>? StreamReaderLookupForMerge;
         private DateTime StartTime;

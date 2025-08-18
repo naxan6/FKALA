@@ -57,7 +57,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="action">Die zu konvertierende MgmtAction</param>
         /// <returns>Der konvertierte String</returns>
-        private string GetMgmtActionString(MgmtAction action)
+        private static string GetMgmtActionString(MgmtAction action)
         {
             switch (action)
             {

@@ -65,7 +65,7 @@ namespace FKala.Core.KalaQl
         }
 
 
-        private IEnumerable<DataPoint> Clone(IEnumerable<DataPoint> input)
+        private static IEnumerable<DataPoint> Clone(IEnumerable<DataPoint> input)
         {
             foreach(var dp in input)
             {
@@ -138,7 +138,7 @@ namespace FKala.Core.KalaQl
             }
         }
 
-        private Resolution? ParseResolution(string v)
+        private static Resolution? ParseResolution(string v)
         {
             if (v.ToUpper() == "MINUTELY")
             {

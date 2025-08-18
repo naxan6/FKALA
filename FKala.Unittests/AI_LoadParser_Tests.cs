@@ -109,7 +109,7 @@ namespace FKala.Unittests
             var parameters = new LoadParams("NAME", "measurement", DateTime.MinValue, DateTime.MaxValue, new CacheResolution { Resolution = Resolution.Full }, true);
 
             // Act
-            var result = _parser.GenerateLine(parameters);
+            var result = LoadParser.GenerateLine(parameters);
 
             // Assert
             result.Should().Be("Load NAME: measurement NewestOnly");
@@ -122,7 +122,7 @@ namespace FKala.Unittests
             var parameters = new LoadParams("NAME", "measurement", new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), new DateTime(2024, 12, 31, 23, 59, 59, DateTimeKind.Utc), new CacheResolution { Resolution = Resolution.Hourly, AggregateFunction = AggregateFunction.Sum });
 
             // Act
-            var result = _parser.GenerateLine(parameters);
+            var result = LoadParser.GenerateLine(parameters);
 
             // Assert
             result.Should().Be("Load NAME: measurement 2024-01-01T00:00:00Z 2024-12-31T23:59:59Z HOURLY_SUM");
@@ -135,7 +135,7 @@ namespace FKala.Unittests
             var parameters = new LoadParams("NAME", "measurement", new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), new DateTime(2024, 12, 31, 23, 59, 59, DateTimeKind.Utc), new CacheResolution { Resolution = Resolution.Hourly, AggregateFunction = AggregateFunction.Sum, ForceRebuild = true });
 
             // Act
-            var result = _parser.GenerateLine(parameters);
+            var result = LoadParser.GenerateLine(parameters);
 
             // Assert
             result.Should().Be("Load NAME: measurement 2024-01-01T00:00:00Z 2024-12-31T23:59:59Z HOURLY_SUM_REBUILD");
@@ -148,7 +148,7 @@ namespace FKala.Unittests
             var parameters = new LoadParams("NAME", "measurement", new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), new DateTime(2024, 12, 31, 23, 59, 59, DateTimeKind.Utc), new CacheResolution { Resolution = Resolution.Hourly, AggregateFunction = AggregateFunction.Sum, IncrementalRefresh = true });
 
             // Act
-            var result = _parser.GenerateLine(parameters);
+            var result = LoadParser.GenerateLine(parameters);
 
             // Assert
             result.Should().Be("Load NAME: measurement 2024-01-01T00:00:00Z 2024-12-31T23:59:59Z HOURLY_SUM_REFRESHINCREMENTAL");
@@ -161,7 +161,7 @@ namespace FKala.Unittests
             var parameters = new LoadParams("NAME", "measurement", new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), new DateTime(2024, 12, 31, 23, 59, 59, DateTimeKind.Utc), new CacheResolution { Resolution = Resolution.Hourly, AggregateFunction = AggregateFunction.Sum, ForceRebuild = true, IncrementalRefresh = true });
 
             // Act
-            var result = _parser.GenerateLine(parameters);
+            var result = LoadParser.GenerateLine(parameters);
 
             // Assert
             result.Should().Be("Load NAME: measurement 2024-01-01T00:00:00Z 2024-12-31T23:59:59Z HOURLY_SUM_REBUILD_REFRESHINCREMENTAL");
@@ -174,7 +174,7 @@ namespace FKala.Unittests
             var cacheResolution = new CacheResolution { Resolution = Resolution.Full };
 
             // Act
-            var result = _parser.GetCacheResolutionString(cacheResolution);
+            var result = LoadParser.GetCacheResolutionString(cacheResolution);
 
             // Assert
             result.Should().Be("NoCache");
@@ -187,7 +187,7 @@ namespace FKala.Unittests
             var cacheResolution = new CacheResolution { Resolution = Resolution.Minutely, AggregateFunction = AggregateFunction.Avg };
 
             // Act
-            var result = _parser.GetCacheResolutionString(cacheResolution);
+            var result = LoadParser.GetCacheResolutionString(cacheResolution);
 
             // Assert
             result.Should().Be("MINUTELY_AVG");
@@ -200,7 +200,7 @@ namespace FKala.Unittests
             var cacheResolution = new CacheResolution { Resolution = Resolution.FiveMinutely, AggregateFunction = AggregateFunction.Sum };
 
             // Act
-            var result = _parser.GetCacheResolutionString(cacheResolution);
+            var result = LoadParser.GetCacheResolutionString(cacheResolution);
 
             // Assert
             result.Should().Be("FIVEMINUTELY_SUM");
@@ -213,7 +213,7 @@ namespace FKala.Unittests
             var cacheResolution = new CacheResolution { Resolution = Resolution.Hourly, AggregateFunction = AggregateFunction.Max, ForceRebuild = true };
 
             // Act
-            var result = _parser.GetCacheResolutionString(cacheResolution);
+            var result = LoadParser.GetCacheResolutionString(cacheResolution);
 
             // Assert
             result.Should().Be("HOURLY_MAX_REBUILD");
@@ -226,7 +226,7 @@ namespace FKala.Unittests
             var aggregateFunction = AggregateFunction.Avg;
 
             // Act
-            var result = _parser.GetAggregateFunctionString(aggregateFunction);
+            var result = LoadParser.GetAggregateFunctionString(aggregateFunction);
 
             // Assert
             result.Should().Be("AVG");
@@ -239,7 +239,7 @@ namespace FKala.Unittests
             var aggregateFunction = AggregateFunction.WAvg;
 
             // Act
-            var result = _parser.GetAggregateFunctionString(aggregateFunction);
+            var result = LoadParser.GetAggregateFunctionString(aggregateFunction);
 
             // Assert
             result.Should().Be("WAVG");
@@ -252,7 +252,7 @@ namespace FKala.Unittests
             var aggregateFunction = AggregateFunction.First;
 
             // Act
-            var result = _parser.GetAggregateFunctionString(aggregateFunction);
+            var result = LoadParser.GetAggregateFunctionString(aggregateFunction);
 
             // Assert
             result.Should().Be("FIRST");
@@ -265,7 +265,7 @@ namespace FKala.Unittests
             var aggregateFunction = AggregateFunction.Last;
 
             // Act
-            var result = _parser.GetAggregateFunctionString(aggregateFunction);
+            var result = LoadParser.GetAggregateFunctionString(aggregateFunction);
 
             // Assert
             result.Should().Be("LAST");
@@ -278,7 +278,7 @@ namespace FKala.Unittests
             var aggregateFunction = AggregateFunction.Min;
 
             // Act
-            var result = _parser.GetAggregateFunctionString(aggregateFunction);
+            var result = LoadParser.GetAggregateFunctionString(aggregateFunction);
 
             // Assert
             result.Should().Be("MIN");
@@ -291,7 +291,7 @@ namespace FKala.Unittests
             var aggregateFunction = AggregateFunction.Max;
 
             // Act
-            var result = _parser.GetAggregateFunctionString(aggregateFunction);
+            var result = LoadParser.GetAggregateFunctionString(aggregateFunction);
 
             // Assert
             result.Should().Be("MAX");
@@ -304,7 +304,7 @@ namespace FKala.Unittests
             var aggregateFunction = AggregateFunction.Count;
 
             // Act
-            var result = _parser.GetAggregateFunctionString(aggregateFunction);
+            var result = LoadParser.GetAggregateFunctionString(aggregateFunction);
 
             // Assert
             result.Should().Be("COUNT");
@@ -317,7 +317,7 @@ namespace FKala.Unittests
             var aggregateFunction = AggregateFunction.Sum;
 
             // Act
-            var result = _parser.GetAggregateFunctionString(aggregateFunction);
+            var result = LoadParser.GetAggregateFunctionString(aggregateFunction);
 
             // Assert
             result.Should().Be("SUM");
@@ -330,7 +330,7 @@ namespace FKala.Unittests
             var aggregateFunction = (AggregateFunction)999; // Unknown function
 
             // Act & Assert
-            var action = () => _parser.GetAggregateFunctionString(aggregateFunction);
+            var action = () => LoadParser.GetAggregateFunctionString(aggregateFunction);
             action.Should().Throw<Exception>().WithMessage("Unbekannte AggregateFunction: 999");
         }
     }

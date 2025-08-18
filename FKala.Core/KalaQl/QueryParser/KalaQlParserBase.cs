@@ -41,7 +41,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="v">Der zu parsende String</param>
         /// <returns>Das geparste DateTime</returns>
-        protected DateTime ParseDateTime(string v)
+        protected static DateTime ParseDateTime(string v)
         {
             string[] dateFormats = {
                 "yyyy-MM-ddTHH:mm:ss.ffffffZ",
@@ -71,7 +71,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="v">Der zu parsende String</param>
         /// <returns>Die geparste AggregateFunction</returns>
-        protected AggregateFunction ParseAggregate(string v)
+        protected static AggregateFunction ParseAggregate(string v)
         {
             v = v.Trim().ToUpper();
             switch (v)
@@ -103,7 +103,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="v">Der zu parsende String</param>
         /// <returns>Das geparste Window</returns>
-        protected Window ParseWindow(string v)
+        protected static Window ParseWindow(string v)
         {
             v = v.Trim();
             switch (v)
@@ -190,7 +190,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// <param name="v">Der zu parsende String</param>
         /// <param name="originalAutoWindowSize">Die ursprüngliche Fenstergröße, wenn die Resolution aus einem "AUTO(...)"-String erstellt wurde</param>
         /// <returns>Die geparste Resolution</returns>
-        protected Resolution? ParseResolution(string v, out long? originalAutoWindowSize)
+        protected static Resolution? ParseResolution(string v, out long? originalAutoWindowSize)
         {
             originalAutoWindowSize = null;
             
@@ -263,7 +263,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="v">Der zu parsende String</param>
         /// <returns>True, wenn EmptyWindows aktiviert sind, sonst False</returns>
-        protected bool ParseEmptyWindows(string v)
+        protected static bool ParseEmptyWindows(string v)
         {
             if (v.Contains("EmptyWindows"))
             {
@@ -277,7 +277,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="v">Der zu parsende String</param>
         /// <returns>Der geparste PublishMode</returns>
-        protected PublishMode ParsePublishMode(string v)
+        protected static PublishMode ParsePublishMode(string v)
         {
             v = v.Trim();
             switch (v)
@@ -295,7 +295,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="v">Der zu parsende String</param>
         /// <returns>Der geparste Decimal oder Null</returns>
-        protected decimal? ParseDecimalNullable(string v)
+        protected static decimal? ParseDecimalNullable(string v)
         {
             if (v.ToUpper() == "NULL")
             {
@@ -312,7 +312,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="v">Der zu parsende String</param>
         /// <returns>Der geparste InterpolationMode</returns>
-        protected InterpolationMode ParseInterpolationMode(string v)
+        protected static InterpolationMode ParseInterpolationMode(string v)
         {
             if (v.ToUpper() == "FORWARDS")
             {
@@ -334,7 +334,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="v">Der zu parsende String</param>
         /// <returns>Die geparste MgmtAction</returns>
-        protected MgmtAction ParseMgmtAction(string v)
+        protected static MgmtAction ParseMgmtAction(string v)
         {
             if (v.ToUpper() == "LOADMEASURES" || v.ToUpper() == "LISTMEASUREMENTS")
             {

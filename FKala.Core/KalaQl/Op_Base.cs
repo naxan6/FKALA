@@ -45,7 +45,7 @@ namespace FKala.Core.KalaQl
             throw new NotImplementedException();
         }
 
-        protected DateTime ParseDateTime(string v)
+        protected static DateTime ParseDateTime(string v)
         {
             string[] dateFormats = {
                 "yyyy-MM-ddTHH:mm:ss.ffffffZ",
@@ -70,7 +70,7 @@ namespace FKala.Core.KalaQl
             throw new Exception($"Zeitangabe {v} ist ungültig");
         }
 
-        protected AggregateFunction ParseAggregate(string v)
+        protected static AggregateFunction ParseAggregate(string v)
         {
             v = v.Trim().ToUpper();
             switch (v)
