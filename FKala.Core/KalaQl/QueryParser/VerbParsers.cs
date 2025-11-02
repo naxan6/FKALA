@@ -295,12 +295,38 @@ namespace FKala.Core.KalaQl.QueryParser
         /// <returns>Die erstellte Operation</returns>
         public override Op_Base Parse(string line, List<string> fields)
         {
-            if (fields[3] == "NewestOnly")
-            {
-                return new Op_JsonQuery(line, fields[1].Trim(':'), fields[2], fields[3], DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefined.NoCache, true);
-            }
+            // Check if NewestOnly is the last parameter
+            bool newestOnly = fields.Count > 6 && fields[6] == "NewestOnly";
+            
             if (fields.Count < 6) throw new Exception($"6 Parameters needed. Example: Load NAME: measurename 0001-01-01T00:00:00 9999-12-31T00:00:00 NoCache. But got: {line}");
-            return new Op_JsonQuery(line, fields[1].Trim(':'), fields[2], fields[3], ParseDateTime(fields[4]), ParseDateTime(fields[5]), ParseCacheResolution(fields[6]));
+            
+            string fieldPath;
+            DateTime startTime, endTime;
+            string cacheResolution;
+            
+            // Handle three different field structures:
+            // Structure A (6 fields): Loaj NAME: measurement start end cache
+            // Structure B (7 fields): Loaj NAME: measurement fieldpath start end cache
+            // Structure C (7 fields): Loaj NAME: measurement start end cache NewestOnly
+            
+            if (fields.Count >= 7 && !newestOnly)
+            {
+                // Structure B: fieldpath is at index 3, start at index 4, end at index 5, cache at index 6
+                fieldPath = fields[3];
+                startTime = ParseDateTime(fields[4]);
+                endTime = ParseDateTime(fields[5]);
+                cacheResolution = fields[6];
+            }
+            else
+            {
+                // Structure A or C: no explicit fieldpath, use default
+                fieldPath = "$.*"; // Default field path when not specified
+                startTime = ParseDateTime(fields[3]);
+                endTime = ParseDateTime(fields[4]);
+                cacheResolution = fields[5];
+            }
+            
+            return new Op_JsonQuery(line, fields[1].Trim(':'), fields[2], fieldPath, startTime, endTime, ParseCacheResolution(cacheResolution), newestOnly);
         }
 
         /// <summary>
@@ -570,7 +596,8 @@ namespace FKala.Core.KalaQl.QueryParser
         /// <returns>Die erstellte Operation</returns>
         public override Op_Base Parse(string line, List<string> fields)
         {
-            return new Op_Interpolate(line, fields[1].Trim(':'), fields[2], ParseInterpolationMode(fields[3]), ParseDecimalNullable(fields[4]));
+            string constantValue = fields.Count > 4 ? fields[4] : null;
+            return new Op_Interpolate(line, fields[1].Trim(':'), fields[2], ParseInterpolationMode(fields[3]), ParseDecimalNullable(constantValue ?? "NULL"));
         }
 
         /// <summary>

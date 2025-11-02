@@ -106,23 +106,28 @@ namespace FKala.Core.KalaQl
         {
             var transInputs = GetAllIntermediateDatasourcesTransitive(context);
             var q = KalaQuery.Start();
+            var qForMatFile = KalaQuery.Start();
+
             foreach (var trans in transInputs)
             {
                 var myTrans = trans.Clone();
                 if (myTrans is Op_Load)
                 {
                     var load = (Op_Load)myTrans;
-                    load.StartTime = DateTime.MinValue;
-                    load.EndTime = DateTime.MaxValue;
+                    load.StartTime = new DateTime(2000, 1, 1);
+                    load.EndTime = new DateTime(2100, 1, 1);
                 }
                 if (trans != this)
                 {
                     q.Add(myTrans);
-                } 
+                }
+                qForMatFile.Add(myTrans);
+
             }
             q.Add(new Op_Publish("noline", new List<string>() { InputDataSetName }, PublishMode.MultipleResultsets));
+            qForMatFile.Add(new Op_Publish("noline", new List<string>() { this.Name }, PublishMode.MultipleResultsets)); // Hier ist this.Name richtig!
 
-            
+
 
             KalaResult matRes = q.Execute(context.DataLayer);
             var enumerable = matRes.ResultSets!.First().Resultset;
@@ -139,7 +144,7 @@ namespace FKala.Core.KalaQl
                 count++;
             }
              
-            List<string> lines = q.AsLines();
+            List<string> lines = qForMatFile.AsLines();
             lines.Insert(0, newestSeen.ToString("yyyy-MM-ddTHH:mm:ss.fffffff"));
             context.DataLayer.WriteMatViewFile(ViewName, lines);
         }

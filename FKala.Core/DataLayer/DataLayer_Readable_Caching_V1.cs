@@ -540,12 +540,11 @@ namespace FKala.Core
                     this.NewestContent = result; // result ist MinValue bei Parse-Fehler, was ok ist
                 }
 
-                if (lines.Length >= 3) // Zeitstempel, Leerzeile, dann Query
+                if (lines.Length >= 2) // Zeitstempel, dann Query
                 {
-                    // Query beginnt ab der dritten Zeile (Index 2)
-                    this.Query = string.Join(Environment.NewLine, lines.Skip(2));
-                }
-                // Wenn lines.Length == 2 (Timestamp + Leerzeile), ist Query string.Empty (Standardwert)
+                    // Query beginnt ab der dritten Zeile (Index 1)
+                    this.Query = string.Join(Environment.NewLine, lines.Skip(1));
+                }                
                 // Wenn lines.Length == 1 (nur Timestamp), ist Query string.Empty
                 // Wenn lines.Length == 0 (leere Datei), ist Query string.Empty
             }

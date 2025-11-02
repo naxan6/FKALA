@@ -80,7 +80,9 @@ namespace FKala.Core.KalaQl
 
         public override IKalaQlOperation Clone()
         {
-            return new Op_Load(base.Line, this.Name, this.Measurement, this.StartTime, this.EndTime, this.CacheResolution, this.NewestOnly);
+            var ret = new Op_Load(base.Line, this.Name, this.Measurement, this.StartTime, this.EndTime, this.CacheResolution, this.NewestOnly);
+            ret.RawCacheResolution = this.RawCacheResolution;
+            return ret;
         }
 
         public override string ToLine()
@@ -91,7 +93,7 @@ namespace FKala.Core.KalaQl
             }
             else
             {
-                return $"Load {Name}: {Measurement} {StartTime:yyyy-MM-ddTHH:mm:ssZ} {EndTime:yyyy-MM-ddTHH:mm:ssZ} {this.RawCacheResolution}";
+                return $"Load {Name}: {Measurement} {StartTime:yyyy-MM-ddTHH:mm:ssZ} {EndTime:yyyy-MM-ddTHH:mm:ssZ} {this.CacheResolution}";
             }
         }
 

@@ -58,9 +58,9 @@ namespace FKala.Core.KalaQl.QueryParser
             DateTime parsedDate;
             foreach (var format in dateFormats)
             {
-                if (DateTime.TryParseExact(v, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedDate))
+                if (DateTime.TryParseExact(v, format, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out parsedDate))
                 {
-                    return parsedDate.ToUniversalTime();
+                    return DateTime.SpecifyKind(parsedDate, DateTimeKind.Utc);
                 }
             }
             throw new Exception($"Zeitangabe {v} ist ungültig");
