@@ -8,7 +8,6 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
 using FKala.Core.Interfaces;
-using System.Runtime.Intrinsics.X86;
 
 namespace FKala.Unittests
 {
@@ -57,7 +56,10 @@ Publ aVar1,aVar2 Table");
         {            
             var localPath = FileSystemHelper.ConvertToLocalPath(@".\Testdata\defectdata");
             var localCachePath = FileSystemHelper.ConvertToLocalPath(@".\Testdata\defectdata\cache");
-            Directory.Delete(localCachePath, true);
+            if (Directory.Exists(localCachePath))
+            {
+                Directory.Delete(localCachePath, true);
+            }
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
             sw.Start();

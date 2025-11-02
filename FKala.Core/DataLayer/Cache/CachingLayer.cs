@@ -146,7 +146,7 @@ namespace FKala.Core.DataLayer.Cache
             string newest = GetNewestCacheFilepath(sanitizedMeasurement, cache, aggregateFunction);
             var parts = newest.Split('_');
             var cacheYear = int.Parse(parts[parts.Length - 2]);
-            var newestInRaw = DataLayer.LoadNewestDatapoint(sanitizedMeasurement, context);
+            var newestInRaw = DataLayer.LoadNewestDatapoint(sanitizedMeasurement);
             var newestInCache = cache.LoadNewestDatapoint(newest);
             return cache.ShouldUpdateFromWhere(cacheYear, newestInCache.First(), newestInRaw.First());
         }

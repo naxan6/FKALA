@@ -1,0 +1,100 @@
+Summary
+  Generated on: 05.08.2025 - 17:39:01
+  Coverage date: 05.08.2025 - 16:09:57
+  Parser: Cobertura
+  Assemblies: 1
+  Classes: 78
+  Files: 56
+  Line coverage: 63.8%
+  Covered lines: 2917
+  Uncovered lines: 1652
+  Coverable lines: 4569
+  Total lines: 7887
+  Branch coverage: 50.9% (683 of 1341)
+  Covered branches: 683
+  Total branches: 1341
+  Method coverage: 75.6% (425 of 562)
+  Full method coverage: 64% (360 of 562)
+  Covered methods: 425
+  Fully covered methods: 360
+  Total methods: 562
+
+FKala.Core                                                    63.8%
+  FileSystemHelper                                            76.9%
+  FKala.Core.DataLayer_Readable_Caching_V1                    70.6%
+  FKala.Core.DataLayer.Cache.Cache_15Minutely                   60%
+  FKala.Core.DataLayer.Cache.Cache_5Minutely                    60%
+  FKala.Core.DataLayer.Cache.Cache_Base                       86.2%
+  FKala.Core.DataLayer.Cache.Cache_Hourly                     71.1%
+  FKala.Core.DataLayer.Cache.Cache_Minutely                     60%
+  FKala.Core.DataLayer.Cache.CachingLayer                     62.2%
+  FKala.Core.DataLayer.Infrastructure.BufferedWriter          93.1%
+  FKala.Core.DataLayer.Infrastructure.BufferedWriterService   75.3%
+  FKala.Core.DataLayer.Infrastructure.DatFileParser           85.1%
+  FKala.Core.DataLayer.Infrastructure.DpPolicy                 100%
+  FKala.Core.DataLayer.Infrastructure.IEnumerableExtensions    100%
+  FKala.Core.DataLayer.Infrastructure.LockManager              100%
+  FKala.Core.DataLayer.Infrastructure.Pools                    100%
+  FKala.Core.DataLayers.StorageAccess                         48.9%
+  FKala.Core.DataLayers.UnexpectedlyUnsortedException         33.3%
+  FKala.Core.Helper.Benchmarker                               96.2%
+  FKala.Core.Helper.Msg                                        100%
+  FKala.Core.KalaQl.KalaQlContext                               59%
+  FKala.Core.KalaQl.KalaQuery                                 93.1%
+  FKala.Core.KalaQl.KalaResult                                 100%
+  FKala.Core.KalaQl.Op_Aggregate                              76.5%
+  FKala.Core.KalaQl.Op_AlignTimezone                            96%
+  FKala.Core.KalaQl.Op_Base                                   72.3%
+  FKala.Core.KalaQl.Op_Expresso                               88.3%
+  FKala.Core.KalaQl.Op_Insert                                  100%
+  FKala.Core.KalaQl.Op_Interpolate                             100%
+  FKala.Core.KalaQl.Op_JsonQuery                              83.4%
+  FKala.Core.KalaQl.Op_Load                                   60.6%
+  FKala.Core.KalaQl.Op_MatView                                31.2%
+  FKala.Core.KalaQl.Op_Mgmt                                     61%
+  FKala.Core.KalaQl.Op_Publish                                54.4%
+  FKala.Core.KalaQl.Op_Var                                      60%
+  FKala.Core.KalaQl.QueryParser.AggregateParams                100%
+  FKala.Core.KalaQl.QueryParser.AggregateParser                5.9%
+  FKala.Core.KalaQl.QueryParser.AlignTimezoneParams              0%
+  FKala.Core.KalaQl.QueryParser.AlignTimezoneParser             40%
+  FKala.Core.KalaQl.QueryParser.ExpressoParams                 100%
+  FKala.Core.KalaQl.QueryParser.ExpressoParser                  40%
+  FKala.Core.KalaQl.QueryParser.InsertParams                   100%
+  FKala.Core.KalaQl.QueryParser.InsertParser                    40%
+  FKala.Core.KalaQl.QueryParser.InterpolateParams              100%
+  FKala.Core.KalaQl.QueryParser.InterpolateParser             16.6%
+  FKala.Core.KalaQl.QueryParser.JsonQueryParams                100%
+  FKala.Core.KalaQl.QueryParser.JsonQueryParser               11.1%
+  FKala.Core.KalaQl.QueryParser.KalaQlParserBase              60.7%
+  FKala.Core.KalaQl.QueryParser.KalaQlParserRegistry          58.8%
+  FKala.Core.KalaQl.QueryParser.LoadParams                     100%
+  FKala.Core.KalaQl.QueryParser.LoadParser                    13.8%
+  FKala.Core.KalaQl.QueryParser.MatViewParams                  100%
+  FKala.Core.KalaQl.QueryParser.MatViewParser                   40%
+  FKala.Core.KalaQl.QueryParser.MgmtParams                     100%
+  FKala.Core.KalaQl.QueryParser.MgmtParser                    21.4%
+  FKala.Core.KalaQl.QueryParser.PublishParams                  100%
+  FKala.Core.KalaQl.QueryParser.PublishParser                 38.8%
+  FKala.Core.KalaQl.QueryParser.VarParams                      100%
+  FKala.Core.KalaQl.QueryParser.VarParser                       40%
+  FKala.Core.KalaQl.Result_Materialized                        100%
+  FKala.Core.KalaQl.ResultPromise                              100%
+  FKala.Core.KalaQl.Windowing.Window                          59.3%
+  FKala.Core.Logic.DatasetsCombiner2                          95.3%
+  FKala.Core.Logic.EnumerableHelpers                           100%
+  FKala.Core.Logic.Fast                                        100%
+  FKala.Core.Logic.FileFromEndProcessor                        100%
+  FKala.Core.Logic.KalaJson                                    100%
+  FKala.Core.Logic.LastLineReader                             92.1%
+  FKala.Core.Logic.PathSanitizer                               100%
+  FKala.Core.Logic.StreamingAggregator                          82%
+  FKala.Core.Migration.InfluxLineProtocolImporter                0%
+  FKala.Core.Migrations.Influx.InfluxLineParser               81.8%
+  FKala.Core.Model.CacheResolution                             100%
+  FKala.Core.Model.CacheResolutionPredefined                    60%
+  FKala.Core.Model.DataPoint                                  35.2%
+  FKala.Core.ReaderTuple                                       100%
+  FKala.Migrate.MariaDb.EventRow                                 0%
+  FKala.Migrate.MariaDb.MigrateMariaDb_Tstsfe_Custom             0%
+  FKala.Migrate.MariaDb.ReaderExtension                          0%

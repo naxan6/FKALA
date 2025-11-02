@@ -17,7 +17,7 @@ namespace FKala.Core.KalaQl
         public string ViewName { get; }
 
 
-        public Op_MatView(string? line, string name, string inputDataSet, string viewName) : base(line)
+        public Op_MatView(string line, string name, string inputDataSet, string viewName) : base(line)
         {
             Name = name;
             InputDataSetName = inputDataSet;
@@ -84,7 +84,7 @@ namespace FKala.Core.KalaQl
                 Console.WriteLine("MaterializeAvail");
             }
             var transInputs = GetAllIntermediateDatasourcesTransitive(context);
-            Op_Load timeFilter = transInputs.First(ti => ti is Op_Load) as Op_Load;
+            Op_Load timeFilter = (Op_Load)transInputs.First(ti => ti is Op_Load);
             return ReadFromMaterialization(context, timeFilter.StartTime, timeFilter.EndTime); // - but timefiltered!! hack: use timefilter from first found Op_Load
         }
 
@@ -94,7 +94,7 @@ namespace FKala.Core.KalaQl
                 .Add(new Op_Load("noline", "matq", ViewName, startTime, endTime, CacheResolutionPredefined.NoCache, false))
                 .Add(new Op_Publish("noline", new List<string>() { "matq" }, PublishMode.MultipleResultsets));
             KalaResult matRes = matQ.Execute(context.DataLayer);
-            return matRes.ResultSets.First().Resultset;
+            return matRes.ResultSets!.First().Resultset;
         }
 
         private bool MaterializationIsAvailable(KalaQlContext context)
@@ -106,38 +106,46 @@ namespace FKala.Core.KalaQl
         {
             var transInputs = GetAllIntermediateDatasourcesTransitive(context);
             var q = KalaQuery.Start();
+            var qForMatFile = KalaQuery.Start();
+
             foreach (var trans in transInputs)
             {
                 var myTrans = trans.Clone();
                 if (myTrans is Op_Load)
                 {
-                    var load = (myTrans as Op_Load);
-                    load.StartTime = DateTime.MinValue;
-                    load.EndTime = DateTime.MaxValue;
+                    var load = (Op_Load)myTrans;
+                    load.StartTime = new DateTime(2000, 1, 1);
+                    load.EndTime = new DateTime(2100, 1, 1);
                 }
                 if (trans != this)
                 {
                     q.Add(myTrans);
                 }
+                qForMatFile.Add(myTrans);
+
             }
             q.Add(new Op_Publish("noline", new List<string>() { InputDataSetName }, PublishMode.MultipleResultsets));
+            qForMatFile.Add(new Op_Publish("noline", new List<string>() { this.Name }, PublishMode.MultipleResultsets)); // Hier ist this.Name richtig!
 
-            
+
 
             KalaResult matRes = q.Execute(context.DataLayer);
-            var enumerable = matRes.ResultSets.First().Resultset;
+            var enumerable = matRes.ResultSets!.First().Resultset;
 
             //var enumerable = input.ResultsetFactory();
             var dataPointsEnumerator = enumerable.GetEnumerator();
 
             int count = 0;
+            DateTime newestSeen = DateTime.MinValue;
             foreach (var dp in enumerable)
             {
+                newestSeen = dp.StartTime > newestSeen ? dp.StartTime : newestSeen;
                 context.DataLayer.Insert(ViewName, dp, $"Op_MatView <{ViewName}>");
                 count++;
             }
-
-            List<string> lines = q.AsLines();
+             
+            List<string> lines = qForMatFile.AsLines();
+            lines.Insert(0, newestSeen.ToString("yyyy-MM-ddTHH:mm:ss.fffffff"));
             context.DataLayer.WriteMatViewFile(ViewName, lines);
         }
 
@@ -148,7 +156,7 @@ namespace FKala.Core.KalaQl
 
         public override IKalaQlOperation Clone()
         {
-            return new Op_MatView(null, Name, InputDataSetName, ViewName); 
+            return new Op_MatView(base.Line, Name, InputDataSetName, ViewName); 
         }
 
         public override string ToLine()

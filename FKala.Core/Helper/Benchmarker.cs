@@ -13,8 +13,8 @@ namespace FKala.Core.Helper
 
         public class BenchmarkResult
         {
-            public Dictionary<long, TimeSpan> Reading { get; set; }
-            public Dictionary<long, TimeSpan> Writing { get; set; }
+            public required Dictionary<long, TimeSpan> Reading { get; set; }
+            public required Dictionary<long, TimeSpan> Writing { get; set; }
         }
 
         public static BenchmarkResult Bench(string baseDir)
@@ -44,8 +44,7 @@ namespace FKala.Core.Helper
             TimeSpan min = TimeSpan.MaxValue;
             string fastestString = "";
             string bestFactorString = "";
-            long fastestBufferSize = 0;
-            long cheapestBufferSize = 0;
+            long fastestBufferSize;            
             FileStreamOptions fileStreamOptions = new FileStreamOptions()
             {
                 Access = FileAccess.Read,
@@ -165,8 +164,8 @@ namespace FKala.Core.Helper
                 sw.Reset();
             }
 
-            Console.WriteLine("FASTEST WRITE: " + fastestString);
-            Console.WriteLine("CHEAPEST WRITE: " + bestFactorString);
+            Console.WriteLine($"FASTEST WRITE: {fastestString} (fastest {fastestBufferSize})");
+            Console.WriteLine($"CHEAPEST WRITE:  {bestFactorString} (cheapest {cheapestBufferSize})");
             return results;
         }
 

@@ -30,7 +30,7 @@ namespace FKala.Core.Migration
         StringBuilder sb = new StringBuilder();
 
 #pragma warning disable CS1998 // Bei der asynchronen Methode fehlen "await"-Operatoren. Die Methode wird synchron ausgeführt.
-        public async IAsyncEnumerable<Dictionary<string, object?>> Import(string stringParams)
+        public IEnumerable<Dictionary<string, object?>> Import(string stringParams)
 #pragma warning restore CS1998 // Bei der asynchronen Methode fehlen "await"-Operatoren. Die Methode wird synchron ausgeführt.
         {
             var parts = stringParams.Split(";");
@@ -40,7 +40,7 @@ namespace FKala.Core.Migration
                 this._start = DateTime.MinValue;
                 this._end = DateTime.MaxValue;
                 filePath = parts[0];
-            } 
+            }
             else if (parts.Count() == 3)
             {
                 this._start = DateTime.Parse(parts[0]);
@@ -89,11 +89,12 @@ namespace FKala.Core.Migration
                     yield return retRow;
                 }
             }
+            sr.Close();
         }
 
         InfluxLineParser ilp = new InfluxLineParser();
 
-        public void ImportLine(string line)
+        private void ImportLine(string line)
         {
             ilp.Read(line);
 

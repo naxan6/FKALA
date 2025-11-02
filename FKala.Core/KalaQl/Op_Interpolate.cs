@@ -13,7 +13,7 @@ namespace FKala.Core.KalaQl
         public InterpolationMode Mode { get; }
         public decimal? ConstantValue { get; }
 
-        public Op_Interpolate(string? line, string name, string inputDataSet, InterpolationMode mode, decimal? value) : base(line)
+        public Op_Interpolate(string line, string name, string inputDataSet, InterpolationMode mode, decimal? value) : base(line)
         {
             Name = name;
             InputDataSetName = inputDataSet;
@@ -108,7 +108,7 @@ namespace FKala.Core.KalaQl
 
         public override IKalaQlOperation Clone()
         {
-            return new Op_Interpolate(null, Name, InputDataSetName, Mode, ConstantValue);
+            return new Op_Interpolate(base.Line, Name, InputDataSetName, Mode, ConstantValue);
         }
 
         public override string ToLine()

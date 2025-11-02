@@ -17,8 +17,8 @@ namespace FKala.Core.KalaQl
         public string? AlignTzTimeZoneId { get; set; }
         public bool Streaming { get; internal set; }
 
-        public List<string> Warnings = new List<string>();
-        public List<string> Errors = new List<string>();
+        public List<string> Warnings { get; private set; } = new List<string>();
+        public List<string> Errors { get; private set; } = new List<string>();
         public KalaQlContext(KalaQuery kalaQuery, IDataLayer DataLayer)
         {
             this.KalaQuery = kalaQuery;
@@ -33,7 +33,7 @@ namespace FKala.Core.KalaQl
         }
         public void AddWarning(string msg)
         {
-            Errors.Add($"WARNING: {msg}");
+            Warnings.Add($"WARNING: {msg}");
             Console.WriteLine(msg);
         }
     }

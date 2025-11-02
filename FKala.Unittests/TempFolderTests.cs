@@ -7,15 +7,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO; // Hinzugefügt für Pfadoperationen
+using FKala.Core; // Hinzugefügt für DataLayer_Readable_Caching_V1.MatView
 
 namespace FKala.Unittests
 {
     [TestClass]
     public class TempFolderTests
     {
-#pragma warning disable CS8618 // Ein Non-Nullable-Feld muss beim Beenden des Konstruktors einen Wert ungleich NULL enthalten. Fügen Sie ggf. den „erforderlichen“ Modifizierer hinzu, oder deklarieren Sie den Modifizierer als NULL-Werte zulassend.
-        static DataFaker DataFaker;
-#pragma warning restore CS8618 // Ein Non-Nullable-Feld muss beim Beenden des Konstruktors einen Wert ungleich NULL enthalten. Fügen Sie ggf. den „erforderlichen“ Modifizierer hinzu, oder deklarieren Sie den Modifizierer als NULL-Werte zulassend.
+        static DataFaker DataFaker = new DataFaker();
 
         [ClassInitialize]
         public static void Initialize(TestContext context)
@@ -33,7 +33,7 @@ namespace FKala.Unittests
         public void DataLayer_LoadData_CheckBorders()
         {
             // Act
-            var resultset = DataFaker.TestDataLayer.LoadData("m1", new DateTime(2024, 03, 01), new DateTime(2024, 03, 15), CacheResolutionPredefined.NoCache, false, new KalaQlContext(null, DataFaker.TestDataLayer), false);
+            var resultset = DataFaker.TestDataLayer.LoadData("m1", new DateTime(2024, 03, 01), new DateTime(2024, 03, 15), CacheResolutionPredefined.NoCache, false, new KalaQlContext(null!, DataFaker.TestDataLayer), false);
 
             resultset = resultset.ToList(); // persist result
 
@@ -48,7 +48,7 @@ namespace FKala.Unittests
             Assert.AreEqual(0.457086396616458m, resultset.Last().Value);
 
             // Assert 2
-            var resultsetAll = DataFaker.TestDataLayer.LoadData("m1", new DateTime(0001, 01, 01), new DateTime(9999, 12, 31), CacheResolutionPredefined.NoCache, false, new KalaQlContext(null, DataFaker.TestDataLayer), false);
+            var resultsetAll = DataFaker.TestDataLayer.LoadData("m1", new DateTime(0001, 01, 01), new DateTime(9999, 12, 31), CacheResolutionPredefined.NoCache, false, new KalaQlContext(null!, DataFaker.TestDataLayer), false);
             resultsetAll = resultsetAll.ToList();
             resultsetAll.First().StartTime.Should().Be(new DateTime(2024, 01, 01, 0, 0, 13).AddTicks(5443658));
             Assert.AreEqual(0.248668584157093m, resultsetAll.First().Value);
@@ -175,6 +175,47 @@ namespace FKala.Unittests
             var resultset = result.ResultTable;
             resultset.Should().NotBeNull();
             resultset!.Count().Should().Be(140);
+        }
+
+        [TestMethod]
+        public void DataLayer_MatView_CreateLoadDelete()
+        {
+            // Arrange
+            var dataLayer = DataFaker.TestDataLayer;
+            string viewName = "testMatView_CreateLoadDelete";
+            string measurementPath = Path.Combine(dataLayer.DataDirectory, viewName);
+            string viewDefFilePath = Path.Combine(measurementPath, "viewdef.txt");
+
+            var queryLines = new List<string>
+            {
+                DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffffff"), // Timestamp-Zeile                
+                "Load input_m1: m1 2024-01-01T00:00:00Z 2024-01-02T00:00:00Z NoCache",
+                "MatView output_mv: input_m1 " + viewName,
+                "Publ output_mv Table"
+            };
+
+            // Act & Assert - Create
+            dataLayer.WriteMatViewFile(viewName, queryLines);
+            Assert.IsTrue(Directory.Exists(measurementPath), "Measurement directory should exist after WriteMatViewFile.");
+            Assert.IsTrue(File.Exists(viewDefFilePath), "viewdef.txt should exist after WriteMatViewFile.");
+
+            // Act & Assert - Load
+            var loadedMatViews = dataLayer.LoadMatViews();
+            var loadedMatView = loadedMatViews.FirstOrDefault(mv => mv.ViewdefFilePath != null && new DirectoryInfo(mv.ViewdefFilePath).Parent?.Name == viewName);
+            
+            Assert.IsNotNull(loadedMatView, $"MatView '{viewName}' should be loaded.");
+            Assert.AreEqual(viewDefFilePath, loadedMatView.ViewdefFilePath); // loadedMatView ist hier nicht null
+            string expectedQuery = string.Join(Environment.NewLine, queryLines.Skip(1));
+            Assert.AreEqual(expectedQuery, loadedMatView.Query, "Loaded MatView query should match written query.");
+
+            // Act & Assert - Delete
+            dataLayer.DeleteMeasurementAndMatViewDefinition(viewName);
+            Assert.IsFalse(Directory.Exists(measurementPath), "Measurement directory should NOT exist after DeleteMeasurementAndMatViewDefinition.");
+            Assert.IsFalse(File.Exists(viewDefFilePath), "viewdef.txt should NOT exist after DeleteMeasurementAndMatViewDefinition.");
+
+            loadedMatViews = dataLayer.LoadMatViews();
+            loadedMatView = loadedMatViews.FirstOrDefault(mv => mv.ViewdefFilePath != null && new DirectoryInfo(mv.ViewdefFilePath).Parent?.Name == viewName);
+            Assert.IsNull(loadedMatView, $"MatView '{viewName}' should NOT be loaded after deletion.");
         }
     }
 }

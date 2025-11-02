@@ -6,6 +6,7 @@ using FKala.Core.Model;
 using FKala.Migrate.MariaDb;
 using System.Diagnostics.Metrics;
 using System.Runtime.Intrinsics.Arm;
+using System;
 
 namespace FKala.Core.KalaQl
 {
@@ -36,19 +37,19 @@ namespace FKala.Core.KalaQl
                 var result = context.DataLayer.LoadMeasurementList();
                 context.Result = new KalaResult();
                 context.Result.MeasureList = result;
-                context.Result.StreamResult = result.Select(e => Msg.Get("name", e)).AsAsyncEnumerable();
+                context.Result.StreamResult = result.Select(e => Msg.Get("name", e)).AsEnumerable()!;
                 this.hasExecuted = true;
             }
             else if (MgmtAction == MgmtAction.SortAllRaw)
             {
                 context.Result = new KalaResult();
-                context.Result.StreamResult = SortRawFiles(context);
+                context.Result.StreamResult = SortRawFiles(context)!;
                 this.hasExecuted = true;
             }
             else if (MgmtAction == MgmtAction.FsChk)
             {
                 context.Result = new KalaResult();
-                context.Result.StreamResult = FsChk(context);
+                context.Result.StreamResult = FsChk(context)!;
                 this.hasExecuted = true;
             }
             else if (MgmtAction == MgmtAction.Copy)
@@ -77,7 +78,7 @@ namespace FKala.Core.KalaQl
                 var paramParts = Params.Split(" ");
                 var measurement = paramParts[0];
                 context.Result = new KalaResult();
-                context.Result.StreamResult = context.DataLayer.Blacklist(measurement);
+                context.Result.StreamResult = context.DataLayer.Blacklist(measurement)!;
                 this.hasExecuted = true;
             }
             else if (MgmtAction == MgmtAction.UnBlacklist)
@@ -86,33 +87,33 @@ namespace FKala.Core.KalaQl
                 var paramParts = Params.Split(" ");
                 var measurement = paramParts[0];
                 context.Result = new KalaResult();
-                context.Result.StreamResult = context.DataLayer.UnBlacklist(measurement);
+                context.Result.StreamResult = context.DataLayer.UnBlacklist(measurement)!;
                 this.hasExecuted = true;
             }
             else if (MgmtAction == MgmtAction.ImportInflux)
             {
                 var importer = new InfluxLineProtocolImporter(context.DataLayer);
                 context.Result = new KalaResult();
-                context.Result.StreamResult = importer.Import(Params);
+                context.Result.StreamResult = importer.Import(Params)!;
                 this.hasExecuted = true;
             }
             else if (MgmtAction == MgmtAction.ImportMariaDbTstsfe)
             {
                 var importer = new MigrateMariaDb_Tstsfe_Custom(Params, context.DataLayer);
                 context.Result = new KalaResult();
-                context.Result.StreamResult = importer.Migrate();
+                context.Result.StreamResult = importer.Migrate().ToBlockingEnumerable()!;
                 this.hasExecuted = true;
             }
             else if (MgmtAction == MgmtAction.BenchmarkIo)
             {                
                 context.Result = new KalaResult();
                 
-                context.Result.StreamResult = Bench(context.DataLayer.DataDirectory);
+                context.Result.StreamResult = Bench(context.DataLayer.DataDirectory)!;
                 this.hasExecuted = true;
             }
         }
 
-        private async IAsyncEnumerable<Dictionary<string, object?>>? Bench(string baseDir)
+        private static IEnumerable<Dictionary<string, object?>>? Bench(string baseDir)
         {
             var bm = Benchmarker.Bench(baseDir);
             foreach (var rResult in bm.Reading)
@@ -172,39 +173,37 @@ namespace FKala.Core.KalaQl
         //    }
         //}
 
-        private async IAsyncEnumerable<Dictionary<string, object?>>? Copy(string sourceMeasurement, string targetMeasurement, KalaQlContext context)
+        private static IEnumerable<Dictionary<string, object>> Copy(string sourceMeasurement, string targetMeasurement, KalaQlContext context)
         {
             var result = context.DataLayer.CopyFilesFromMeasurementToMeasurement(sourceMeasurement, targetMeasurement, context);
-            await foreach (var msg in result)
+            foreach (var msg in result)
             {
                 yield return msg;
             }
             yield break;
         }
-        private async IAsyncEnumerable<Dictionary<string, object?>>? Rename(string sourceMeasurement, string targetMeasurement, KalaQlContext context)
+        private static IEnumerable<Dictionary<string, object>> Rename(string sourceMeasurement, string targetMeasurement, KalaQlContext context)
         {
             var result = context.DataLayer.MoveMeasurement(sourceMeasurement, targetMeasurement, context);
-            await foreach (var msg in result)
+            foreach (var msg in result)
             {
                 yield return msg;
             }
         }
 
-        private async IAsyncEnumerable<Dictionary<string, object?>> SortRawFiles(KalaQlContext context)
+        private static IEnumerable<Dictionary<string, object?>> SortRawFiles(KalaQlContext context)
         {
             var result = context.DataLayer.LoadMeasurementList();
             foreach (var measurement in result)
             {
-                await foreach (var msg in context.DataLayer.SortRawFiles(measurement, context))
+                foreach (var msg in context.DataLayer.SortRawFiles(measurement, context))
                 {
                     yield return msg;
                 }
             }
         }
 
-#pragma warning disable CS1998 // Bei der asynchronen Methode fehlen "await"-Operatoren. Die Methode wird synchron ausgeführt.
-        public async IAsyncEnumerable<Dictionary<string, object?>> FsChk(KalaQlContext context)
-#pragma warning restore CS1998 // Bei der asynchronen Methode fehlen "await"-Operatoren. Die Methode wird synchron ausgeführt.
+        public IEnumerable<Dictionary<string, object?>> FsChk(KalaQlContext context)
         {
             var measurements = context.DataLayer.LoadMeasurementList();
             List<string> chkResults = new List<string>();
@@ -289,11 +288,11 @@ namespace FKala.Core.KalaQl
             context.Result = new KalaResult();
             context.Result.StreamResult = chkResults.Select(t =>
             {
-                var retRow = new Dictionary<string, object?>();
+                var retRow = new Dictionary<string, object>();
                 retRow.Add("info", t);
                 return retRow;
             }
-            ).AsAsyncEnumerable();
+            );
             this.hasExecuted = true;
         }
 

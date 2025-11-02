@@ -155,7 +155,7 @@ order by e.id asc;
             }
         }
 
-        private async Task<EventRow> ReadRowAsync(MySqlDataReader reader)
+        private static async Task<EventRow> ReadRowAsync(MySqlDataReader reader)
         {
 #pragma warning disable CS8601 // Mögliche Nullverweiszuweisung.
             return new EventRow()

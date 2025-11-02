@@ -33,9 +33,9 @@ namespace FKala.Core.DataLayers
             AttributesToSkip = FileAttributes.Hidden
         };
 
-        public string TimeFormat { get { return "HH:mm:ss.fffffff"; } }
-        private SortedDictionary<DateOnly, ReaderTuple> TimeSortedStreamReader;
-        private ILookup<DateOnly, ReaderTuple> StreamReaderLookupForMerge;
+        public static string TimeFormat { get { return "HH:mm:ss.fffffff"; } }
+        private SortedDictionary<DateOnly, ReaderTuple>? TimeSortedStreamReader;
+        private ILookup<DateOnly, ReaderTuple>? StreamReaderLookupForMerge;
         private DateTime StartTime;
         private DateTime EndTime;
 
@@ -44,36 +44,38 @@ namespace FKala.Core.DataLayers
         public int WriteBuffer { get; }
 
         private bool IsActiveAutoSortRawFiles;
-        private IDataLayer? DataLayer;
+        private IDataLayer DataLayer;
         private TimeOnly AtMidnight = new TimeOnly(0, 0, 0);
 
         private LockManager LockManager;
 
-        private StorageAccess(IDataLayer dataLayer)
+        private StorageAccess(IDataLayer dataLayer, KalaQlContext context)
         {
             this.DataLayer = dataLayer;
+            this.Context = context;
+
             fileStreamOptions.BufferSize = dataLayer.ReadBuffer;
             optionFindFilesRecursive.BufferSize = dataLayer.ReadBuffer;
             ReadBuffer = dataLayer.ReadBuffer;
-            WriteBuffer = dataLayer.WriteBuffer;
+            WriteBuffer = dataLayer.WriteBuffer;           
             LockManager = new LockManager();
         }
 
         public static StorageAccess ForReadMultiFile(string measurementPath, string measurementPathPart, DateTime startTime, DateTime endTime, KalaQl.KalaQlContext context)
         {
-            var ret = new StorageAccess(context.DataLayer);
+            var ret = new StorageAccess(context.DataLayer, context);
             ret.StartTime = startTime;
             ret.EndTime = endTime;
-            ret.Context = context;
+            
             ret.StreamReaderLookupForMerge = ret.QueryFilesForMergingMultipleFiles(measurementPath, measurementPathPart, startTime, endTime);
             return ret;
         }
         public static StorageAccess ForRead(string measurementPath, string measurementPathPart, DateTime startTime, DateTime endTime, KalaQl.KalaQlContext context, bool doSortRawFiles)
         {
-            var ret = new StorageAccess(context.DataLayer);
+            var ret = new StorageAccess(context.DataLayer, context);
             ret.StartTime = startTime;
             ret.EndTime = endTime;
-            ret.Context = context;
+            
             if (doSortRawFiles) { ret.ActivateAutoSortRawFiles(context.DataLayer); }
             ret.TimeSortedStreamReader = ret.GetFilePaths(measurementPath, measurementPathPart, startTime, endTime);
             return ret;
@@ -81,29 +83,29 @@ namespace FKala.Core.DataLayers
 
         public static StorageAccess ForSort(string measurementPath, string measurementPathPart, DateTime startTime, DateTime endTime, KalaQl.KalaQlContext context)
         {
-            var ret = new StorageAccess(context.DataLayer);
+            var ret = new StorageAccess(context.DataLayer, context);
             ret.StartTime = startTime;
             ret.EndTime = endTime;
-            ret.Context = context;
+            
             ret.TimeSortedStreamReader = ret.GetFilePaths(measurementPath, measurementPathPart, startTime, endTime);
             return ret;
         }
         public static StorageAccess ForMerging(string measurementPath, string measurementPathPart, KalaQl.KalaQlContext context)
         {
-            var ret = new StorageAccess(context.DataLayer);
+            var ret = new StorageAccess(context.DataLayer, context);
             ret.StartTime = DateTime.MinValue;
             ret.EndTime = DateTime.MaxValue;
-            ret.Context = context;
+            
             ret.StreamReaderLookupForMerge = ret.QueryFilesForMergingAllFiles(measurementPath, measurementPathPart);
             return ret;
         }
 
         public static StorageAccess ForCleanup(string measurementPath, string measurementPathPart, KalaQl.KalaQlContext context)
         {
-            var ret = new StorageAccess(context.DataLayer);
+            var ret = new StorageAccess(context.DataLayer, context);
             ret.StartTime = DateTime.MinValue;
             ret.EndTime = DateTime.MaxValue;
-            ret.Context = context;
+            
             ret.StreamReaderLookupForMerge = ret.QueryFilesForCleanup(measurementPath, measurementPathPart);
             return ret;
         }
@@ -281,7 +283,7 @@ namespace FKala.Core.DataLayers
 
         public IEnumerable<DataPoint> StreamMergeDataPoints()
         {
-            foreach (var streamreaderTuple in StreamReaderLookupForMerge.OrderBy(k => k.Key))
+            foreach (var streamreaderTuple in StreamReaderLookupForMerge!.OrderBy(k => k.Key))
             {
                 int fileyear = streamreaderTuple.Key.Year;
                 int filemonth = streamreaderTuple.Key.Month;
@@ -320,7 +322,7 @@ namespace FKala.Core.DataLayers
 
         public IEnumerable<DataPoint> StreamMergeDataPoints_MaterializeSortIfNeeded(string measurement, bool dontInvalidateCache_ForUseWhileCacheRebuild)
         {
-            foreach (var streamreaderDayList in StreamReaderLookupForMerge.OrderBy(srl => srl.Key))
+            foreach (var streamreaderDayList in StreamReaderLookupForMerge!.OrderBy(srl => srl.Key))
             {
                 int fileyear = streamreaderDayList.Key.Year;
                 int filemonth = streamreaderDayList.Key.Month;
@@ -389,7 +391,7 @@ namespace FKala.Core.DataLayers
 
         public IEnumerable<DataPoint> StreamDataPoints()
         {
-            foreach (var streamreaderTuple in TimeSortedStreamReader)
+            foreach (var streamreaderTuple in TimeSortedStreamReader!)
             {
                 var srTuple = streamreaderTuple.Value;
                 int fileyear = streamreaderTuple.Key.Year;
@@ -559,7 +561,7 @@ namespace FKala.Core.DataLayers
             while ((dataline = sr.StreamReader!.ReadLine()) != null)
             {
                 lineIdx++;
-                var ret = DatFileParser.ParseLine(fileyear, filemonth, fileday, dataline, sr.FilePath, lineIdx, Context);
+                var ret = DatFileParser.ParseLine(fileyear, filemonth, fileday, dataline, sr.FilePath, lineIdx);
                 ret.Source = $"{sr.FilePath}, Line {lineIdx} {sr.MarkedAsSorted}";
 
 
@@ -581,7 +583,7 @@ namespace FKala.Core.DataLayers
                 else if (retPrev.StartTime >= ret.StartTime && checkUnsorted)
                 {
                     string err = $"Marked sorted but unsorted at File {ret.Source} ## {dataline}";
-                    DataLayer.InsertError(err);
+                    DataLayer!.InsertError(err);
                     throw new UnexpectedlyUnsortedException(err);
                 }
 

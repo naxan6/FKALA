@@ -12,12 +12,19 @@ namespace FKala.Client.Cmd
     class QuerySyncOpts
     {
         [Option('u', "url", Required = true, HelpText = "Die Api-Base-Url von Kala.")]
-        public string Url { get; set; } 
+        public string Url { get; set; } = string.Empty;
 
         [Option('i', "input", Required = true, HelpText = "Der Eingabe-String, der verarbeitet werden soll.")]
-        public string Input { get; set; }
+        public string Input { get; set; } = string.Empty;
 
         [Option('d', "debug", Required = false, Default =false, HelpText = "Debug.")]
-        public bool Debug { get; set; }
+        public bool Debug { get; set; } = false;
+
+        public QuerySyncOpts()
+        {
+            Url = string.Empty;
+            Input = string.Empty;
+            Debug = false;
+        }
     }
 }

@@ -20,7 +20,7 @@ namespace FKala.Core.KalaQl
         public string Expresso { get; }
         public IdentifiersInfo UnknownIdInfo { get; private set; }
 
-        public Op_Expresso(string? line, string name, string expresso) : base(line)
+        public Op_Expresso(string line, string name, string expresso) : base(line)
         {
             Name = name;
             Expresso = expresso;
@@ -160,7 +160,7 @@ namespace FKala.Core.KalaQl
 
         public override IKalaQlOperation Clone()
         {
-            return new Op_Expresso(null, Name, Expresso);
+            return new Op_Expresso(base.Line, Name, Expresso);
         }
 
         public override string ToLine()

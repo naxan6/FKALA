@@ -1,4 +1,5 @@
 ﻿using FKala.Core.Interfaces;
+using FKala.Core.KalaQl.QueryParser;
 using FKala.Core.KalaQl.Windowing;
 using FKala.Core.Model;
 using System.Globalization;
@@ -9,12 +10,34 @@ namespace FKala.Core.KalaQl
 {
     public class KalaQuery
     {
+        private readonly KalaQlParserRegistry _parserRegistry;
 
         public List<IKalaQlOperation> ops = new List<IKalaQlOperation>();
 
         List<Op_Var> opvars = new List<Op_Var>();
 
         public bool Streaming { get; private set; }
+
+        public KalaQuery()
+        {
+            _parserRegistry = new KalaQlParserRegistry();
+            RegisterParsers();
+        }
+
+        private void RegisterParsers()
+        {
+            _parserRegistry.RegisterParser(new AlignTimezoneParser());
+            _parserRegistry.RegisterParser(new VarParser());
+            _parserRegistry.RegisterParser(new LoadParser());
+            _parserRegistry.RegisterParser(new JsonQueryParser());
+            _parserRegistry.RegisterParser(new AggregateParser());
+            _parserRegistry.RegisterParser(new InterpolateParser());
+            _parserRegistry.RegisterParser(new MatViewParser());
+            _parserRegistry.RegisterParser(new InsertParser());
+            _parserRegistry.RegisterParser(new ExpressoParser());
+            _parserRegistry.RegisterParser(new PublishParser());
+            _parserRegistry.RegisterParser(new MgmtParser());
+        }
 
         public static KalaQuery Start(bool streaming = false)
         {
@@ -70,15 +93,32 @@ namespace FKala.Core.KalaQl
         public KalaQuery FromQuery(string queryText)
         {
             queryText = Regex.Unescape(queryText);
-            string[] lines = queryText.Split("\n", StringSplitOptions.RemoveEmptyEntries);
-            //string[] lines = queryText.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-
-            foreach (var line in lines)
+            
+            // Überprüfen, ob die Abfrage mehrere Operationen enthält
+            if (queryText.Contains(" | "))
             {
-                var op = ParseQueryText(line);
-                if (op != null)
+                string[] operations = queryText.Split(" | ", StringSplitOptions.RemoveEmptyEntries);
+                foreach (var operation in operations)
                 {
-                    this.Add(op);
+                    var op = ParseQueryText(operation);
+                    if (op != null)
+                    {
+                        this.Add(op);
+                    }
+                }
+            }
+            else
+            {
+                string[] lines = queryText.Split("\n", StringSplitOptions.RemoveEmptyEntries);
+                //string[] lines = queryText.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+                foreach (var line in lines)
+                {
+                    var op = ParseQueryText(line);
+                    if (op != null)
+                    {
+                        this.Add(op);
+                    }
                 }
             }
 
@@ -119,326 +159,34 @@ namespace FKala.Core.KalaQl
             }
 
             var verb = fields[0];
-            switch (verb)
+            if (verb == "Var")
             {
-                case "AlTz":
-                    return new Op_AlignTimezone(line, fields[1]);
-                case "Var":
-                    var opvar = new Op_Var(line, fields[1].Trim(':'), fields[2]);
-                    opvars.RemoveAll(e => e.VarName == opvar.VarName);
-                    opvars.Add(opvar);
-                    return opvar;
-                case "Load":
-                    if (fields[3] == "NewestOnly")
-                    {
-                        return new Op_Load(line, fields[1].Trim(':'), fields[2], DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefined.NoCache, true);
-                    }
-                    if (fields.Count < 6) throw new Exception($"6 Parameters needed. Example: Load NAME: mesaurename 0001-01-01T00:00:00 9999-12-31T00:00:00 NoCache. But got: {line}");
-                    return new Op_Load(line, fields[1].Trim(':'), fields[2], ParseDateTime(fields[3]), ParseDateTime(fields[4]), ParseCacheResolution(fields[5]));
-                case "Loaj":
-                    if (fields[3] == "NewestOnly")
-                    {
-                        return new Op_JsonQuery(line, fields[1].Trim(':'), fields[2], fields[3], DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefined.NoCache, true);
-                    }
-                    if (fields.Count < 6) throw new Exception($"6 Parameters needed. Example: Load NAME: measurename 0001-01-01T00:00:00 9999-12-31T00:00:00 NoCache. But got: {line}");
-                    return new Op_JsonQuery(line, fields[1].Trim(':'), fields[2], fields[3], ParseDateTime(fields[4]), ParseDateTime(fields[5]), ParseCacheResolution(fields[6]));
-                case "Aggr":
-                    return new Op_Aggregate(line, fields[1].Trim(':'), fields[2], ParseWindow(fields[3]), ParseAggregate(fields[4]), ParseEmptyWindows(fields.Count > 5 ? fields[5] : ""));
-                case "Inpo":
-                    return new Op_Interpolate(line, fields[1].Trim(':'), fields[2], ParseInterpolationMode(fields[3]), ParseDecimalNullable(fields[4]));
-                case "MatView":
-                    return new Op_MatView(line, fields[1].Trim(':'), fields[2], fields[3]);
-                case "Insert":
-                    return new Op_Insert(line, fields[1].Trim(':'), fields[2], fields[3]);
-                case "Expr":
-                    return new Op_Expresso(line, fields[1].Trim(':'), fields[2].Replace('\'', '"'));
-                case "Publ":
-                    return new Op_Publish(line, fields[1].Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(), ParsePublishMode(fields[2]));
-                case "Mgmt":
-                    return new Op_Mgmt(line, ParseMgmtAction(fields[1]), fields.Count > 2 ? String.Join(" ", fields.Skip(2)) : "");
-                default:
-                    throw new Exception($"Unkown Verb <{verb}>");
-            }
-        }
-
-        private decimal? ParseDecimalNullable(string v)
-        {
-            if (v.ToUpper() == "NULL")
-            {
-                return null;
+                var opvar = new Op_Var(line, fields[1].Trim(':'), fields[2]);
+                opvars.RemoveAll(e => e.VarName == opvar.VarName);
+                opvars.Add(opvar);
+                return opvar;
             }
             else
             {
-                return decimal.Parse(v);
-            }
-
-        }
-
-        private InterpolationMode ParseInterpolationMode(string v)
-        {
-            if (v.ToUpper() == "FORWARDS")
-            {
-                return InterpolationMode.forwards;
-            }
-            else if (v.ToUpper() == "BACKWARDS")
-            {
-                return InterpolationMode.backwards;
-            }
-            else if (v.ToUpper() == "CONSTANT")
-            {
-                return InterpolationMode.constant;
-            }
-            throw new Exception($"InterpolationMode {v} is invalid");
-        }
-
-        private MgmtAction ParseMgmtAction(string v)
-        {
-            if (v.ToUpper() == "LOADMEASURES" || v.ToUpper() == "LISTMEASUREMENTS")
-            {
-                return MgmtAction.LoadMeasures;
-            }
-            else if (v.ToUpper() == "SORTRAWFILES")
-            {
-                return MgmtAction.SortAllRaw;
-            }
-            else if (v.ToUpper() == "IMPORTINFLUX")
-            {
-                return MgmtAction.ImportInflux;
-            }
-            else if (v.ToUpper() == "IMPORTTSTSFE")
-            {
-                return MgmtAction.ImportMariaDbTstsfe;
-            }
-            else if (v.ToUpper() == "BENCHIO")
-            {
-                return MgmtAction.BenchmarkIo;
-            }
-            else if (v.ToUpper() == "FSCHK")
-            {
-                return MgmtAction.FsChk;
-            }
-            else if (v.ToUpper() == "COPY")
-            {
-                return MgmtAction.Copy;
-            }
-            else if (v.ToUpper() == "RENAME")
-            {
-                return MgmtAction.Rename;
-            }
-            else if (v.ToUpper() == "SORT")
-            {
-                return MgmtAction.Sort;
-            }
-            else if (v.ToUpper() == "CLEAN")
-            {
-                return MgmtAction.Clean;
-            }
-            else if (v.ToUpper() == "BLACKLIST")
-            {
-                return MgmtAction.Blacklist;
-            }
-            else if (v.ToUpper() == "UNBLACKLIST")
-            {
-                return MgmtAction.UnBlacklist;
-            }
-
-            throw new Exception($"MgmtAction {v} is invalid");
-        }
-
-        private CacheResolution ParseCacheResolution(string v)
-        {
-            v = v.Trim();
-
-            var parts = v.Split('_');
-
-            Resolution? resolution = ParseResolution(parts[0]);
-            if (resolution != null && resolution != Resolution.Full)
-            {
-                var aggregate = ParseAggregate(parts[1]);
-                var forceRebuild = parts.Length > 2 && parts[2].ToUpper().Contains("REBUILD");
-                var refreshIncremental = parts.Length > 2 && parts[2].ToUpper().Contains("REFRESHINCREMENTAL");
-                return new CacheResolution() { Resolution = resolution.Value, AggregateFunction = aggregate, ForceRebuild = forceRebuild, IncrementalRefresh = refreshIncremental };
-            }
-            else
-            {
-                return CacheResolutionPredefined.NoCache;
-            }
-        }
-
-        private Resolution? ParseResolution(string v)
-        {
-            if (v.ToUpper() == "MINUTELY")
-            {
-                return Resolution.Minutely;
-            }
-            else if (v.ToUpper() == "FIVEMINUTELY")
-            {
-                return Resolution.FiveMinutely;
-            }
-            else if (v.ToUpper() == "FIFTEENMINUTELY")
-            {
-                return Resolution.FifteenMinutely;
-            }
-            else if (v.ToUpper() == "HOURLY")
-            {
-                return Resolution.Hourly;
-            }
-            else if (v.ToUpper().StartsWith("AUTO("))
-            {
-                var parts = v.Split(['(', ')']);
-                var queriedwindowsize = long.Parse(parts[1]);
-
-                Resolution autoresolution = Resolution.Hourly;
-
-                if (queriedwindowsize < 1 * 60 * 1000)
+                try
                 {
-                    autoresolution = Resolution.Full;
+                    return _parserRegistry.Parse(line, fields);
                 }
-                else if (queriedwindowsize < 5 * 60 * 1000)
+                catch (Exception ex)
                 {
-                    autoresolution = Resolution.Full;           // no azto-minutely cache, beacuse mostly raw data is faster
+                    throw new Exception($"Fehler beim Parsen von {line}: {ex.Message}");
                 }
-                else if (queriedwindowsize < 15 * 60 * 1000)
-                {
-                    autoresolution = Resolution.FiveMinutely;
-                }
-                else if (queriedwindowsize < 60 * 60 * 1000)
-                {
-                    autoresolution = Resolution.FifteenMinutely;
-                }
-                else
-                {
-                    autoresolution = Resolution.Hourly;
-                }
-
-                Console.WriteLine($"autoselect cache {autoresolution} for {queriedwindowsize}");
-                return autoresolution;
-            }
-            return null;
-        }
-
-        private bool ParseEmptyWindows(string v)
-        {
-            if (v.Contains("EmptyWindows"))
-            {
-                return true;
-            }
-            return false;
-        }
-
-        private PublishMode ParsePublishMode(string v)
-        {
-            v = v.Trim();
-            switch (v)
-            {
-                case "CombinedResultset":
-                case "Table":
-                    return PublishMode.CombinedResultset;
-                default:
-                    return PublishMode.MultipleResultsets;
-            }
-        }
-
-        private DateTime ParseDateTime(string v)
-        {
-            string[] dateFormats = {
-                "yyyy-MM-ddTHH:mm:ss.ffffffZ",
-                "yyyy-MM-ddTHH:mm:ss.ffffff",
-                "yyyy-MM-ddTHH:mm:ss.fffZ",
-                "yyyy-MM-ddTHH:mm:ss.fff",
-                "yyyy-MM-ddTHH:mm:ssZ",
-                "yyyy-MM-ddTHH:mm:ss",
-                "yyyy-MM-ddZ",
-                "yyyy-MM-dd"
-            };
-            var ci = CultureInfo.InvariantCulture;
-
-            DateTime parsedDate;
-            foreach (var format in dateFormats)
-            {
-                if (DateTime.TryParseExact(v, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedDate))
-                {
-                    return parsedDate.ToUniversalTime();
-                }
-            }
-            throw new Exception($"Zeitangabe {v} ist ungültig");
-        }
-
-        private Window ParseWindow(string v)
-
-        {
-            v = v.Trim();
-            switch (v)
-            {
-                case "Aligned_5Minutes":
-                    return Window.Aligned_5Minutes;
-                case "Aligned_15Minutes":
-                    return Window.Aligned_15Minutes;
-                case "Aligned_1Hour":
-                    return Window.Aligned_1Hour;
-                case "Aligned_1Day":
-                    return Window.Aligned_1Day;
-                case "Aligned_1Week":
-                    return Window.Aligned_1Week;
-                case "Aligned_1Month":
-                    return Window.Aligned_1Month;
-                case "Aligned_1YearStartAtHalf":
-                    return Window.Aligned_1YearStartAtHalf;
-                case "Aligned_1Year":
-                    return Window.Aligned_1Year;
-                case "Unaligned_1Month":
-                    return Window.Unaligned_1Month;
-                case "Unaligned_1Year":
-                    return Window.Unaligned_1Year;
-                case "Scalarize":
-                case "Infinite":
-                    return Window.Infinite;
-                default:
-                    TimeSpan timespan;
-                    if (int.TryParse(v, out int vint))
-                    {
-                        timespan = TimeSpan.FromMilliseconds(vint);
-                    }
-                    else
-                    {
-                        timespan = TimeSpan.Parse(v);
-                    }
-
-                    return new Window(WindowMode.FixedIntervall, timespan);
-
-            }
-        }
-
-        private AggregateFunction ParseAggregate(string v)
-        {
-            v = v.Trim().ToUpper();
-            switch (v)
-            {
-                case "AVG":
-                case "MEAN":
-                    return AggregateFunction.Avg;
-                case "WAVG":
-                    return AggregateFunction.WAvg;
-                case "FIRST":
-                    return AggregateFunction.First;
-                case "LAST":
-                    return AggregateFunction.Last;
-                case "MIN":
-                    return AggregateFunction.Min;
-                case "MAX":
-                    return AggregateFunction.Max;
-                case "COUNT":
-                    return AggregateFunction.Count;
-                case "SUM":
-                    return AggregateFunction.Sum;
-                default:
-                    throw new Exception($"Unkown Aggregate <{v}>");
             }
         }
 
         public List<string> AsLines()
         {
             return ops.Select(op => op.ToLine()).ToList();
+        }
+
+        public string ToQueryString()
+        {
+            return string.Join(" | ", AsLines());
         }
     }
 }
