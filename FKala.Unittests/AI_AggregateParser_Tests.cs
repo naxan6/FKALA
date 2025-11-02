@@ -10,7 +10,7 @@ namespace Fkala.Unittests
     [TestClass]
     public class AI_AggregateParser_Tests
     {
-        private AggregateParser _parser;
+        private AggregateParser _parser = null!;
 
         [TestInitialize]
         public void Setup()
@@ -70,7 +70,7 @@ namespace Fkala.Unittests
             // Assert
             result.Should().NotBeNull();
             result.Should().BeOfType<FKala.Core.KalaQl.Op_Aggregate>();
-            var opAggregate = result as FKala.Core.KalaQl.Op_Aggregate;
+            var opAggregate = (FKala.Core.KalaQl.Op_Aggregate)result;
             opAggregate.Name.Should().Be("TestAggr");
             opAggregate.InputDataSetName.Should().Be("InputData");
             opAggregate.AggregateFunc.Should().Be(AggregateFunction.Sum);
@@ -90,7 +90,7 @@ namespace Fkala.Unittests
             // Assert
             result.Should().NotBeNull();
             result.Should().BeOfType<FKala.Core.KalaQl.Op_Aggregate>();
-            var opAggregate = result as FKala.Core.KalaQl.Op_Aggregate;
+            var opAggregate = (FKala.Core.KalaQl.Op_Aggregate)result;
             opAggregate.Name.Should().Be("TestAggregate");
             opAggregate.InputDataSetName.Should().Be("InputData");
             opAggregate.AggregateFunc.Should().Be(AggregateFunction.Avg);

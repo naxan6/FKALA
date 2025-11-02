@@ -596,7 +596,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// <returns>Die erstellte Operation</returns>
         public override Op_Base Parse(string line, List<string> fields)
         {
-            string constantValue = fields.Count > 4 ? fields[4] : null;
+            string? constantValue = fields.Count > 4 ? fields[4] : null;
             return new Op_Interpolate(line, fields[1].Trim(':'), fields[2], ParseInterpolationMode(fields[3]), ParseDecimalNullable(constantValue ?? "NULL"));
         }
 
