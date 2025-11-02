@@ -47,8 +47,8 @@ builder.Services.AddQuartz(q =>
     q.AddTrigger(opts => opts
         .ForJob(jobKey)
         .WithIdentity($"{nameof(MatViewRefreshJob)}-trigger")
-        //.WithCronSchedule("0 0 2 * * ?") // Täglich um 2:00 Uhr morgens
-        .WithCronSchedule("0 */1 * * * ?")
+        .WithCronSchedule("0 0 2 * * ?") // Täglich um 2:00 Uhr morgens
+        //.WithCronSchedule("0 */1 * * * ?")
         // Alternativ für Tests alle 5 Minuten: .WithCronSchedule("0 */5 * * * ?") 
         );
 });

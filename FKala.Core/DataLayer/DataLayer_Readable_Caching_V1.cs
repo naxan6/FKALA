@@ -542,7 +542,7 @@ namespace FKala.Core
 
                 if (lines.Length >= 2) // Zeitstempel, dann Query
                 {
-                    // Query beginnt ab der dritten Zeile (Index 1)
+                    // Query beginnt ab der zweiten Zeile (Index 1)
                     this.Query = string.Join(Environment.NewLine, lines.Skip(1));
                 }                
                 // Wenn lines.Length == 1 (nur Timestamp), ist Query string.Empty
