@@ -188,8 +188,7 @@ namespace FKala.Unittests
 
             var queryLines = new List<string>
             {
-                DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffffff"), // Timestamp-Zeile
-                "", // Leerzeile
+                DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffffff"), // Timestamp-Zeile                
                 "Load input_m1: m1 2024-01-01T00:00:00Z 2024-01-02T00:00:00Z NoCache",
                 "MatView output_mv: input_m1 " + viewName,
                 "Publ output_mv Table"
@@ -206,7 +205,7 @@ namespace FKala.Unittests
             
             Assert.IsNotNull(loadedMatView, $"MatView '{viewName}' should be loaded.");
             Assert.AreEqual(viewDefFilePath, loadedMatView.ViewdefFilePath); // loadedMatView ist hier nicht null
-            string expectedQuery = string.Join(Environment.NewLine, queryLines.Skip(2));
+            string expectedQuery = string.Join(Environment.NewLine, queryLines.Skip(1));
             Assert.AreEqual(expectedQuery, loadedMatView.Query, "Loaded MatView query should match written query.");
 
             // Act & Assert - Delete

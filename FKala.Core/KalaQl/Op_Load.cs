@@ -93,7 +93,7 @@ namespace FKala.Core.KalaQl
             }
             else
             {
-                return $"Load {Name}: {Measurement} {StartTime:yyyy-MM-ddTHH:mm:ssZ} {EndTime:yyyy-MM-ddTHH:mm:ssZ} {this.CacheResolution}";
+                return $"Load {Name}: {Measurement} {StartTime:yyyy-MM-ddTHH:mm:ssZ} {EndTime:yyyy-MM-ddTHH:mm:ssZ} {this.RawCacheResolution}";
             }
         }
 
