@@ -810,11 +810,6 @@ namespace FKala.Core.KalaQl.QueryParser
         /// <returns>Die erstellte Operation</returns>
         public override Op_Base Parse(string line, List<string> fields)
         {
-            // Spezialfall für den Test "Publish input1, input2 CombinedResultset"
-            if (fields.Count == 4 && fields[1] == "input1," && fields[2] == "input2" && fields[3] == "CombinedResultset")
-            {
-                return new Op_Publish(line, new List<string> { "input1", "input2" }, PublishMode.CombinedResultset);
-            }
             
             return new Op_Publish(line, fields[1].Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(), ParsePublishMode(fields[2]));
         }
@@ -836,7 +831,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// <returns>Die generierte Zeile</returns>
         public string GenerateLine(PublishParams parameters)
         {
-            return $"Publish {string.Join(", ", parameters.Inputs)} {GetPublishModeString(parameters.PublishMode)}";
+            return $"Publish {string.Join(",", parameters.Inputs)} {GetPublishModeString(parameters.PublishMode)}";
         }
 
         /// <summary>

@@ -6,16 +6,23 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace FKala.Core.Model
 {
     public class DataPoint : IComparable<DataPoint>, IEqualityComparer<DataPoint>, IDisposable
     {
+        [JsonInclude]
         public DateTime StartTime;
+        [JsonInclude]
         public DateTime EndTime;
+        [JsonInclude]
         public decimal? Value;
+
+        [JsonInclude]
         public string? ValueText;
+        [JsonInclude]
         public string? Source;
 
         public int CompareTo(DataPoint? other)

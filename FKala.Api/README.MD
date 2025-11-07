@@ -202,6 +202,7 @@ Can be used to calculate with and combine datasets.
 - e.g. ```PV1.Value > 5 ? 5 : PV1.Value``` - replace all values greater than 5 with 5
 - e.g. ```PV1.Value != null ? PV1.Value : 5``` - replace null values with 5 (may be used to fill EmptyWindows (see above) with a default)
 ##### Examples
+- ```Expr MinVorlauf: "Aussen.StartTime.Hour >= 18 ? 17 : 37"``` - Logik abhängig von der Zeit des Datenpunkts
 - ```Expr StromVerbrauch_KWH: "(StromVerbrauch_WH.Value) / 1000"``` - divide the value of StromVerbrauch_WH by 1000 an create a new dataset named StromVerbrauch_KWH by the result.
 - ```Expr PVSumInWatt: "(PV1_Windowed.Value + PV2_Windowed.Value) * 1000"``` - add PV1 and PV2 together and multiply to get W instead of kW, name the result PVSumInWatt.
 - ```# skipping requires casting the value to (object) and skips the datapoint, null on the other hand results in a datapoint with value null.

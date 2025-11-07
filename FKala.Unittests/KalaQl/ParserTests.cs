@@ -72,7 +72,7 @@ namespace FKala.Unittests.KalaQl
         public void TestPublishOperationParsing()
         {
             // Arrange
-            var queryText = "Publish input1, input2 CombinedResultset";
+            var queryText = "Publish input1,input2 CombinedResultset";
 
             // Act
             var query = KalaQuery.Start().FromQuery(queryText);
