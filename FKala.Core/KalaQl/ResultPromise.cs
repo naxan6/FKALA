@@ -20,13 +20,14 @@ namespace FKala.Core.KalaQl
 
         public Result_Materialized ToResult_Materialized()
         {
-            return new Result_Materialized()
+            var ret = new Result_Materialized()
             {
                 Name = Name,
                 Resultset = ResultsetFactory(),
                 Query_StartTime = Query_StartTime,
                 Query_EndTime = Query_EndTime
             };
+            return ret;
         }
     }
 

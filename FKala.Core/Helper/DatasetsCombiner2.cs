@@ -61,7 +61,7 @@ namespace FKala.Core.Logic
                 List<(ResultPromise result, DataPoint datapoint)> timeMatches = new List<(ResultPromise result, DataPoint datapoint)>();
                 foreach (var enumerator in enumerators)
                 {
-                    if (minStartTime < enumerator.Enumerator.Current.EndTime && minEndTime >= enumerator.Enumerator.Current.StartTime)
+                    if (minStartTime < enumerator.Enumerator.Current.EndTime && minEndTime > enumerator.Enumerator.Current.StartTime)
                     {
                         timeMatches.Add((enumerator.Result, enumerator.Enumerator.Current));                        
                     }

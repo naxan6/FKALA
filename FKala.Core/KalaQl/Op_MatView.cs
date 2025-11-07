@@ -1,4 +1,5 @@
 ﻿using FKala.Core.DataLayer.Infrastructure;
+using FKala.Core.DataLayers;
 using FKala.Core.Helper;
 using FKala.Core.Interfaces;
 using FKala.Core.KalaQl.Windowing;
@@ -12,11 +13,13 @@ namespace FKala.Core.KalaQl
 {
     public class Op_MatView : Op_Base, IKalaQlOperation
     {
+        
         public override string Name { get; }
         public string InputDataSetName { get; }
         public string ViewName { get; }
 
-
+        private static LockManager LockManager = new LockManager();
+    
         public Op_MatView(string line, string name, string inputDataSet, string viewName) : base(line)
         {
             Name = name;
@@ -76,8 +79,15 @@ namespace FKala.Core.KalaQl
         {
             if (!MaterializationIsAvailable(context))
             {
-                Console.WriteLine("Materializing");
-                MaterializeFull(context, input);
+                using (LockManager.AcquireLock(ViewName)) // nicht mehrfach parallel eine MatView (= selber Name) initialisieren, sondern "den ersten" abwarten
+                {
+                    if (!MaterializationIsAvailable(context))
+                    {
+
+                        Console.WriteLine("Materializing");
+                        MaterializeFull(context, input);
+                    }
+                }
             }
             else
             {
@@ -114,8 +124,8 @@ namespace FKala.Core.KalaQl
                 if (myTrans is Op_Load)
                 {
                     var load = (Op_Load)myTrans;
-                    load.StartTime = new DateTime(2000, 1, 1);
-                    load.EndTime = new DateTime(2100, 1, 1);
+                    load.StartTime = Constants.MatView_MinDate;
+                    load.EndTime = Constants.MatView_MaxDate;
                 }
                 if (trans != this)
                 {

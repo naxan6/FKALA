@@ -475,7 +475,7 @@ namespace FKala.Core.DataLayers
                                 writer.Append(" ");
                                 writer.Append(dp.Value.Value.ToString(CultureInfo.InvariantCulture));
                                 writer.AppendNewline();
-                            };
+                            }
                         }
                     });
                     var bakFile = filePath + $".bak_{DateTime.Now.ToString("yyyyMMddHHmmssfff")}";

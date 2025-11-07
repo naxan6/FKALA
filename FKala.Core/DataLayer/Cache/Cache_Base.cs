@@ -137,13 +137,13 @@ namespace FKala.Core.DataLayer.Cache
                 {
                     if (current.StartTime < startTime) // position is too early in the file
                     {
-                        Console.WriteLine("jump forwards");
+                        //Console.WriteLine("jump forwards");
                         jumpintervall = jumpintervall / 2;
                         position = position + jumpintervall;
                     } 
                     else if (current.StartTime >= startTime) // position is to late in the file
                     {
-                        Console.WriteLine("jump backwards");
+                        //Console.WriteLine("jump backwards");
                         position = position - jumpintervall;
                     }
                 }

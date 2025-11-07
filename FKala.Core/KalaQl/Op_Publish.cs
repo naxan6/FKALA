@@ -16,7 +16,7 @@ namespace FKala.Core.KalaQl
         {
             this.NamesToPublish = namesToPublish;
             this.PublishMode = mode;
-            this.Limit = 250000;
+            this.Limit = 250000;            
         }
 
         public override bool CanExecute(KalaQlContext context)
@@ -89,6 +89,8 @@ namespace FKala.Core.KalaQl
                 {
                     ResultSets = resultsets.Select(r => r.ToResult_Materialized()).ToList()
                 };
+                context.Result.ResultSets.ForEach(rs => rs.Resultset = rs.Resultset.ToList());
+                
                 hasExecuted = true;
             }
             else if (PublishMode == PublishMode.CombinedResultset && context.Streaming)
@@ -176,7 +178,7 @@ namespace FKala.Core.KalaQl
         public override string ToLine()
         {
             // Anpassung, um den Erwartungen der ParserTests zu entsprechen
-            string namesString = string.Join(", ", NamesToPublish); // Komma und Leerzeichen als Trenner
+            string namesString = string.Join(",", NamesToPublish); // Komma und Leerzeichen als Trenner
             string modeString = PublishMode == PublishMode.CombinedResultset ? "CombinedResultset" : "MultipleResultsets";
             // Das Leerzeichen am Ende wurde in der ursprünglichen Version von ToLine() hinzugefügt,
             // aber die Tests erwarten es nicht.
