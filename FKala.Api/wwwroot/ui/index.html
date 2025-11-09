@@ -58,7 +58,21 @@ Expr Verluste: "-(PV.Value+Netzbezug.Value+Akkuentladung.Value+Verbrauch.Value+N
 
 Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch,PrognoseSolcast,PrognoseForecast,Verluste" Table
 `
-            } 
+            } else if(selection == "Mgmt Examples") {
+                text = `Mgmt FSCHK kala$errors
+#Mgmt FSCHK
+#Mgmt ListMeasurements
+#Mgmt COPY
+#Mgmt RENAME
+#Mgmt CLEAN
+#Mgmt BLACKLIST
+#Mgmt UNBLACKLIST
+#Mgmt SORTRAWFILES   - UNNÖTIG!
+#Mgmt BENCHIO
+#Mgmt IMPORTINFLUX
+#Mgmt IMPORTTSTSFE
+`
+            }
             document.getElementById('query').value = text;
             document.getElementById('send').click();
         }
@@ -191,6 +205,8 @@ Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch,PrognoseSo
                 <a href="#" onClick="prefill('Kala-Fehler');">Kala-Fehler</a><br>
                 <a href="#" onClick="prefill('List Measurements');">List Measurements</a><br>
                 <a href="#" onClick="prefill('PV Beispiel');">PV Beispiel</a><br>
+                <a href="#" onClick="prefill('Mgmt Examples');">Mgmt Examples</a><br>
+                
                 
                 
             </td>
