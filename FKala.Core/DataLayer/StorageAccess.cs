@@ -254,7 +254,7 @@ namespace FKala.Core.DataLayers
             }
             if (this.StreamReaderLookupForMerge != null)
             {
-                DataLayer.BufferedWriterSvc.ForceFlushWriters();
+                //DataLayer.BufferedWriterSvc.ForceFlushWriters(); TRY FOR SPEEDUP
                 this.StreamReaderLookupForMerge.AsParallel().ForAll(daySrs => daySrs.ToList().ForEach(sr => sr.StreamReader = new StreamReader(sr.FilePath, Encoding.UTF8, false, fileStreamOptions)));
             }
 
@@ -461,7 +461,8 @@ namespace FKala.Core.DataLayers
             filenameMarkedUnsorted = Path.Combine(Path.GetDirectoryName(filenameMarkedUnsorted), "unmarked_" + Path.GetFileName(filenameMarkedUnsorted));
            try
            {
-               File.Move(currentPath, filenameMarkedUnsorted);
+                File.Move(currentPath, filenameMarkedUnsorted);
+               Console.WriteLine($"unmarked {currentPath} to unsorted");
            }
            catch (Exception ex)
            {

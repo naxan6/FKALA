@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace FKala.Core.Model
 {
-    public class DataPoint : IComparable<DataPoint>, IEqualityComparer<DataPoint>, IDisposable
+    public class  DataPoint : IComparable<DataPoint>, IEqualityComparer<DataPoint>, IDisposable
     {
         [JsonInclude]
         public DateTime StartTime;
