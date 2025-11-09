@@ -89,7 +89,7 @@ namespace FKala.Core.KalaQl
                 {
                     ResultSets = resultsets.Select(r => r.ToResult_Materialized()).ToList()
                 };
-                context.Result.ResultSets.ForEach(rs => rs.Resultset = rs.Resultset.ToList());
+                //context.Result.ResultSets.ForEach(rs => rs.Resultset = rs.Resultset.ToList()); HUGE Memory usage
                 
                 hasExecuted = true;
             }
