@@ -122,7 +122,7 @@ namespace FKala.Core.KalaQl.QueryParser
             }
             if (fields.Count < 6) throw new Exception($"6 Parameters needed. Example: Load NAME: measurename 0001-01-01T00:00:00 9999-12-31T00:00:00 NoCache. But got: {line}");
             
-            var loadOp = new Op_Load(line, fields[1].Trim(':'), fields[2], ParseDateTime(fields[3]), ParseDateTime(fields[4]), ParseCacheResolution(fields[5]));
+            var loadOp = new Op_Load(line, fields[1].Trim(':'), fields[2], ParseDateTime(fields[3], false), ParseDateTime(fields[4], true), ParseCacheResolution(fields[5]));
             
             // Setze die RawCacheResolution-Eigenschaft
             loadOp.RawCacheResolution = fields[5];
@@ -313,16 +313,16 @@ namespace FKala.Core.KalaQl.QueryParser
             {
                 // Structure B: fieldpath is at index 3, start at index 4, end at index 5, cache at index 6
                 fieldPath = fields[3];
-                startTime = ParseDateTime(fields[4]);
-                endTime = ParseDateTime(fields[5]);
+                startTime = ParseDateTime(fields[4], false);
+                endTime = ParseDateTime(fields[5], true);
                 cacheResolution = fields[6];
             }
             else
             {
                 // Structure A or C: no explicit fieldpath, use default
                 fieldPath = "$.*"; // Default field path when not specified
-                startTime = ParseDateTime(fields[3]);
-                endTime = ParseDateTime(fields[4]);
+                startTime = ParseDateTime(fields[3], false);
+                endTime = ParseDateTime(fields[4], true);
                 cacheResolution = fields[5];
             }
             

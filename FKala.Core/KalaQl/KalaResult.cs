@@ -14,6 +14,7 @@ namespace FKala.Core.KalaQl
         public IEnumerable<Dictionary<string, object>>? ResultTable { get; set; }
         public List<string>? MeasureList { get; internal set; }
         public List<string> Errors { get; internal set; } = new List<string>();
+        public List<Exception> Exceptions { get; internal set; } = new List<Exception>();
         public IEnumerable<Dictionary<string, object>>? StreamResult { get; internal set; }
     }
 }

@@ -87,7 +87,7 @@ Loads data from storage
  - ```Load``` Verb
  - ```<Name>``` Name for the (temporary!) dataset being created 
  - ```<measurement>``` Name of the measurement to load
- - ```<from>```, ```<to>``` timerange to load
+ - ```<from>```, ```<to>``` timerange to load (only UTC! e.g. "2015-01-01T16:30:41" or relative: e.g. "now/h" or "now-1d/d")
  - ```<CacheResolution>``` which Databasis or Cache to use. Can be one of:
    - ```NoCache``` uses raw ingested data
    - ```<resolution>_<AggregateFunction>[_Rebuild]```

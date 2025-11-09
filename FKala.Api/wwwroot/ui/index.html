@@ -8,7 +8,60 @@
         let isProgrammaticScroll = false;
         let userScrolled = false;
 
-        
+        function prefill(selection) {
+            let text = "";
+            if (selection == "List Measurements") {
+                text = `Mgmt ListMeasurements`
+            } else if (selection == "Kala-Fehler") {
+                text = `Load k: kala$errors 0001-01-01T00:00:00 9999-12-31T23:59:59 NoCache
+Publ k Table`
+            } else if(selection == "PV Beispiel") {
+                text = `#Var $FROM "\${__from:date:iso:YYYY-MM-DDTHH:mm:ss}"
+#Var $TO "\${__to:date:iso:YYYY-MM-DDTHH:mm:ss}"
+#Var $CACHE Auto(\${__interval_ms})_WAvg_REFRESHINCREMENTAL
+#Var $INTERVAL \${__interval_ms}
+
+Var $FROM 2025-01-01T00:00:00
+Var $TO 2025-01-02T00:00:00
+Var $CACHE NoCache
+Var $INTERVAL 3600000
+
+Var $AGG "WAvg EmptyWindows"
+
+
+Load rPV1: Sofar/measure/PVInput1/0x586_Leistung_PV1[kW] $FROM $TO $CACHE
+Load rPV2: Sofar/measure/PVInput1/0x589_Leistung_PV2[kW] $FROM $TO $CACHE
+Load rNetz: Sofar/measure/OnGridOutput/0x488_ActivePower_PCC_Total[kW] $FROM $TO $CACHE
+Load rAkku: Sofar/measure/batteryInput1/0x606_Power_Bat1[kW] $FROM $TO $CACHE
+Load rVerbrauch: Sofar/measure/OnGridOutput/0x4AF_ActivePower_Load_Sys[kW] $FROM $TO $CACHE
+Load rPrognoseSolcast: prognose$solcast$50 $FROM $TO NoCache
+Load rPrognoseForecast: prognose$forecastsolar $FROM $TO NoCache
+
+Aggr aPV1: rPV1 $INTERVAL $AGG
+Aggr aPV2: rPV2 $INTERVAL $AGG
+Aggr aNetz: rNetz $INTERVAL $AGG
+Aggr aAkku: rAkku $INTERVAL $AGG
+Aggr aVerbrauch: rVerbrauch $INTERVAL $AGG
+Aggr aAkkuladung: rAkku $INTERVAL $AGG
+Aggr aPrognoseSolcast: rPrognoseSolcast  $INTERVAL $AGG
+Aggr aPrognoseForecast: rPrognoseForecast  $INTERVAL $AGG
+
+Expr PV: "aPV1.Value + aPV2.Value"
+Expr Netzbezug: "aNetz.Value > 0 ? 0 : -aNetz.Value"
+Expr Netzeinspeisung: "aNetz.Value < 0 ? 0 : -aNetz.Value"
+Expr Akkuentladung: "aAkku.Value > 0 ? 0 : -aAkku.Value"
+Expr Akkuladung: "aAkku.Value < 0 ? 0 : -aAkku.Value"
+Expr Verbrauch: "-aVerbrauch.Value"
+Expr PrognoseSolcast: "aPrognoseSolcast.Value"
+Expr PrognoseForecast: "aPrognoseForecast.Value / 1000.0"
+Expr Verluste: "-(PV.Value+Netzbezug.Value+Akkuentladung.Value+Verbrauch.Value+Netzeinspeisung.Value+Akkuladung.Value)"
+
+Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch,PrognoseSolcast,PrognoseForecast,Verluste" Table
+`
+            } 
+            document.getElementById('query').value = text;
+            document.getElementById('send').click();
+        }
 
         window.onload = (ev) => {
 
@@ -57,7 +110,7 @@
             if (!userScrolled) {
                 // Scroll to bottom
                 isProgrammaticScroll = true;
-                outputDiv.scrollTop = outputDiv.scrollHeight;
+                outputDiv.scrollTop = outputDiv.scrollHeight -100;
             }
         }
 
@@ -99,7 +152,7 @@
                     firstline = false;
                 }
                 outputDiv.innerHTML += chunk.replaceAll("{", "<br>" + datePrefix() + "{");                
-                autoScroll();
+                setTimeout(() => autoScroll(), 1);
 
                 if (cancelled) {
                     reader.cancel("user");
@@ -128,9 +181,22 @@
 </head>
 <body>
     URL: <br />
+    
     <input id="url" value="http://server/api/StreamQuery" size="80"></input><br />
     Query: <br />
-    <textarea id="query" name="Text1" cols="80" rows="15" spellcheck="false">Mgmt ListMeasurements</textarea>
+    <table>
+        <tr>            
+            <td><textarea id="query" name="Text1" cols="80" rows="15" spellcheck="false">Mgmt ListMeasurements</textarea></td>
+            <td style="vertical-align: top;">
+                <a href="#" onClick="prefill('Kala-Fehler');">Kala-Fehler</a><br>
+                <a href="#" onClick="prefill('List Measurements');">List Measurements</a><br>
+                <a href="#" onClick="prefill('PV Beispiel');">PV Beispiel</a><br>
+                
+                
+            </td>
+        </tr>
+    </table>
+    
     <br />
     <button id="send">Send</button>&nbsp;&nbsp;<button id="cancel">Cancel</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id="clear">Clear</button>
     <div id="output" class="scrollable-div"></div>

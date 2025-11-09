@@ -304,7 +304,7 @@ namespace FKala.Core.DataLayers
             char[] newPath = filepath.ToCharArray();// "measure$aasd[#_]2024-11-02.dat"
             if (sorted)
             {
-                newPath[newPath.Length - 15] = '#';   // "<measure$aasd_2024-11-02.dat"
+                newPath[newPath.Length - 15] = '#';   // "<measure$aasd#2024-11-02.dat"
             }
             else
             {
@@ -332,7 +332,7 @@ namespace FKala.Core.DataLayers
                     DataLayer.Flush(srTuple.FilePath);
                 }
 
-                // ###### If out of order by multiple files per day or by only single but unsorted file
+                // ###### If out of order by multiple files per day or by only single, but unsorted, file
                 if (streamreaderDayList.Count() > 1 ||
                     (streamreaderDayList.Count() == 1 && 
                     (!streamreaderDayList.First().MarkedAsSorted || streamreaderDayList.First().MeasurementFileDiffersToPath())))
@@ -389,65 +389,6 @@ namespace FKala.Core.DataLayers
             }
         }
 
-        public IEnumerable<DataPoint> StreamDataPoints()
-        {
-            foreach (var streamreaderTuple in TimeSortedStreamReader!)
-            {
-                var srTuple = streamreaderTuple.Value;
-                int fileyear = streamreaderTuple.Key.Year;
-                int filemonth = streamreaderTuple.Key.Month;
-                int fileday = streamreaderTuple.Key.Day;
-
-                if (!streamreaderTuple.Value.MarkedAsSorted)
-                {
-                    foreach (var dp in InternalStreamDataPointsSort(srTuple, fileyear, filemonth, fileday))
-                    {
-                        yield return dp;
-                    }
-                }
-                else
-                {
-                    foreach (var dp in InternalStreamDataPoints(srTuple, fileyear, filemonth, fileday, true))
-                    {
-                        yield return dp;
-                    }
-                }
-            }
-        }
-
-        private IEnumerable<DataPoint> InternalStreamDataPointsSort(ReaderTuple readerTuple, int fileyear, int filemonth, int fileday)
-        {
-            var comparer = Pools.DataPoint.Get();
-            var dataPoints = InternalStreamDataPoints(readerTuple, fileyear, filemonth, fileday, false).ToList();
-            bool persistenceIsSorted = IsSortedAndWithoutDuplicates(dataPoints);
-            // if not sorted, sort it
-            if (!persistenceIsSorted)
-            {
-                dataPoints = dataPoints.OrderBy(a => a.StartTime).ToList(); // Sort
-                dataPoints = dataPoints.Distinct(comparer).ToList(); // Deduplicate
-
-                // persist sorted (if activated)
-                // and only if it's at least older than 1-2 days (pathdate is start of day at midnight!)
-                if (IsActiveAutoSortRawFiles && readerTuple.FileDate.ToDateTime(AtMidnight) < DateTime.Now.AddDays(-2))
-                {
-                    WriteSortedFile(readerTuple.FilePath, dataPoints);
-                    persistenceIsSorted = true;
-                }
-            }
-
-            // mark as sorted (if it already was or is now) -
-            // and only if it's at least older than 1-2 days (pathdate is start of day at midnight!)
-            if (persistenceIsSorted && readerTuple.FileDate.ToDateTime(AtMidnight) < DateTime.Now.AddDays(-2))
-            {
-                MarkFileAsSorted(readerTuple.FilePath);
-            }
-
-            foreach (var dp in dataPoints)
-            {
-                yield return dp;
-            }
-        }
-
         public StorageAccess ActivateAutoSortRawFiles(IDataLayer dataLayer)
         {
             IsActiveAutoSortRawFiles = true;
@@ -474,6 +415,11 @@ namespace FKala.Core.DataLayers
                                 writer.Append(dp.StartTime.ToString(TimeFormat));
                                 writer.Append(" ");
                                 writer.Append(dp.Value.Value.ToString(CultureInfo.InvariantCulture));
+                                writer.AppendNewline();
+                            } else if (dp.ValueText != null) {
+                                writer.Append(dp.StartTime.ToString(TimeFormat));
+                                writer.Append(" ");
+                                writer.Append(dp.ValueText);
                                 writer.AppendNewline();
                             }
                         }
@@ -509,25 +455,19 @@ namespace FKala.Core.DataLayers
             }
         }
 
-        //public static void UnMarkFileAsSorted(string currentPath)
-        //{
-
-        //    char[] newPath = currentPath.ToCharArray();// "measure$aasd[#_]2024-11-02.dat"
-        //    newPath[newPath.Length - 15] = '#';   // "<measure$aasd#2024-11-02.dat"
-        //    string sortedMarkedPath = new string(newPath);
-
-        //    char[] newPathUnsorted = currentPath.ToCharArray();// "measure$aasd[#_]2024-11-02.dat"
-        //    newPathUnsorted[newPath.Length - 15] = '_';   // "<measure$aasd_2024-11-02.dat"
-        //    string unsortedMarkedPath = new string(newPathUnsorted);
-        //    try
-        //    {
-        //        File.Move(sortedMarkedPath, unsortedMarkedPath);
-        //    }
-        //    catch (Exception)
-        //    {
-        //        Console.WriteLine("failed renaming to sorted. maybe already marked unsorted by parallel stream");
-        //    }
-        //}
+        public static void UnMarkFileAsSorted(string currentPath)
+        {
+            string filenameMarkedUnsorted = SetSortMark(currentPath, false);
+            filenameMarkedUnsorted = Path.Combine(Path.GetDirectoryName(filenameMarkedUnsorted), "unmarked_" + Path.GetFileName(filenameMarkedUnsorted));
+           try
+           {
+               File.Move(currentPath, filenameMarkedUnsorted);
+           }
+           catch (Exception ex)
+           {
+               Console.WriteLine($"failed renaming {currentPath} to unsorted. maybe already marked unsorted by parallel stream, or unsorted file {ex}");
+           }
+        }
 
         static bool IsSorted<T>(List<T> list) where T : IComparable<T>
         {
@@ -584,7 +524,7 @@ namespace FKala.Core.DataLayers
                 {
                     string err = $"Marked sorted but unsorted at File {ret.Source} ## {dataline}";
                     DataLayer!.InsertError(err);
-                    throw new UnexpectedlyUnsortedException(err);
+                    throw new UnexpectedlyUnsortedException(err, sr.FilePath);
                 }
 
                 if (retPrev.StartTime >= StartTime && retPrev.StartTime < EndTime) // send if DataPoint is in window

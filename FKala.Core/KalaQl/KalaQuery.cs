@@ -69,6 +69,7 @@ namespace FKala.Core.KalaQl
                         context.Result = new KalaResult();
                         context.Result.Errors.Add($"Error while processing {nextop.Line}");
                         context.Result.Errors.Add(ex.ToString());
+                        context.Result.Exceptions.Add(ex);
                         return context.Result;
                     }
                 }

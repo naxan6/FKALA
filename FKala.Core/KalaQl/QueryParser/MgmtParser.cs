@@ -77,10 +77,6 @@ namespace FKala.Core.KalaQl.QueryParser
                     return "COPY";
                 case MgmtAction.Rename:
                     return "RENAME";
-                case MgmtAction.Sort:
-                    return "SORT";
-                case MgmtAction.Clean:
-                    return "CLEAN";
                 case MgmtAction.Blacklist:
                     return "BLACKLIST";
                 case MgmtAction.UnBlacklist:

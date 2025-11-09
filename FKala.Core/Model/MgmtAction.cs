@@ -8,9 +8,7 @@
         ImportInflux,
         ImportMariaDbTstsfe,
         Copy,
-        Sort,
         Rename,
-        Clean,
         BenchmarkIo,
         UnBlacklist,
         Blacklist        
