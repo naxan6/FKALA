@@ -1,5 +1,7 @@
+using Exceptionless.DateTimeExtensions;
 using FKala.Core.KalaQl.Windowing;
 using FKala.Core.Model;
+using NodaTime.TimeZones;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -41,7 +43,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// </summary>
         /// <param name="v">Der zu parsende String</param>
         /// <returns>Das geparste DateTime</returns>
-        protected static DateTime ParseDateTime(string v)
+        protected static DateTime ParseDateTime(string v, bool isEnd)
         {
             string[] dateFormats = {
                 "yyyy-MM-ddTHH:mm:ss.ffffffZ",
@@ -63,7 +65,9 @@ namespace FKala.Core.KalaQl.QueryParser
                     return DateTime.SpecifyKind(parsedDate, DateTimeKind.Utc);
                 }
             }
-            throw new Exception($"Zeitangabe {v} ist ungültig");
+            
+            var dateTimeOffset = DateMath.Parse(v, TimeZoneInfo.Utc, isEnd);
+            return dateTimeOffset.DateTime;
         }
 
         /// <summary>
@@ -162,18 +166,19 @@ namespace FKala.Core.KalaQl.QueryParser
             var parts = v.Split('_');
 
             // Speichert die ursprüngliche Fenstergröße, wenn die Resolution aus einem "AUTO(...)"-String erstellt wurde
-            long? originalAutoWindowSize = null;
-            
+            long? originalAutoWindowSize;
+
             Resolution? resolution = ParseResolution(parts[0], out originalAutoWindowSize);
             if (resolution != null && resolution != Resolution.Full)
             {
                 var aggregate = ParseAggregate(parts[1]);
                 var forceRebuild = parts.Length > 2 && parts[2].ToUpper().Contains("REBUILD");
                 var refreshIncremental = parts.Length > 2 && parts[2].ToUpper().Contains("REFRESHINCREMENTAL");
-                return new CacheResolution() { 
-                    Resolution = resolution.Value, 
-                    AggregateFunction = aggregate, 
-                    ForceRebuild = forceRebuild, 
+                return new CacheResolution()
+                {
+                    Resolution = resolution.Value,
+                    AggregateFunction = aggregate,
+                    ForceRebuild = forceRebuild,
                     IncrementalRefresh = refreshIncremental,
                     OriginalAutoWindowSize = originalAutoWindowSize
                 };
@@ -193,7 +198,7 @@ namespace FKala.Core.KalaQl.QueryParser
         protected static Resolution? ParseResolution(string v, out long? originalAutoWindowSize)
         {
             originalAutoWindowSize = null;
-            
+
             if (v.ToUpper() == "MINUTELY")
             {
                 return Resolution.Minutely;
@@ -214,7 +219,7 @@ namespace FKala.Core.KalaQl.QueryParser
             {
                 var parts = v.Split(['(', ')']);
                 var queriedwindowsize = long.Parse(parts[1]);
-                
+
                 // Speichert die ursprüngliche Fenstergröße
                 originalAutoWindowSize = queriedwindowsize;
 
@@ -246,7 +251,7 @@ namespace FKala.Core.KalaQl.QueryParser
             }
             return null;
         }
-        
+
         /// <summary>
         /// Parst eine Resolution
         /// </summary>
@@ -326,7 +331,7 @@ namespace FKala.Core.KalaQl.QueryParser
             {
                 return InterpolationMode.constant;
             }
-            throw new Exception($"InterpolationMode {v} is invalid");
+            throw new ArgumentException($"InterpolationMode {v} is invalid");
         }
 
         /// <summary>
@@ -368,14 +373,6 @@ namespace FKala.Core.KalaQl.QueryParser
             {
                 return MgmtAction.Rename;
             }
-            else if (v.ToUpper() == "SORT")
-            {
-                return MgmtAction.Sort;
-            }
-            else if (v.ToUpper() == "CLEAN")
-            {
-                return MgmtAction.Clean;
-            }
             else if (v.ToUpper() == "BLACKLIST")
             {
                 return MgmtAction.Blacklist;
@@ -385,7 +382,7 @@ namespace FKala.Core.KalaQl.QueryParser
                 return MgmtAction.UnBlacklist;
             }
 
-            throw new Exception($"MgmtAction {v} is invalid");
+            throw new ArgumentException($"MgmtAction {v} is invalid");
         }
     }
 }

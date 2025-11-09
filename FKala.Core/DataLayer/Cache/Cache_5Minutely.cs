@@ -32,7 +32,7 @@ namespace FKala.Core.DataLayer.Cache
 
             if (aggResult?.ResultSets == null)
             {
-                throw new Exception("could not aquire aggregate for caching");
+                throw new Exception($"could not aquire aggregate for caching {string.Join(", ", aggResult.Errors)}");
             }
             var rs = aggResult.ResultSets.First().Resultset;
             //return EnumerableHelpers.SkipLast(rs);

@@ -7,6 +7,7 @@ using FKala.Migrate.MariaDb;
 using System.Diagnostics.Metrics;
 using System.Runtime.Intrinsics.Arm;
 using System;
+using FKala.Core.DataLayers;
 
 namespace FKala.Core.KalaQl
 {
@@ -48,8 +49,10 @@ namespace FKala.Core.KalaQl
             }
             else if (MgmtAction == MgmtAction.FsChk)
             {
+                Params = Params.Trim('"');
+                var paramParts = Params.Split(",");
                 context.Result = new KalaResult();
-                context.Result.StreamResult = FsChk(context)!;
+                context.Result.StreamResult = FsChk(context, paramParts)!;
                 this.hasExecuted = true;
             }
             else if (MgmtAction == MgmtAction.Copy)
@@ -105,9 +108,9 @@ namespace FKala.Core.KalaQl
                 this.hasExecuted = true;
             }
             else if (MgmtAction == MgmtAction.BenchmarkIo)
-            {                
+            {
                 context.Result = new KalaResult();
-                
+
                 context.Result.StreamResult = Bench(context.DataLayer.DataDirectory)!;
                 this.hasExecuted = true;
             }
@@ -118,7 +121,7 @@ namespace FKala.Core.KalaQl
             var bm = Benchmarker.Bench(baseDir);
             foreach (var rResult in bm.Reading)
             {
-                yield return new Dictionary<string, object?>() { { $"reading buffer {rResult.Key}", $"{ rResult.Value }" } };
+                yield return new Dictionary<string, object?>() { { $"reading buffer {rResult.Key}", $"{rResult.Value}" } };
             }
             foreach (var rResult in bm.Writing)
             {
@@ -203,9 +206,13 @@ namespace FKala.Core.KalaQl
             }
         }
 
-        public IEnumerable<Dictionary<string, object?>> FsChk(KalaQlContext context)
+        public IEnumerable<Dictionary<string, object?>> FsChk(KalaQlContext context, IEnumerable<string> measurements)
         {
-            var measurements = context.DataLayer.LoadMeasurementList();
+            // Die übergebenen oder alle
+            if (measurements == null || !measurements.Any() || string.IsNullOrEmpty(measurements.First()))
+            {
+                measurements = context.DataLayer.LoadMeasurementList();
+            }
             List<string> chkResults = new List<string>();
 
             var total = measurements.Count();
@@ -218,23 +225,37 @@ namespace FKala.Core.KalaQl
                 progress = (int)(100.0 * (1.0 * count / total));
 
                 KalaResult? result = null;
-                try
+                while (true)
                 {
-                    var q = new KalaQuery()
-                        .Add(new Op_Load("SortRawFiles", "toSort", measurement, DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefined.NoCache, false))
-                        .Add(new Op_Publish("SortRawFiles", new List<string>() { "toSort" }, PublishMode.MultipleResultsets));
-                    result = q.Execute(context.DataLayer);
-                    var localresult = result.ResultSets!.First().Resultset;
-                    foreach (var r in localresult) // iterate to load everything
+                    try
                     {
-                        var t = r.StartTime;
-                        Pools.DataPoint.Return(r);
+                        var q = new KalaQuery()
+                                                .Add(new Op_Load("SortRawFiles", "toSort", measurement, DateTime.MinValue, DateTime.MaxValue, CacheResolutionPredefined.NoCache, false))
+                                                .Add(new Op_Publish("SortRawFiles", new List<string>() { "toSort" }, PublishMode.MultipleResultsets));
+                        result = q.Execute(context.DataLayer);
+                        if (result.Exceptions.Any())
+                        {
+                            throw result.Exceptions.First();
+                        }
+                        var localresult = result.ResultSets!.First().Resultset;
+                        foreach (var r in localresult) // iterate to load everything
+                        {
+                            var t = r.StartTime;
+                            Pools.DataPoint.Return(r);
+                        }
                     }
+                    catch (UnexpectedlyUnsortedException uuex)
+                    {
+                        StorageAccess.UnMarkFileAsSorted(uuex.File);
+                        continue;
+                    }
+                    catch (Exception ex)
+                    {
+                        measureErrors.Add(ex.ToString());
+                    }
+                    break;
                 }
-                catch (Exception ex)
-                {
-                    measureErrors.Add(ex.ToString());
-                }
+
                 bool hasErrors = false;
                 if (measureErrors.Any())
                 {
@@ -277,7 +298,7 @@ namespace FKala.Core.KalaQl
                         {
                             { "status", $"Ok" },
                             { "measurement", $"{measurement}" },
-                            { "progress", $"({progress}% {count}/{total})" }                            
+                            { "progress", $"({progress}% {count}/{total})" }
                         };
                     yield return retRow;
                 }
@@ -295,6 +316,8 @@ namespace FKala.Core.KalaQl
             );
             this.hasExecuted = true;
         }
+
+        
 
         public override string ToString()
         {

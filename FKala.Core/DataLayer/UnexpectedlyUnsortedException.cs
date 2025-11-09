@@ -2,18 +2,18 @@
 namespace FKala.Core.DataLayers
 {
     [Serializable]
-    internal class UnexpectedlyUnsortedException : Exception
+    public class UnexpectedlyUnsortedException : Exception
     {
-        public UnexpectedlyUnsortedException()
+        public string File { get; set; }
+
+        public UnexpectedlyUnsortedException(string? message, string file) : base(message)
         {
+            File = file;
         }
 
-        public UnexpectedlyUnsortedException(string? message) : base(message)
+        public UnexpectedlyUnsortedException(string? message, string file, Exception? innerException) : base(message, innerException)
         {
-        }
-
-        public UnexpectedlyUnsortedException(string? message, Exception? innerException) : base(message, innerException)
-        {
+            File = file;
         }
     }
 }
