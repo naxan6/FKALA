@@ -221,7 +221,8 @@ namespace FKala.Core.DataLayers
             // files
             string filter = $"*.dat";
 
-            var fileCandidates = filteredYears.AsParallel().SelectMany(y => Directory.GetFileSystemEntries(Path.Combine(measurementPath, y.ToString()), filter, optionFindFilesRecursive)).ToList();
+            //var fileCandidates = filteredYears.AsParallel().SelectMany(y => Directory.GetFileSystemEntries(Path.Combine(measurementPath, y.ToString()), filter, optionFindFilesRecursive)).ToList();
+            var fileCandidates = filteredYears.SelectMany(y => Directory.GetFileSystemEntries(Path.Combine(measurementPath, y.ToString()), filter, optionFindFilesRecursive)).ToList();
             fileCandidates = fileCandidates.Order().ToList();
 
             List<(DateOnly, ReaderTuple)> retList = new List<(DateOnly, ReaderTuple)>();
@@ -255,7 +256,8 @@ namespace FKala.Core.DataLayers
             if (this.StreamReaderLookupForMerge != null)
             {
                 //DataLayer.BufferedWriterSvc.ForceFlushWriters(); TRY FOR SPEEDUP
-                this.StreamReaderLookupForMerge.AsParallel().ForAll(daySrs => daySrs.ToList().ForEach(sr => sr.StreamReader = new StreamReader(sr.FilePath, Encoding.UTF8, false, fileStreamOptions)));
+                //this.StreamReaderLookupForMerge.AsParallel().ForAll(daySrs => daySrs.ToList().ForEach(sr => sr.StreamReader = new StreamReader(sr.FilePath, Encoding.UTF8, false, fileStreamOptions)));
+                this.StreamReaderLookupForMerge.ToList().ForEach(daySrs => daySrs.ToList().ForEach(sr => sr.StreamReader = new StreamReader(sr.FilePath, Encoding.UTF8, false, fileStreamOptions)));
             }
 
             return this;
