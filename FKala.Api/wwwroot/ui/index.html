@@ -154,8 +154,9 @@ Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch,PrognoseSo
                 const outputDiv = document.getElementById('output');
                 const { done, value } = await reader.read();
                 if (done) {
-                    console.log('Stream complete');
+                    console.log('Stream complete');                    
                     outputDiv.innerHTML += "<br/>" + datePrefix() + "Stream Complete ===========================<br/>"
+                    autoScroll();
                     return;
                 }
 
@@ -166,11 +167,12 @@ Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch,PrognoseSo
                     firstline = false;
                 }
                 outputDiv.innerHTML += chunk.replaceAll("{", "<br>" + datePrefix() + "{");                
-                setTimeout(() => autoScroll(), 1);
+                autoScroll();
 
                 if (cancelled) {
                     reader.cancel("user");
                     outputDiv.innerHTML += "<br/>" + datePrefix() + "Stream Cancelled ===========================<br/>"
+                    autoScroll();                    
                     return;
                 }
 

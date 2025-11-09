@@ -70,7 +70,7 @@ namespace FKala.Api.Jobs
 
                         // Führe die Query aus, um die MatView neu zu materialisieren
                         KalaResult executionResult = newKalaQuery.Execute(_dataLayer);
-
+                        
                         if (executionResult.Errors.Any())
                         {
                             _logger.LogError("Fehler bei der Ausführung der KalaQuery für MatView {ViewName}: {Errors}",
@@ -78,6 +78,7 @@ namespace FKala.Api.Jobs
                         }
                         else
                         {
+                             executionResult.ConsumeResultSetsNoOutput();
                             _logger.LogInformation("MatView {ViewName} erfolgreich neu erstellt.", viewName);
                         }
                     }

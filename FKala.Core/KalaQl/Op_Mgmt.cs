@@ -237,12 +237,13 @@ namespace FKala.Core.KalaQl
                         {
                             throw result.Exceptions.First();
                         }
-                        var localresult = result.ResultSets!.First().Resultset;
-                        foreach (var r in localresult) // iterate to load everything
-                        {
-                            var t = r.StartTime;
-                            Pools.DataPoint.Return(r);
-                        }
+                        result.ConsumeResultSetsNoOutput();
+                        // var localresult = result.ResultSets!.First().Resultset;
+                        // foreach (var r in localresult) // iterate to load everything
+                        // {
+                        //     var t = r.StartTime;
+                        //     Pools.DataPoint.Return(r);
+                        // }
                     }
                     catch (UnexpectedlyUnsortedException uuex)
                     {
