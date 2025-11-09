@@ -3,6 +3,34 @@
 <head>
     <meta charset="utf-8" />
     <title></title>
+    <style>
+        /* Das Lade-DIV (nur für die Optik) */
+        #ladeAnzeige {
+        margin-top: 0px;
+        display: flex;
+        align-items: center;
+        }
+
+        #ladeAnzeige p {
+        margin-left: 10px;
+        }
+
+        /* Der eigentliche Spinner */
+        .spinner {
+        border: 5px solid #f3f3f3; /* Hellgrauer Kreis */
+        border-top: 5px solid #3498db; /* Blauer "Lade"-Teil */
+        border-radius: 50%;
+        width: 7px;
+        height: 7px;
+        animation: spin 1s linear infinite;
+        }
+
+        /* Die CSS-Animation (blockiert nichts) */
+        @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+        }
+    </style>
     <script>
         var cancelled = false;
         let isProgrammaticScroll = false;
@@ -91,7 +119,12 @@ Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch,PrognoseSo
                 console.log("URL: " + url.value);
                 console.log("QUERY: " + query.value);
                 cancelled = false;
+
+                let ladeDiv = document.getElementById("ladeAnzeige");
+                document.getElementById('send').disabled = true
+                ladeDiv.style.display = "inline-flex";
                 await streamquery(url.value, query.value);
+                
             });
             var clearButton = document.getElementById('clear');
             clearButton.addEventListener('click', async () => {
@@ -157,6 +190,10 @@ Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch,PrognoseSo
                     console.log('Stream complete');                    
                     outputDiv.innerHTML += "<br/>" + datePrefix() + "Stream Complete ===========================<br/>"
                     autoScroll();
+                    let ladeDiv = document.getElementById("ladeAnzeige");
+                    ladeDiv = document.getElementById("ladeAnzeige");
+                    ladeDiv.style.display = "none";
+                    document.getElementById('send').disabled = false
                     return;
                 }
 
@@ -172,7 +209,11 @@ Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch,PrognoseSo
                 if (cancelled) {
                     reader.cancel("user");
                     outputDiv.innerHTML += "<br/>" + datePrefix() + "Stream Cancelled ===========================<br/>"
-                    autoScroll();                    
+                    autoScroll(); 
+                    let ladeDiv = document.getElementById("ladeAnzeige");                
+                    ladeDiv = document.getElementById("ladeAnzeige");
+                    ladeDiv.style.display = "none";
+                    document.getElementById('send').disabled = false   
                     return;
                 }
 
@@ -216,7 +257,8 @@ Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch,PrognoseSo
     </table>
     
     <br />
-    <button id="send">Send</button>&nbsp;&nbsp;<button id="cancel">Cancel</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id="clear">Clear</button>
+    <button id="send">Send</button>&nbsp;<div id="ladeAnzeige" style="display: none;"><div class="spinner"></div></div>&nbsp;<button id="cancel">Cancel</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id="clear">Clear</button>
+    
     <div id="output" class="scrollable-div"></div>
 </body>
 </html>

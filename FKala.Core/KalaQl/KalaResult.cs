@@ -27,7 +27,6 @@ namespace FKala.Core.KalaQl
 
                 foreach (var r in rs.Resultset) // iterate to load everything
                 {
-                    var t = r.StartTime;
                     Pools.DataPoint.Return(r);
                 }
         }
