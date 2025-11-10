@@ -192,9 +192,15 @@ namespace FKala.Core.KalaQl.Windowing
         {
             TimeSpan diff = startTimeNextPoint - this.StartTime;
             long faktor = (long)diff.TotalSeconds / (long)Interval.TotalSeconds;
-
-            this.StartTime = this.EndTime.AddSeconds((faktor -1) * Interval.TotalSeconds);
-            CalcTimes();
+            if (faktor > 0)
+            {
+                this.StartTime = this.EndTime.AddSeconds((faktor - 1) * Interval.TotalSeconds);
+                CalcTimes();
+            } else
+            {
+                Next();
+            }
+            
         }
 
         public bool IsInWindow(DateTime time)
