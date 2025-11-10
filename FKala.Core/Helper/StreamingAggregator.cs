@@ -75,7 +75,7 @@ namespace FKala.Core.Logic
                     break;
 
                 default:
-                    throw new ArgumentException("Ungültige Aggregationsfunktion");
+                    throw new ArgumentException($"Ungültige Aggregationsfunktion {AggregationFunction}");
             }
         }
 
@@ -158,7 +158,7 @@ namespace FKala.Core.Logic
                     aggregatedValue = (toIntegrate == null) ? aggregatedValue : (aggregatedValue ?? 0) + toIntegrate;
                     break;
                 default:
-                    throw new ArgumentException("Ungültige Aggregationsfunktion");
+                    throw new ArgumentException($"Ungültige Aggregationsfunktion {AggregationFunction}");
             }
         }
 
@@ -182,7 +182,7 @@ namespace FKala.Core.Logic
                 case AggregateFunction.WAvg:
 
                 default:
-                    throw new ArgumentException("Ungültige Aggregationsfunktion");
+                    throw new ArgumentException($"Ungültige Aggregationsfunktion bei Text-Measurement: {AggregationFunction}");
             }
         }
 
