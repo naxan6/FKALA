@@ -71,16 +71,23 @@ namespace FKala.Core.KalaQl
             bool isFirstAfterMoveNext = true;
             int seenPoints = 0;
             DataPoint? previous = null;
-            bool isText = false;
+            bool? isText = null;
             while (dataPointsEnumerator.MoveNext())
             {
 
                 seenPoints++;
 
                 var currentInputDatePoint = dataPointsEnumerator.Current;
-                if (currentInputDatePoint.Value == null && currentInputDatePoint.ValueText != null)
+                if (isText == null)
                 {
-                    isText = true;
+                    if (currentInputDatePoint.Value == null && currentInputDatePoint.ValueText != null)
+                    {
+                        isText = true;
+                    }
+                    else
+                    {
+                        isText = false;
+                    }
                 }
                 //Console.WriteLine($"Aggregate {c} from {input.Name} to {Name} ##### {previous}");
                 previous = currentInputDatePoint;
