@@ -27,7 +27,7 @@ namespace FKala.Unittests
             };
 
             // Act
-            var op = parser.Parse(line, fields);
+            var op = parser.Parse(line, fields, new List<FKala.Core.Interfaces.IKalaQlOperation>());
 
             // Assert
             Assert.IsInstanceOfType(op, typeof(Op_JsonQuery));
@@ -59,7 +59,7 @@ namespace FKala.Unittests
             };
 
             // Act
-            var op = parser.Parse(line, fields);
+            var op = parser.Parse(line, fields, new List<FKala.Core.Interfaces.IKalaQlOperation>());
 
             // Assert
             Assert.IsInstanceOfType(op, typeof(Op_JsonQuery));

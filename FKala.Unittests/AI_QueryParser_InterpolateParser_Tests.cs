@@ -25,7 +25,7 @@ namespace FKala.Unittests
             };
 
             // Act
-            var op = parser.Parse(line, fields);
+            var op = parser.Parse(line, fields, new List<Core.Interfaces.IKalaQlOperation>());
 
             // Assert
             Assert.IsInstanceOfType(op, typeof(Op_Interpolate));
@@ -51,7 +51,7 @@ namespace FKala.Unittests
             };
 
             // Act
-            var op = parser.Parse(line, fields);
+            var op = parser.Parse(line, fields, new List<Core.Interfaces.IKalaQlOperation>());
 
             // Assert
             Assert.IsInstanceOfType(op, typeof(Op_Interpolate));

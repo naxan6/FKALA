@@ -23,7 +23,7 @@ namespace FKala.Unittests
 
             // Test parsing with registered parser
             var fields = new List<string> { "TestVerb", "param1", "param2" };
-            var result = registry.Parse("TestVerb param1 param2", fields);
+            var result = registry.Parse("TestVerb param1 param2", fields, new List<Core.Interfaces.IKalaQlOperation>());
 
             Assert.IsNotNull(result);
             Assert.IsInstanceOfType(result, typeof(Op_Test));
@@ -41,7 +41,7 @@ namespace FKala.Unittests
 
             // Test parsing a management command
             var fields = new List<string> { "Mgmt", "LOADMEASURES", "param1" };
-            var result = parser.Parse("Mgmt LOADMEASURES param1", fields);
+            var result = parser.Parse("Mgmt LOADMEASURES param1", fields, new List<Core.Interfaces.IKalaQlOperation>());
 
             Assert.IsNotNull(result);
             Assert.IsInstanceOfType(result, typeof(Op_Mgmt));
@@ -62,7 +62,7 @@ namespace FKala.Unittests
 
             // Test parsing an align timezone command
             var fields = new List<string> { "AlTz", "Europe/Berlin" };
-            var result = parser.Parse("AlTz Europe/Berlin", fields);
+            var result = parser.Parse("AlTz Europe/Berlin", fields, new List<Core.Interfaces.IKalaQlOperation>());
 
             Assert.IsNotNull(result);
             Assert.IsInstanceOfType(result, typeof(Op_AlignTimezone));
@@ -82,7 +82,7 @@ namespace FKala.Unittests
 
             // Test parsing a variable assignment
             var fields = new List<string> { "Var", "testVar:", "testValue" };
-            var result = parser.Parse("Var testVar: testValue", fields);
+            var result = parser.Parse("Var testVar: testValue", fields, new List<Core.Interfaces.IKalaQlOperation>());
 
             Assert.IsNotNull(result);
             Assert.IsInstanceOfType(result, typeof(Op_Var));
@@ -103,7 +103,7 @@ namespace FKala.Unittests
 
             // Test parsing a load command
             var fields = new List<string> { "Load", "testName:", "testMeasure", "2020-01-01T00:00:00Z", "2021-01-01T00:00:00Z", "NoCache" };
-            var result = parser.Parse("Load testName: testMeasure 2020-01-01T00:00:00Z 2021-01-01T00:00:00Z NoCache", fields);
+            var result = parser.Parse("Load testName: testMeasure 2020-01-01T00:00:00Z 2021-01-01T00:00:00Z NoCache", fields, new List<Core.Interfaces.IKalaQlOperation>());
 
             Assert.IsNotNull(result);
             Assert.IsInstanceOfType(result, typeof(Op_Load));
@@ -119,7 +119,7 @@ namespace FKala.Unittests
         {
             public override bool CanParse(string verb) => verb == "TestVerb";
 
-            public override Op_Base Parse(string line, List<string> fields)
+            public override Op_Base Parse(string line, List<string> fields, List<IKalaQlOperation> previousOps)
             {
                 return new Op_Test(line);
             }

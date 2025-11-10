@@ -22,7 +22,7 @@ namespace FKala.Unittests
 
             // Test parsing a json query command
             var fields = new List<string> { "Loaj", "testName:", "testMeasure", "$.data.value", "2020-01-01T00:00:00Z", "2021-01-01T00:00:00Z", "NoCache" };
-            var result = parser.Parse("Loaj testName: testMeasure $.data.value 2020-01-01T00:00:00Z 2021-01-01T00:00:00Z NoCache", fields);
+            var result = parser.Parse("Loaj testName: testMeasure $.data.value 2020-01-01T00:00:00Z 2021-01-01T00:00:00Z NoCache", fields, new List<FKala.Core.Interfaces.IKalaQlOperation>());
 
             Assert.IsNotNull(result);
             Assert.IsInstanceOfType(result, typeof(Op_JsonQuery));
@@ -45,7 +45,7 @@ namespace FKala.Unittests
 
             // Test parsing an aggregate command
             var fields = new List<string> { "Aggr", "testName:", "testInput", "Aligned_1Hour", "AVG", "EmptyWindows" };
-            var result = parser.Parse("Aggr testName: testInput Aligned_1Hour AVG EmptyWindows", fields);
+            var result = parser.Parse("Aggr testName: testInput Aligned_1Hour AVG EmptyWindows", fields, new List<FKala.Core.Interfaces.IKalaQlOperation>());
 
             Assert.IsNotNull(result);
             Assert.IsInstanceOfType(result, typeof(Op_Aggregate));
@@ -67,7 +67,7 @@ namespace FKala.Unittests
 
             // Test parsing an interpolate command
             var fields = new List<string> { "Inpo", "testName:", "testInput", "FORWARDS", "10.5" };
-            var result = parser.Parse("Inpo testName: testInput FORWARDS 10.5", fields);
+            var result = parser.Parse("Inpo testName: testInput FORWARDS 10.5", fields, new List<FKala.Core.Interfaces.IKalaQlOperation>());
 
             Assert.IsNotNull(result);
             Assert.IsInstanceOfType(result, typeof(Op_Interpolate));
@@ -90,7 +90,7 @@ namespace FKala.Unittests
 
             // Test parsing a matview command
             var fields = new List<string> { "MatView", "testName:", "testInput", "testMeasurement" };
-            var result = parser.Parse("MatView testName: testInput testMeasurement", fields);
+            var result = parser.Parse("MatView testName: testInput testMeasurement", fields, new List<FKala.Core.Interfaces.IKalaQlOperation>());
 
             Assert.IsNotNull(result);
             Assert.IsInstanceOfType(result, typeof(Op_MatView));
@@ -112,7 +112,7 @@ namespace FKala.Unittests
 
             // Test parsing an insert command
             var fields = new List<string> { "Insert", "testName:", "testValue", "testMeasurement"};
-            var result = parser.Parse("Insert testName: testValue testMeasurement", fields);
+            var result = parser.Parse("Insert testName: testValue testMeasurement", fields, new List<FKala.Core.Interfaces.IKalaQlOperation>());
 
             Assert.IsNotNull(result);
             Assert.IsInstanceOfType(result, typeof(Op_Insert));
@@ -134,7 +134,7 @@ namespace FKala.Unittests
 
             // Test parsing an expresso command
             var fields = new List<string> { "Expr", "testName:", "testExpression" };
-            var result = parser.Parse("Expr testName: testExpression", fields);
+            var result = parser.Parse("Expr testName: testExpression", fields, new List<FKala.Core.Interfaces.IKalaQlOperation>());
 
             Assert.IsNotNull(result);
             Assert.IsInstanceOfType(result, typeof(Op_Expresso));
@@ -156,7 +156,7 @@ namespace FKala.Unittests
 
             // Test parsing a publish command
             var fields = new List<string> { "Publish", "input1, input2", "MultipleResultsets" };
-            var result = parser.Parse("Publish input1, input2 MultipleResultsets", fields);
+            var result = parser.Parse("Publish input1, input2 MultipleResultsets", fields, new List<FKala.Core.Interfaces.IKalaQlOperation>());
 
             Assert.IsNotNull(result);
             Assert.IsInstanceOfType(result, typeof(Op_Publish));
