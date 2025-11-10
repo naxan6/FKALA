@@ -65,7 +65,7 @@ namespace Fkala.Unittests
             var fields = new List<string> { "Aggr", "TestAggr", "InputData", "Aligned_1Hour", "Sum", "false" };
 
             // Act
-            var result = _parser.Parse(line, fields);
+            var result = _parser.Parse(line, fields, new List<FKala.Core.Interfaces.IKalaQlOperation>());
 
             // Assert
             result.Should().NotBeNull();
@@ -85,7 +85,7 @@ namespace Fkala.Unittests
             var fields = new List<string> { "Aggregate", "TestAggregate", "InputData", "Aligned_1Hour", "Avg", "EmptyWindows" };
 
             // Act
-            var result = _parser.Parse(line, fields);
+            var result = _parser.Parse(line, fields, new List<FKala.Core.Interfaces.IKalaQlOperation>());
 
             // Assert
             result.Should().NotBeNull();
@@ -105,7 +105,7 @@ namespace Fkala.Unittests
             var fields = new List<string> { "Aggr", "", "", "" };
 
             // Act
-            Action act = () => _parser.Parse(line, fields);
+            Action act = () => _parser.Parse(line, fields, new List<FKala.Core.Interfaces.IKalaQlOperation>());
 
             // Assert
             act.Should().Throw<FormatException>();

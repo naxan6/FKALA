@@ -53,7 +53,7 @@ namespace FKala.Unittests
             var fields = new List<string> { "Load", "NAME:", "measurement", "NewestOnly" };
 
             // Act
-            var result = _parser.Parse(line, fields);
+            var result = _parser.Parse(line, fields, new List<FKala.Core.Interfaces.IKalaQlOperation>());
 
             // Assert
             result.Should().NotBeNull();
@@ -75,7 +75,7 @@ namespace FKala.Unittests
             var fields = new List<string> { "Load", "NAME:", "measurement", "2024-01-01T00:00:00Z", "2024-12-31T23:59:59Z", "HOURLY_SUM" };
 
             // Act
-            var result = _parser.Parse(line, fields);
+            var result = _parser.Parse(line, fields, new List<FKala.Core.Interfaces.IKalaQlOperation>());
 
             // Assert
             result.Should().NotBeNull();
@@ -98,7 +98,7 @@ namespace FKala.Unittests
             var fields = new List<string> { "Load", "NAME:", "measurement", "2024-01-01T00:00:00Z" };
 
             // Act & Assert
-            var action = () => _parser.Parse(line, fields);
+            var action = () => _parser.Parse(line, fields, new List<FKala.Core.Interfaces.IKalaQlOperation>());
             action.Should().Throw<Exception>().WithMessage("6 Parameters needed. Example: Load NAME: measurename 0001-01-01T00:00:00 9999-12-31T00:00:00 NoCache. But got: " + line);
         }
 

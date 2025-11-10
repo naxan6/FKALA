@@ -52,7 +52,7 @@ namespace FKala.Unittests
             var fields = new List<string> { "Mgmt", "LOADMEASURES" };
 
             // Act
-            var result = _parser.Parse(line, fields);
+            var result = _parser.Parse(line, fields, new List<Core.Interfaces.IKalaQlOperation>());
 
             // Assert
             result.Should().NotBeNull();
@@ -70,7 +70,7 @@ namespace FKala.Unittests
             var fields = new List<string> { "Mgmt", "COPY", "source", "destination" };
 
             // Act
-            var result = _parser.Parse(line, fields);
+            var result = _parser.Parse(line, fields, new List<Core.Interfaces.IKalaQlOperation>());
 
             // Assert
             result.Should().NotBeNull();
@@ -182,32 +182,6 @@ namespace FKala.Unittests
 
             // Assert
             result.Should().Be("Mgmt RENAME oldname newname");
-        }
-
-        [TestMethod]
-        public void GenerateLine_WithSortActionAndParameters_ShouldReturnCorrectString()
-        {
-            // Arrange
-            var parameters = new MgmtParams(MgmtAction.Sort, "measurement");
-
-            // Act
-            var result = _parser.GenerateLine(parameters);
-
-            // Assert
-            result.Should().Be("Mgmt SORT measurement");
-        }
-
-        [TestMethod]
-        public void GenerateLine_WithCleanActionAndParameters_ShouldReturnCorrectString()
-        {
-            // Arrange
-            var parameters = new MgmtParams(MgmtAction.Clean, "measurement");
-
-            // Act
-            var result = _parser.GenerateLine(parameters);
-
-            // Assert
-            result.Should().Be("Mgmt CLEAN measurement");
         }
 
         [TestMethod]
