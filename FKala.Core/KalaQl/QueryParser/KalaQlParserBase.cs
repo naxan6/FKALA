@@ -1,4 +1,5 @@
 using Exceptionless.DateTimeExtensions;
+using FKala.Core.Interfaces;
 using FKala.Core.KalaQl.Windowing;
 using FKala.Core.Model;
 using NodaTime.TimeZones;
@@ -7,6 +8,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace FKala.Core.KalaQl.QueryParser
@@ -29,7 +31,78 @@ namespace FKala.Core.KalaQl.QueryParser
         /// <param name="line">Die zu parsende Zeile</param>
         /// <param name="fields">Die bereits aufgeteilten Felder der Zeile</param>
         /// <returns>Die erstellte Operation</returns>
-        public abstract Op_Base Parse(string line, List<string> fields);
+        public abstract Op_Base Parse(string line, List<string> fields, List<IKalaQlOperation> previousOps);
+
+        public static string ParseSourceName(string sourceName, List<IKalaQlOperation> previousOps)
+        {
+            // Dieser Regex-Pattern fängt alle drei Fälle ab:
+            // 1. =N-M=> (z.B. =1-5=>) -> Gruppe 1 = N, Gruppe 2 = M
+            // 2. =N=>   (z.B. =3=>)   -> Gruppe 1 = N, Gruppe 2 nicht erfolgreich
+            // 3. ==>                  -> Gruppe 1 & 2 nicht erfolgreich
+            string pattern = @"=(?:(?:(\d+)(?:-(\d+))?)|)=>";
+            // Regex.Replace mit einem MatchEvaluator (der Lambda-Funktion)
+            // wird für jeden Treffer aufgerufen.
+            return Regex.Replace(sourceName, pattern, (match) =>
+            {
+                try
+                {
+                    // Fall 1: Range-Match (z.B. =1-5=>)
+                    if (match.Groups[1].Success && match.Groups[2].Success)
+                    {
+                        int startIndex = int.Parse(match.Groups[1].Value);
+                        int endIndex = int.Parse(match.Groups[2].Value);
+
+                        // Sicherstellen, dass die kleinere Zahl vorne steht
+                        if (startIndex > endIndex)
+                        {
+                            (startIndex, endIndex) = (endIndex, startIndex); // Tuple-Swap
+                        }
+
+                        // Prüfen, ob der höchste Index gültig ist
+                        if (endIndex > previousOps.Count)
+                        {
+                            return $"(Error: Index {endIndex} out of range. Max is {previousOps.Count})";
+                        }
+
+                        // Eine Liste der Namen im Bereich erstellen
+                        var names = Enumerable.Range(startIndex, endIndex - startIndex + 1)
+                                          // C# 8+ Index-Syntax (^i bedeutet "i von hinten")
+                                          .Select(i => previousOps[^i].Name);
+
+                        return string.Join(", ", names);
+                    }
+
+                    // Fall 2: Single-Index-Match (z.B. =3=>)
+                    if (match.Groups[1].Success)
+                    {
+                        int index = int.Parse(match.Groups[1].Value);
+
+                        if (index > previousOps.Count || index < 1)
+                        {
+                            return $"(Error: Index {index} out of range. Max is {previousOps.Count})";
+                        }
+
+                        // C# 8+ Index-Syntax
+                        return previousOps[^index].Name;
+                    }
+
+                    // Fall 3: Default-Match (==>)
+                    if (previousOps.Count < 1)
+                    {
+                        return "(Error: No previous ops for '==>')";
+                    }
+
+                    // C# 8+ Index-Syntax (^1 ist das letzte Element)
+                    return previousOps[^1].Name;
+                }
+                catch (Exception ex)
+                {
+                    // Allgemeines Fallback für unerwartete Fehler (z.B. leere Liste)
+                    return $"(Error: {ex.Message})";
+                }
+            });
+        }
+
 
         /// <summary>
         /// Generiert eine Zeile aus den angegebenen Parametern
@@ -65,7 +138,7 @@ namespace FKala.Core.KalaQl.QueryParser
                     return DateTime.SpecifyKind(parsedDate, DateTimeKind.Utc);
                 }
             }
-            
+
             var dateTimeOffset = DateMath.Parse(v, TimeZoneInfo.Utc, isEnd);
             return dateTimeOffset.DateTime;
         }

@@ -1,3 +1,4 @@
+using FKala.Core.Interfaces;
 using FKala.Core.KalaQl.Windowing;
 using FKala.Core.Model;
 using System;
@@ -26,7 +27,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// <param name="line">Die zu parsende Zeile</param>
         /// <param name="fields">Die bereits aufgeteilten Felder der Zeile</param>
         /// <returns>Die erstellte Operation</returns>
-        public override Op_Base Parse(string line, List<string> fields)
+        public override Op_Base Parse(string line, List<string> fields, List<IKalaQlOperation> previousOps)
         {
             return new Op_AlignTimezone(line, fields[1]);
         }
@@ -70,7 +71,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// <param name="line">Die zu parsende Zeile</param>
         /// <param name="fields">Die bereits aufgeteilten Felder der Zeile</param>
         /// <returns>Die erstellte Operation</returns>
-        public override Op_Base Parse(string line, List<string> fields)
+        public override Op_Base Parse(string line, List<string> fields, List<IKalaQlOperation> previousOps)
         {
             return new Op_Var(line, fields[1].Trim(':'), fields[2]);
         }
@@ -114,7 +115,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// <param name="line">Die zu parsende Zeile</param>
         /// <param name="fields">Die bereits aufgeteilten Felder der Zeile</param>
         /// <returns>Die erstellte Operation</returns>
-        public override Op_Base Parse(string line, List<string> fields)
+        public override Op_Base Parse(string line, List<string> fields, List<IKalaQlOperation> previousOps)
         {
             if (fields[3] == "NewestOnly")
             {
@@ -293,22 +294,22 @@ namespace FKala.Core.KalaQl.QueryParser
         /// <param name="line">Die zu parsende Zeile</param>
         /// <param name="fields">Die bereits aufgeteilten Felder der Zeile</param>
         /// <returns>Die erstellte Operation</returns>
-        public override Op_Base Parse(string line, List<string> fields)
+        public override Op_Base Parse(string line, List<string> fields, List<IKalaQlOperation> previousOps)
         {
             // Check if NewestOnly is the last parameter
             bool newestOnly = fields.Count > 6 && fields[6] == "NewestOnly";
-            
+
             if (fields.Count < 6) throw new Exception($"6 Parameters needed. Example: Load NAME: measurename 0001-01-01T00:00:00 9999-12-31T00:00:00 NoCache. But got: {line}");
-            
+
             string fieldPath;
             DateTime startTime, endTime;
             string cacheResolution;
-            
+
             // Handle three different field structures:
             // Structure A (6 fields): Loaj NAME: measurement start end cache
             // Structure B (7 fields): Loaj NAME: measurement fieldpath start end cache
             // Structure C (7 fields): Loaj NAME: measurement start end cache NewestOnly
-            
+
             if (fields.Count >= 7 && !newestOnly)
             {
                 // Structure B: fieldpath is at index 3, start at index 4, end at index 5, cache at index 6
@@ -325,8 +326,9 @@ namespace FKala.Core.KalaQl.QueryParser
                 endTime = ParseDateTime(fields[4], true);
                 cacheResolution = fields[5];
             }
-            
-            return new Op_JsonQuery(line, fields[1].Trim(':'), fields[2], fieldPath, startTime, endTime, ParseCacheResolution(cacheResolution), newestOnly);
+            string sourceName = ParseSourceName(fields[2], previousOps);
+
+            return new Op_JsonQuery(line, fields[1].Trim(':'), sourceName, fieldPath, startTime, endTime, ParseCacheResolution(cacheResolution), newestOnly);
         }
 
         /// <summary>
@@ -453,9 +455,11 @@ namespace FKala.Core.KalaQl.QueryParser
         /// <param name="line">Die zu parsende Zeile</param>
         /// <param name="fields">Die bereits aufgeteilten Felder der Zeile</param>
         /// <returns>Die erstellte Operation</returns>
-        public override Op_Base Parse(string line, List<string> fields)
+        public override Op_Base Parse(string line, List<string> fields, List<IKalaQlOperation> previousOps)
         {
-            return new Op_Aggregate(line, fields[1].Trim(':'), fields[2], ParseWindow(fields[3]), ParseAggregate(fields[4]), ParseEmptyWindows(fields.Count > 5 ? fields[5] : ""));
+            string sourceName = ParseSourceName(fields[2], previousOps);
+
+            return new Op_Aggregate(line, fields[1].Trim(':'), sourceName, ParseWindow(fields[3]), ParseAggregate(fields[4]), ParseEmptyWindows(fields.Count > 5 ? fields[5] : ""));
         }
 
         /// <summary>
@@ -594,10 +598,11 @@ namespace FKala.Core.KalaQl.QueryParser
         /// <param name="line">Die zu parsende Zeile</param>
         /// <param name="fields">Die bereits aufgeteilten Felder der Zeile</param>
         /// <returns>Die erstellte Operation</returns>
-        public override Op_Base Parse(string line, List<string> fields)
+        public override Op_Base Parse(string line, List<string> fields, List<IKalaQlOperation> previousOps)
         {
             string? constantValue = fields.Count > 4 ? fields[4] : null;
-            return new Op_Interpolate(line, fields[1].Trim(':'), fields[2], ParseInterpolationMode(fields[3]), ParseDecimalNullable(constantValue ?? "NULL"));
+            string sourceName = ParseSourceName(fields[2], previousOps);
+            return new Op_Interpolate(line, fields[1].Trim(':'), sourceName, ParseInterpolationMode(fields[3]), ParseDecimalNullable(constantValue ?? "NULL"));
         }
 
         /// <summary>
@@ -676,9 +681,10 @@ namespace FKala.Core.KalaQl.QueryParser
         /// <param name="line">Die zu parsende Zeile</param>
         /// <param name="fields">Die bereits aufgeteilten Felder der Zeile</param>
         /// <returns>Die erstellte Operation</returns>
-        public override Op_Base Parse(string line, List<string> fields)
+        public override Op_Base Parse(string line, List<string> fields, List<IKalaQlOperation> previousOps)
         {
-            return new Op_MatView(line, fields[1].Trim(':'), fields[2], fields[3]);
+            string sourceName = ParseSourceName(fields[2], previousOps);
+            return new Op_MatView(line, fields[1].Trim(':'), sourceName, fields[3]);
         }
 
         /// <summary>
@@ -720,9 +726,10 @@ namespace FKala.Core.KalaQl.QueryParser
         /// <param name="line">Die zu parsende Zeile</param>
         /// <param name="fields">Die bereits aufgeteilten Felder der Zeile</param>
         /// <returns>Die erstellte Operation</returns>
-        public override Op_Base Parse(string line, List<string> fields)
+        public override Op_Base Parse(string line, List<string> fields, List<IKalaQlOperation> previousOps)
         {
-            return new Op_Insert(line, fields[1].Trim(':'), fields[2], fields[3]);
+            string sourceName = ParseSourceName(fields[2], previousOps);
+            return new Op_Insert(line, fields[1].Trim(':'), sourceName, fields[3]);
         }
 
         /// <summary>
@@ -764,9 +771,10 @@ namespace FKala.Core.KalaQl.QueryParser
         /// <param name="line">Die zu parsende Zeile</param>
         /// <param name="fields">Die bereits aufgeteilten Felder der Zeile</param>
         /// <returns>Die erstellte Operation</returns>
-        public override Op_Base Parse(string line, List<string> fields)
+        public override Op_Base Parse(string line, List<string> fields, List<IKalaQlOperation> previousOps)
         {
-            return new Op_Expresso(line, fields[1].Trim(':'), fields[2].Replace('\'', '"'));
+            string sourceName = ParseSourceName(fields[2], previousOps);
+            return new Op_Expresso(line, fields[1].Trim(':'), sourceName.Replace('\'', '"'));
         }
 
         /// <summary>
@@ -808,10 +816,11 @@ namespace FKala.Core.KalaQl.QueryParser
         /// <param name="line">Die zu parsende Zeile</param>
         /// <param name="fields">Die bereits aufgeteilten Felder der Zeile</param>
         /// <returns>Die erstellte Operation</returns>
-        public override Op_Base Parse(string line, List<string> fields)
+        public override Op_Base Parse(string line, List<string> fields, List<IKalaQlOperation> previousOps)
         {
-            
-            return new Op_Publish(line, fields[1].Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(), ParsePublishMode(fields[2]));
+            string sourceName = ParseSourceName(fields[1], previousOps);
+
+            return new Op_Publish(line, sourceName.Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(), ParsePublishMode(fields[2]));
         }
 
         /// <summary>

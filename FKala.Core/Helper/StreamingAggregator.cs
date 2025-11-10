@@ -18,6 +18,7 @@ namespace FKala.Core.Logic
         public decimal? LastAggregatedValue { get; private set; }
 
         private decimal? aggregatedValue { get; set; } = null;
+        private string? aggregatedValueString { get; set; } = null;
         private int _count { get; set; }
         private decimal previousTicks { get; set; }
         private decimal? LastValuePreviousWindow { get; set; }
@@ -42,6 +43,7 @@ namespace FKala.Core.Logic
         private void InternalInit(Window window, decimal? lastValuePreviousWindow)
         {
             aggregatedValue = null;
+            aggregatedValueString = null;
             _count = 0;
             previousTicks = 0;
             LastValuePreviousWindow = null;
@@ -122,6 +124,11 @@ namespace FKala.Core.Logic
             return aggregatedValue;
         }
 
+        public string? GetAggregatedValueText()
+        {
+            return aggregatedValueString;
+        }
+
         public void AddValue(DateTime time, decimal? toIntegrate)
         {
             switch (AggregationFunction)
@@ -150,6 +157,30 @@ namespace FKala.Core.Logic
                 case AggregateFunction.Sum:
                     aggregatedValue = (toIntegrate == null) ? aggregatedValue : (aggregatedValue ?? 0) + toIntegrate;
                     break;
+                default:
+                    throw new ArgumentException("Ungültige Aggregationsfunktion");
+            }
+        }
+
+        public void AddValueString(DateTime time, string toIntegrate)
+        {
+            switch (AggregationFunction)
+            {
+                case AggregateFunction.First:
+                    aggregatedValueString = aggregatedValueString ?? toIntegrate;
+                    break;
+                case AggregateFunction.Last:
+                    aggregatedValueString = toIntegrate;
+                    break;
+                case AggregateFunction.Count:
+                    aggregatedValue = aggregatedValue != null ? aggregatedValue.Value + 1 : 1;
+                    break;
+                case AggregateFunction.Min:
+                case AggregateFunction.Max:
+                case AggregateFunction.Sum:
+                case AggregateFunction.Avg:
+                case AggregateFunction.WAvg:
+
                 default:
                     throw new ArgumentException("Ungültige Aggregationsfunktion");
             }
