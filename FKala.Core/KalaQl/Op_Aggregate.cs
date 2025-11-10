@@ -80,7 +80,7 @@ namespace FKala.Core.KalaQl
                 var currentInputDatePoint = dataPointsEnumerator.Current;
                 if (isText == null)
                 {
-                    if (currentInputDatePoint.Value == null && currentInputDatePoint.ValueText != null)
+                    if (currentInputDatePoint.Value == null && !string.IsNullOrEmpty(currentInputDatePoint.ValueText))
                     {
                         isText = true;
                     }
