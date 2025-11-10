@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FKala.Core.Interfaces;
 
 namespace FKala.Core.KalaQl.QueryParser
 {
@@ -28,14 +29,14 @@ namespace FKala.Core.KalaQl.QueryParser
         /// <param name="line">Die zu parsende Zeile</param>
         /// <param name="fields">Die bereits aufgeteilten Felder der Zeile</param>
         /// <returns>Die erstellte Operation</returns>
-        public Op_Base Parse(string line, List<string> fields)
+        public Op_Base Parse(string line, List<string> fields, List<IKalaQlOperation> previousOps)
         {
             var verb = fields[0];
             var parser = _parsers.FirstOrDefault(p => p.CanParse(verb));
             if (parser == null)
                 throw new Exception($"Unkown Verb <{verb}>");
 
-            return parser.Parse(line, fields);
+            return parser.Parse(line, fields, previousOps);
         }
 
         /// <summary>

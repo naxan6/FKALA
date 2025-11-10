@@ -188,6 +188,15 @@ namespace FKala.Core.KalaQl.Windowing
             CalcTimes();
         }
 
+        public void FastForward(DateTime startTimeNextPoint)
+        {
+            TimeSpan diff = startTimeNextPoint - this.StartTime;
+            long faktor = (long)diff.TotalSeconds / (long)Interval.TotalSeconds;
+
+            this.StartTime = this.EndTime.AddSeconds((faktor -1) * Interval.TotalSeconds);
+            CalcTimes();
+        }
+
         public bool IsInWindow(DateTime time)
         {
             return time >= StartTime && time < EndTime;
@@ -232,6 +241,15 @@ namespace FKala.Core.KalaQl.Windowing
             dp.StartTime = this.StartTime;
             dp.EndTime = this.EndTime;
             dp.Value = value;
+            return dp;
+        }
+
+        public DataPoint GetDataPoint(string? value)
+        {
+            var dp = Pools.DataPoint.Get();
+            dp.StartTime = this.StartTime;
+            dp.EndTime = this.EndTime;
+            dp.ValueText = value;
             return dp;
         }
 

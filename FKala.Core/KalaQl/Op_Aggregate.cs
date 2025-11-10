@@ -39,7 +39,7 @@ namespace FKala.Core.KalaQl
             // sich die Zugriffe auf den Enumerable überschneiden und das ganze dann buggt
             // (noch nicht final geklärt, z.B. siehe BUGTEST_KalaQl_2_Datasets_Aggregated_Expresso). 
             var input = context.IntermediateDatasources.First(x => x.Name == InputDataSetName);
-            
+
             var outgoingResult =
                 new ResultPromise()
                 {
@@ -66,17 +66,22 @@ namespace FKala.Core.KalaQl
 
             //hint: this slidingWindows AND StreamingAggregator instances are only used if input is empty
             slidingWindow.Init(input.Query_StartTime, context.AlignTzTimeZoneId);
-            StreamingAggregator currentAggregator = new StreamingAggregator(AggregateFunc, slidingWindow); 
+            StreamingAggregator currentAggregator = new StreamingAggregator(AggregateFunc, slidingWindow);
             bool scrolledForward = false;
             bool isFirstAfterMoveNext = true;
             int seenPoints = 0;
             DataPoint? previous = null;
+            bool isText = false;
             while (dataPointsEnumerator.MoveNext())
             {
 
                 seenPoints++;
-                
+
                 var currentInputDatePoint = dataPointsEnumerator.Current;
+                if (currentInputDatePoint.Value == null && currentInputDatePoint.ValueText != null)
+                {
+                    isText = true;
+                }
                 //Console.WriteLine($"Aggregate {c} from {input.Name} to {Name} ##### {previous}");
                 previous = currentInputDatePoint;
                 if (isFirstAfterMoveNext)
@@ -89,7 +94,15 @@ namespace FKala.Core.KalaQl
 
                 if (slidingWindow.IsInWindow(currentInputDatePoint.StartTime))
                 {
-                    currentAggregator!.AddValue(currentInputDatePoint.StartTime, currentInputDatePoint.Value);
+                    if (isText)
+                    {
+                        currentAggregator!.AddValueString(currentInputDatePoint.StartTime, currentInputDatePoint.ValueText);
+                    }
+                    else
+                    {
+                        currentAggregator!.AddValue(currentInputDatePoint.StartTime, currentInputDatePoint.Value);
+                    }
+
                     scrolledForward = true;
                 }
                 else if (slidingWindow.DateTimeIsBeforeWindow(currentInputDatePoint.StartTime))
@@ -100,7 +113,14 @@ namespace FKala.Core.KalaQl
                         {
                             slidingWindow.Next();
                         }
-                        currentAggregator!.AddValue(currentInputDatePoint.StartTime, currentInputDatePoint.Value);
+                        if (isText)
+                        {
+                            currentAggregator!.AddValueString(currentInputDatePoint.StartTime, currentInputDatePoint.ValueText);
+                        }
+                        else
+                        {
+                            currentAggregator!.AddValue(currentInputDatePoint.StartTime, currentInputDatePoint.Value);
+                        }
                         scrolledForward = true;
 
                     }
@@ -113,32 +133,47 @@ namespace FKala.Core.KalaQl
                 {
                     while (slidingWindow.DateTimeIsAfterWindow(currentInputDatePoint.StartTime))
                     {
-                        var currentDataPoint = slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValue());
-                        if (EmptyWindows || currentDataPoint.Value != null) yield return currentDataPoint;
+                        var currentDataPoint = isText ? slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValueText()) : slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValue());
+                        if (EmptyWindows || currentDataPoint.Value != null || currentDataPoint.ValueText != null) yield return currentDataPoint;
+                        if (EmptyWindows)
+                        {
+                            slidingWindow.Next();
+                        }
+                        else
+                        {
+                            slidingWindow.FastForward(currentInputDatePoint.StartTime);
+                        }
 
-                        slidingWindow.Next();
 
                         currentAggregator.Reset(currentAggregator.LastAggregatedValue);
                         if (slidingWindow.IsInWindow(currentInputDatePoint.StartTime))
                         {
-                            currentAggregator.AddValue(currentInputDatePoint.StartTime, currentInputDatePoint.Value);
+                            if (isText)
+                            {
+                                currentAggregator!.AddValueString(currentInputDatePoint.StartTime, currentInputDatePoint.ValueText);
+                            }
+                            else
+                            {
+                                currentAggregator!.AddValue(currentInputDatePoint.StartTime, currentInputDatePoint.Value);
+                            }
                         }
                     }
                 }
                 Pools.DataPoint.Return(currentInputDatePoint);
             }
             // add final interval
-            var finalContentDataPoint = slidingWindow.GetDataPoint(currentAggregator.GetAggregatedValue());
-            if (EmptyWindows || finalContentDataPoint.Value != null) yield return finalContentDataPoint;
-            
+            var finalContentDataPoint = isText ? slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValueText()) : slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValue());
+            if (EmptyWindows || finalContentDataPoint.Value != null || finalContentDataPoint.ValueText != null) yield return finalContentDataPoint;
+
             if (EmptyWindows)
             {
                 while (slidingWindow.EndTime < input.Query_EndTime)
                 {
                     slidingWindow.Next();
-                    currentAggregator.Reset(currentAggregator.LastAggregatedValue);
-                    var closingDataPoint = slidingWindow.GetDataPoint(currentAggregator.GetAggregatedValue());
-                    if (EmptyWindows || closingDataPoint.Value != null) yield return closingDataPoint;
+                    // Müsste ein BUG gewesen sein??? currentAggregator.Reset(currentAggregator.LastAggregatedValue);
+                    currentAggregator.Reset(null);
+                    var closingDataPoint = isText ? slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValueText()) : slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValue());
+                    if (EmptyWindows || closingDataPoint.Value != null || closingDataPoint.ValueText != null) yield return closingDataPoint;
                 }
             }
         }
@@ -153,48 +188,48 @@ namespace FKala.Core.KalaQl
             return new Op_Aggregate(base.Line, Name, InputDataSetName, WindowTemplate, AggregateFunc, EmptyWindows, UseMaterializing);
         }
 
-    public override string ToLine()
-    {
-        string windowStr;
-        
-        // Vergleiche das WindowTemplate mit den statischen Vorlagen
-        if (WindowTemplate.Mode == WindowMode.Aligned1Minute)
-            windowStr = "Aligned_1Minute";
-        else if (WindowTemplate.Mode == WindowMode.Aligned5Minutes)
-            windowStr = "Aligned_5Minutes";
-        else if (WindowTemplate.Mode == WindowMode.Aligned15Minutes)
-            windowStr = "Aligned_15Minutes";
-        else if (WindowTemplate.Mode == WindowMode.AlignedHour)
-            windowStr = "Aligned_1Hour";
-        else if (WindowTemplate.Mode == WindowMode.AlignedDay)
-            windowStr = "Aligned_1Day";
-        else if (WindowTemplate.Mode == WindowMode.AlignedWeek)
-            windowStr = "Aligned_1Week";
-        else if (WindowTemplate.Mode == WindowMode.AlignedMonth)
-            windowStr = "Aligned_1Month";
-        else if (WindowTemplate.Mode == WindowMode.AlignedYearStartAtHalf)
-            windowStr = "Aligned_1YearStartAtHalf";
-        else if (WindowTemplate.Mode == WindowMode.AlignedYear)
-            windowStr = "Aligned_1Year";
-        else if (WindowTemplate.Mode == WindowMode.UnalignedMonth)
-            windowStr = "Unaligned_1Month";
-        else if (WindowTemplate.Mode == WindowMode.UnalignedYear)
-            windowStr = "Unaligned_1Year";
-        else if (WindowTemplate.Mode == WindowMode.FixedIntervall)
+        public override string ToLine()
         {
-            // Für FixedIntervall das Intervall ausgeben
-            if (WindowTemplate.Interval == TimeSpan.MaxValue)
-                windowStr = "Infinite";
+            string windowStr;
+
+            // Vergleiche das WindowTemplate mit den statischen Vorlagen
+            if (WindowTemplate.Mode == WindowMode.Aligned1Minute)
+                windowStr = "Aligned_1Minute";
+            else if (WindowTemplate.Mode == WindowMode.Aligned5Minutes)
+                windowStr = "Aligned_5Minutes";
+            else if (WindowTemplate.Mode == WindowMode.Aligned15Minutes)
+                windowStr = "Aligned_15Minutes";
+            else if (WindowTemplate.Mode == WindowMode.AlignedHour)
+                windowStr = "Aligned_1Hour";
+            else if (WindowTemplate.Mode == WindowMode.AlignedDay)
+                windowStr = "Aligned_1Day";
+            else if (WindowTemplate.Mode == WindowMode.AlignedWeek)
+                windowStr = "Aligned_1Week";
+            else if (WindowTemplate.Mode == WindowMode.AlignedMonth)
+                windowStr = "Aligned_1Month";
+            else if (WindowTemplate.Mode == WindowMode.AlignedYearStartAtHalf)
+                windowStr = "Aligned_1YearStartAtHalf";
+            else if (WindowTemplate.Mode == WindowMode.AlignedYear)
+                windowStr = "Aligned_1Year";
+            else if (WindowTemplate.Mode == WindowMode.UnalignedMonth)
+                windowStr = "Unaligned_1Month";
+            else if (WindowTemplate.Mode == WindowMode.UnalignedYear)
+                windowStr = "Unaligned_1Year";
+            else if (WindowTemplate.Mode == WindowMode.FixedIntervall)
+            {
+                // Für FixedIntervall das Intervall ausgeben
+                if (WindowTemplate.Interval == TimeSpan.MaxValue)
+                    windowStr = "Infinite";
+                else
+                    windowStr = WindowTemplate.Interval.ToString();
+            }
             else
-                windowStr = WindowTemplate.Interval.ToString();
+            {
+                // Fallback für unbekannte Modi
+                windowStr = WindowTemplate.Mode.ToString();
+            }
+
+            return $"Aggregate {Name}: {InputDataSetName} {windowStr} {AggregateFunc}{(EmptyWindows ? " EmptyWindows" : "")}";
         }
-        else
-        {
-            // Fallback für unbekannte Modi
-            windowStr = WindowTemplate.Mode.ToString();
-        }
-        
-        return $"Aggregate {Name}: {InputDataSetName} {windowStr} {AggregateFunc}{(EmptyWindows ? " EmptyWindows" : "")}";
-    }
     }
 }

@@ -1,3 +1,4 @@
+using FKala.Core.Interfaces;
 using FKala.Core.Model;
 using System;
 using System.Collections.Generic;
@@ -25,7 +26,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// <param name="line">Die zu parsende Zeile</param>
         /// <param name="fields">Die bereits aufgeteilten Felder der Zeile</param>
         /// <returns>Die erstellte Operation</returns>
-        public override Op_Base Parse(string line, List<string> fields)
+        public override Op_Base Parse(string line, List<string> fields, List<IKalaQlOperation> previousOps)
         {
             var action = ParseMgmtAction(fields[1]);
             var parameters = fields.Count > 2 ? String.Join(" ", fields.Skip(2)) : "";

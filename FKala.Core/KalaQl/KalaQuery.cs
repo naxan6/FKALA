@@ -101,7 +101,7 @@ namespace FKala.Core.KalaQl
                 string[] operations = queryText.Split(" | ", StringSplitOptions.RemoveEmptyEntries);
                 foreach (var operation in operations)
                 {
-                    var op = ParseQueryText(operation);
+                    var op = ParseQueryText(operation, this.ops);
                     if (op != null)
                     {
                         this.Add(op);
@@ -115,7 +115,7 @@ namespace FKala.Core.KalaQl
 
                 foreach (var line in lines)
                 {
-                    var op = ParseQueryText(line);
+                    var op = ParseQueryText(line, this.ops);
                     if (op != null)
                     {
                         this.Add(op);
@@ -126,7 +126,7 @@ namespace FKala.Core.KalaQl
             return this;
         }
 
-        private Op_Base? ParseQueryText(string line)
+        private Op_Base? ParseQueryText(string line, List<IKalaQlOperation> previousOps)
         {
             foreach (var opVar in opvars)
             {
@@ -171,7 +171,7 @@ namespace FKala.Core.KalaQl
             {
                 try
                 {
-                    return _parserRegistry.Parse(line, fields);
+                    return _parserRegistry.Parse(line, fields, previousOps);
                 }
                 catch (Exception ex)
                 {

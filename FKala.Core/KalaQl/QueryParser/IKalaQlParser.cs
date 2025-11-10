@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FKala.Core.Interfaces;
 
 namespace FKala.Core.KalaQl.QueryParser
 {
@@ -24,7 +25,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// <param name="line">Die zu parsende Zeile</param>
         /// <param name="fields">Die bereits aufgeteilten Felder der Zeile</param>
         /// <returns>Die erstellte Operation</returns>
-        Op_Base Parse(string line, List<string> fields);
+        Op_Base Parse(string line, List<string> fields, List<IKalaQlOperation> previousOps);
 
         /// <summary>
         /// Generiert eine Zeile aus den angegebenen Parametern
