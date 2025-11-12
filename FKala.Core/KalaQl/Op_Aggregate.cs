@@ -169,7 +169,7 @@ namespace FKala.Core.KalaQl
                 Pools.DataPoint.Return(currentInputDatePoint);
             }
             // add final interval
-            var finalContentDataPoint = isText.Value ? slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValueText()) : slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValue());
+            var finalContentDataPoint = (isText.HasValue ? isText.Value : false) ? slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValueText()) : slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValue());
             if (EmptyWindows || finalContentDataPoint.Value != null || finalContentDataPoint.ValueText != null) yield return finalContentDataPoint;
 
             if (EmptyWindows)
@@ -179,7 +179,7 @@ namespace FKala.Core.KalaQl
                     slidingWindow.Next();
                     // Müsste ein BUG gewesen sein??? currentAggregator.Reset(currentAggregator.LastAggregatedValue);
                     currentAggregator.Reset(null);
-                    var closingDataPoint = isText.Value ? slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValueText()) : slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValue());
+                    var closingDataPoint = (isText.HasValue ? isText.Value : false) ? slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValueText()) : slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValue());
                     if (EmptyWindows || closingDataPoint.Value != null || closingDataPoint.ValueText != null) yield return closingDataPoint;
                 }
             }

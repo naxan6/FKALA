@@ -406,7 +406,7 @@ namespace FKala.Core
         public List<string> LoadMeasurementList()
         {
             var measurements = Directory.GetDirectories(DataDirectory);
-            return measurements.Select(d => Path.GetFileName(d)).ToList();
+            return measurements.Select(d => Path.GetFileName(d)).OrderBy(e => e).ToList();
         }
 
         public void Dispose()
