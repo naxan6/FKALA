@@ -77,7 +77,7 @@ namespace FKala.Api.Controller
             try
             {
                 var q = KalaQuery.Start(true)
-                    .FromQuery(query);
+                    .FromQuery(query, this.DataLayer);
 
                 var result = q.Execute(this.DataLayer);
 

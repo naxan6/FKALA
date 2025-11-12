@@ -91,10 +91,17 @@ namespace FKala.Core.KalaQl
             return context.Result;
         }
 
-        public KalaQuery FromQuery(string queryText)
+        public KalaQuery FromQuery(string queryText, IDataLayer dataLayer = null)
         {
             queryText = Regex.Unescape(queryText);
+
+            if (dataLayer != null)
+            {
+                QueryPreprocessor preproc = new QueryPreprocessor(dataLayer);
+                queryText = string.Join("\n", preproc.Process(queryText));
+            }
             
+
             // Überprüfen, ob die Abfrage mehrere Operationen enthält
             if (queryText.Contains(" | "))
             {
