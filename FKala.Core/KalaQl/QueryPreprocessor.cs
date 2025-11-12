@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using FKala.Core.Interfaces;
+using FKala.Core.Interfaces; // Annahme, dass IDataLayer hier definiert ist
 
 
 /// <summary>
@@ -28,8 +28,6 @@ public class QueryPreprocessor
     /// <summary>
     /// Hauptmethode zur Verarbeitung des kompakten Skripts.
     /// </summary>
-    /// <param name="compactScript">Das gesamte Skript als einzelner String.</param>
-    /// <returns>Eine Liste der erweiterten Zeilen.</returns>
     public List<string> Process(string compactScript)
     {
         _generatedNames.Clear();
@@ -51,15 +49,31 @@ public class QueryPreprocessor
     private void ProcessLine(string line)
     {
         if (string.IsNullOrWhiteSpace(line)) return;
+        if (line.StartsWith("#") || line.StartsWith("//")) return;
 
         var parts = SplitLineRespectingQuotes(line);
         if (parts.Count == 0) return;
 
-        // Eine Zeile ist eine Vorlage, wenn sie 'regex:' enthält.
-        // Wir erwarten mindestens 3 Teile: <Verb> <Name>: <Input>
-        bool isTemplate = parts.Count >= 3 && parts[2].StartsWith("regex:");
+        string verb = parts[0];
 
-        if (!isTemplate)
+        // *** LOGIK FÜR 3 TEMPLATE-STILE ***
+
+        // Stil 1: Load rName: regex:pattern (Name endet mit :)
+        bool isInputRegex = parts.Count >= 3 &&
+                            parts[1].EndsWith(":") &&
+                            parts[2].StartsWith("regex:");
+
+        // Stil 2: Publ regex:pattern (Name ist die Regex)
+        bool isNameRegex = parts.Count >= 2 &&
+                           parts[1].StartsWith("regex:");
+
+        // Stil 3 (NEU): Mgmt FSCHK regex:pattern (Sub-Command, kein : )
+        bool isSubCmdRegex = parts.Count >= 3 &&
+                             !parts[1].EndsWith(":") && // Der wichtige Unterschied zu Stil 1
+                             parts[2].StartsWith("regex:");
+
+
+        if (!isInputRegex && !isNameRegex && !isSubCmdRegex)
         {
             // Normale Zeile, einfach hinzufügen
             _expandedLines.Add(line);
@@ -68,49 +82,102 @@ public class QueryPreprocessor
         }
 
         // --- Vorlagenverarbeitung ---
-        string verb = parts[0];
-        string nameTemplate = parts[1].TrimEnd(':');
-        string inputTemplate = parts[2];
-        string parameters = string.Join(" ", parts.Skip(3));
 
-        string regexPattern = inputTemplate.Substring("regex:".Length);
+        string regexPattern;
         List<string> sourceList;
 
-        // 'Load' durchsucht die DataLayer-Messpunkte
-        if (verb.Equals("Load", StringComparison.OrdinalIgnoreCase))
+        // --- Quelle der zu durchsuchenden Namen bestimmen ---
+        // 'Load' und 'Mgmt' durchsuchen die DataLayer-Messpunkte
+        if (verb.Equals("Load", StringComparison.OrdinalIgnoreCase) ||
+            verb.Equals("Mgmt", StringComparison.OrdinalIgnoreCase))
         {
             sourceList = this.DataLayer.LoadMeasurementList();
         }
-        // 'Aggr' (und andere) durchsuchen die bisher generierten Namen
+        // 'Aggr', 'Publ' (und andere) durchsuchen die bisher generierten Namen
         else
         {
             sourceList = _generatedNames;
         }
 
-        // Führe die Regex-Suche durch
-        var regex = new Regex(regexPattern);
-        var matches = sourceList.Where(s => regex.IsMatch(s)).ToList();
+        // --- Verzweigung je nach Template-Stil ---
 
-        if (matches.Count == 0)
+        if (isInputRegex) // Stil 1: Load r<...>: regex:pattern $P...
         {
-            throw new ArgumentException($"[Warning] Preprocessor: Regex '{regexPattern}' " +
-                              $"für '{verb}' fand 0 Treffer.");
+            string nameTemplate = parts[1].TrimEnd(':');
+            string inputTemplate = parts[2];
+            string parameters = string.Join(" ", parts.Skip(3));
+            regexPattern = inputTemplate.Substring("regex:".Length);
+
+            var regex = new Regex("^" + regexPattern + "$");
+            var matches = sourceList.Where(s => regex.IsMatch(s)).ToList();
+
+            if (matches.Count == 0)
+            {
+                throw new ArgumentException($"[Warning] Preprocessor: Regex '{regexPattern}' " +
+                                  $"für '{verb}' fand 0 Treffer.");
+            }
+
+            // Erzeuge eine neue Zeile für jeden Treffer
+            foreach (var match in matches)
+            {
+                // 1. Neuen Namen generieren
+                string newName = GenerateNameFromTemplate(nameTemplate, match);
+
+                // 2. Neuen Input generieren (der Treffer selbst, ggf. in Quotes)
+                string newInput = QuoteIfNecessary(match);
+
+                // 3. Zeile zusammensetzen
+                string newLine = $"{verb} {newName}: {newInput} {parameters}";
+
+                _expandedLines.Add(newLine);
+                _generatedNames.Add(newName);
+            }
         }
-
-        // Erzeuge eine neue Zeile für jeden Treffer
-        foreach (var match in matches)
+        else if (isNameRegex) // Stil 2: Publ regex:a.* $P...
         {
-            // 1. Neuen Namen generieren
-            string newName = GenerateNameFromTemplate(nameTemplate, match);
+            string inputTemplate = parts[1];
+            string parameters = string.Join(" ", parts.Skip(2));
+            regexPattern = inputTemplate.Substring("regex:".Length);
 
-            // 2. Neuen Input generieren (der Treffer selbst, ggf. in Quotes)
-            string newInput = QuoteIfNecessary(match);
+            var regex = new Regex("^" + regexPattern + "$");
+            var matches = sourceList.Where(s => regex.IsMatch(s)).ToList();
 
-            // 3. Zeile zusammensetzen
-            string newLine = $"{verb} {newName}: {newInput} {parameters}";
+            if (matches.Count == 0)
+            {
+                throw new ArgumentException($"[Warning] Preprocessor: Regex '{regexPattern}' " +
+                                  $"für '{verb}' (Stil '{verb}') fand 0 Treffer.");
+            }
 
+            // Erzeuge EINE Zeile, die alle Treffer kombiniert
+            string newNameList = string.Join(",", matches);
+            string newInput = QuoteIfNecessary(newNameList); // z.B. "aPV1,aPV2,aNetz"
+
+            string newLine = $"{verb} {newInput} {parameters}";
             _expandedLines.Add(newLine);
-            _generatedNames.Add(newName);
+            // 'Publ' registriert keinen neuen Namen
+        }
+        else if (isSubCmdRegex) // Stil 3 (NEU): Mgmt FSCHK regex:kala.*
+        {
+            string subCommand = parts[1]; // z.B. "FSCHK"
+            string inputTemplate = parts[2];
+            string parameters = string.Join(" ", parts.Skip(3));
+            regexPattern = inputTemplate.Substring("regex:".Length);
+
+            var regex = new Regex("^" + regexPattern + "$");
+            var matches = sourceList.Where(s => regex.IsMatch(s)).ToList();
+
+            if (matches.Count == 0)
+            {
+                throw new ArgumentException($"[Warning] Preprocessor: Regex '{regexPattern}' " +
+                                  $"für '{verb} {subCommand}' fand 0 Treffer.");
+            }
+
+            // Erzeuge EINE Zeile, die alle Treffer kombiniert (ohne Quotes)
+            string newNameList = string.Join(",", matches); // z.B. "kala1,kala2,kala3"
+
+            string newLine = $"{verb} {subCommand} {newNameList} {parameters}";
+            _expandedLines.Add(newLine.Trim()); // .Trim() entfernt ggf. überflüssige Leerzeichen am Ende
+            // 'Mgmt' registriert keinen neuen Namen
         }
     }
 
@@ -177,7 +244,7 @@ public class QueryPreprocessor
             {
                 throw new ArgumentException($"[Warning] Namens-Regex '{captureRegexPattern}' " +
                                   $"fand keine Gruppe in '{sourceMatch}'.");
-                namePart = "NAME_ERROR"; // Fallback
+                // namePart = "NAME_ERROR"; // Fallback wird durch Exception ersetzt
             }
         }
 
@@ -229,7 +296,9 @@ public class QueryPreprocessor
     /// </summary>
     private string QuoteIfNecessary(string text)
     {
-        if (text.Contains(' ') && !text.StartsWith("\"") && !text.EndsWith("\""))
+        // Fügt auch Anführungszeichen hinzu, wenn es ein Komma enthält (für Publ)
+        if ((text.Contains(' ') || text.Contains(','))
+            && !text.StartsWith("\"") && !text.EndsWith("\""))
         {
             return $"\"{text}\"";
         }
