@@ -3,6 +3,7 @@ using FKala.Core.Interfaces;
 using FKala.Core.KalaQl.Windowing;
 using FKala.Core.Logic;
 using FKala.Core.Model;
+using NodaTime;
 using System.Xml.Linq;
 
 namespace FKala.Core.KalaQl
@@ -64,8 +65,10 @@ namespace FKala.Core.KalaQl
             var dataPointsEnumerator = enumerable.GetEnumerator();
             Window slidingWindow = WindowTemplate.GetCopy();
 
-            //hint: this slidingWindows AND StreamingAggregator instances are only used if input is empty
-            slidingWindow.Init(input.Query_StartTime, context.AlignTzTimeZoneId);
+            var windowInitStarttime = slidingWindow.Interval == TimeSpan.MaxValue ? DateTime.MinValue : input.Query_StartTime;
+
+            //hint: this slidingWindows AND StreamingAggregator instances are only used if input is empty            
+            slidingWindow.Init(windowInitStarttime, context.AlignTzTimeZoneId);
             StreamingAggregator currentAggregator = new StreamingAggregator(AggregateFunc, slidingWindow);
             bool scrolledForward = false;
             bool isFirstAfterMoveNext = true;
@@ -93,7 +96,7 @@ namespace FKala.Core.KalaQl
                 previous = currentInputDatePoint;
                 if (isFirstAfterMoveNext)
                 {
-                    slidingWindow.Init(currentInputDatePoint.StartTime < input.Query_StartTime ? currentInputDatePoint.StartTime : input.Query_StartTime, context.AlignTzTimeZoneId);
+                    slidingWindow.Init(currentInputDatePoint.StartTime < windowInitStarttime ? currentInputDatePoint.StartTime : windowInitStarttime, context.AlignTzTimeZoneId);
                     currentAggregator = new StreamingAggregator(AggregateFunc, slidingWindow);
                     isFirstAfterMoveNext = false;
                 }
