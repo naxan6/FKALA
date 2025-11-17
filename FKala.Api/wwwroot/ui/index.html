@@ -97,9 +97,21 @@
              let text = "";
             if (selection == "List Measurements") {
                 text = `Mgmt ListMeasurements`
-            } else if (selection == "Kala-Fehler") {
-                text = `Load k: kala$errors 0001-01-01T00:00:00 9999-12-31T23:59:59 NoCache
-Publ k Table`
+            } else if (selection == "Regex Zisterne") {
+                text = `Load <measure:.*[$].*[$](.*)>: regex:zisterne[$]esp_ping[$].* NewestOnly
+Aggr a<measure>: regex:.* Infinite Last
+Publ regex:a.* Table`                
+            } else if (selection == "Regex Beispiel TempBatt") {
+                text = `Load l<measure>: regex:.*Mi.*_.*battery now-1d now NoCache
+Load t<measure>: regex:.*Mi.*_.*temperature now-1d now NoCache
+
+Aggr <measure:.*[$]Mi(.*)_.*>_Batt: regex:l.* Infinite Last EmptyWindows
+Aggr <measure:.*[$]Mi(.*)_.*>_Temp: regex:t.* Infinite Last EmptyWindows
+
+Publ regex:.*(_Batt|_Temp) Table`
+            } else if (selection == "Kala-Fehler") {            
+                text = `Load k<measure>: regex:kala.* now-10h now NoCache
+Publ regex:k.* Table`
             } else if(selection == "PV Beispiel") {
                 text = `#Var $FROM "\${__from:date:iso:YYYY-MM-DDTHH:mm:ss}"
 #Var $TO "\${__to:date:iso:YYYY-MM-DDTHH:mm:ss}"
@@ -475,10 +487,13 @@ Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch,PrognoseSo
         <tr>            
             <td><textarea id="query" name="Text1" cols="80" rows="15" spellcheck="false">Mgmt ListMeasurements</textarea></td>
             <td style="vertical-align: top;">
-                <a href="#" onClick="prefill('Kala-Fehler');">Kala-Fehler</a><br>
+                <a href="#" onClick="prefill('Kala-Fehler');">Kala-Fehler Und Logs</a><br>
                 <a href="#" onClick="prefill('List Measurements');">List Measurements</a><br>
                 <a href="#" onClick="prefill('PV Beispiel');">PV Beispiel</a><br>
                 <a href="#" onClick="prefill('Mgmt Examples');">Mgmt Examples</a><br>
+                <a href="#" onClick="prefill('Regex Beispiel TempBatt');">Regex Beispiel TempBatt</a><br>
+                <a href="#" onClick="prefill('Regex Zisterne');">Regex Zisterne</a><br>
+                
             </td>
         </tr>
     </table>

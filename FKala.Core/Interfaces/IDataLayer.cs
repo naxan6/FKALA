@@ -26,7 +26,6 @@ namespace FKala.Core.Interfaces
 
         IEnumerable<Dictionary<string, object>> CopyFilesFromMeasurementToMeasurement(string measurement, string targetmeasurement, KalaQlContext context);
         IEnumerable<Dictionary<string, object>> MoveMeasurement(string measurementOld, string measurementNew, KalaQlContext context);
-        IEnumerable<Dictionary<string, object>> Cleanup(string measurement, KalaQlContext context);
         void Flush();
         void Flush(string filePath);
 
@@ -37,6 +36,7 @@ namespace FKala.Core.Interfaces
         IEnumerable<Dictionary<string, object?>> UnBlacklist(string measurement);
         bool IsBlacklisted(string filePath, bool checkOnDisk);
         void InsertError(string err);
+        void InsertLog(string err);
         IEnumerable<Dictionary<string, object?>> SortRawFiles(string measurement, KalaQlContext context);
         string GetInsertTargetFilepath(string measurement, ReadOnlySpan<char> yyyy_MM_dd);
         bool DoesMeasurementExist(string name);

@@ -247,7 +247,7 @@ namespace FKala.Core.KalaQl
                     }
                     catch (UnexpectedlyUnsortedException uuex)
                     {
-                        StorageAccess.UnMarkFileAsSorted(uuex.File);
+                        StorageAccess.UnMarkFileAsSorted(uuex.File, context.DataLayer);
                         continue;
                     }
                     catch (Exception ex)

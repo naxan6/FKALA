@@ -38,6 +38,7 @@ namespace FKala.Core
 
         ConcurrentDictionary<string, byte> CreatedDirectories = new ConcurrentDictionary<string, byte>();
         DefaultObjectPool<StringBuilder> stringBuilderPool = new DefaultObjectPool<StringBuilder>(new StringBuilderPooledObjectPolicy());
+        private LockManager LockManager;
 
         public DataLayer_Readable_Caching_V1(string storagePath)
         {
@@ -51,6 +52,8 @@ namespace FKala.Core
             CachingLayer = new CachingLayer(this, storagePath);
             BufferedWriterSvc = new BufferedWriterService(WriteBuffer, this);
             LoadMeasureBlacklist();
+            this.LockManager = new LockManager();
+
         }
 
 
@@ -125,15 +128,7 @@ namespace FKala.Core
         private IEnumerable<DataPoint> LoadFullResolution(string measurement, DateTime startTime, DateTime endTime, KalaQlContext context, bool dontInvalidateCache_ForUseWhileCacheRebuild)
         {
             (string measurementPathPart, string measurementPath) = GetMeasurementDirectory(measurement);
-
-            //using (var sa = StorageAccess.ForRead(measurementPath, measurementPathPart, startTime, endTime, context, doSortRawFiles))
-            //{
-            //    foreach (var dp in sa.OpenStreamReaders().StreamDataPoints())
-            //    {
-            //        yield return dp;
-            //    }
-            //}
-            using (var sa = StorageAccess.ForReadMultiFile(measurementPath, measurementPathPart, startTime, endTime, context))
+            using (var sa = StorageAccess.ForReadMultiFile(measurementPath, measurementPathPart, startTime, endTime, context, this.LockManager))
             {
                 foreach (var dp in sa.OpenStreamReaders().StreamMergeDataPoints_MaterializeSortIfNeeded(measurement, dontInvalidateCache_ForUseWhileCacheRebuild))
                 {
@@ -160,31 +155,6 @@ namespace FKala.Core
             string measurementPath = Path.Combine(DataDirectory, measurementPathPart);
             return (measurementPathPart, measurementPath);
         }
-
-        public IEnumerable<Dictionary<string, object>> Cleanup(string measurement, KalaQlContext context)
-        {
-            bool cleanSorted = false;
-            (string measurementPathPart, string measurementPath) = GetMeasurementDirectory(measurement);
-
-            using (var sa = StorageAccess.ForCleanup(measurementPath, measurementPathPart, context))
-            {
-                var readers = sa.GetReaders();
-                foreach (var rt in readers)
-                {
-                    var measure = new DirectoryInfo(rt.FilePath).Parent!.Parent!.Parent!.Name;
-                    var filename = Path.GetFileName(rt.FilePath);
-                    var measureInName = filename.Substring(0, filename.Length - "_yyyy-MM-dd.dat".Length);
-
-                    if (measure != measureInName || (rt.FilePath[rt.FilePath.Length - 15] == '#' && cleanSorted))
-                    {
-                        File.Delete(rt.FilePath);
-                        yield return new Dictionary<string, object>() { { "msg", $"cleaned up {rt.FilePath}" } };
-                    }
-                }
-            }
-            yield break;
-        }
-
 
         public IEnumerable<Dictionary<string, object>> MoveMeasurement(string measurementOld, string measurementNew, KalaQlContext context)
         {
@@ -228,24 +198,27 @@ namespace FKala.Core
             if (!IsBlacklisted(measurement, false))
             {
                 string filePath = GetInsertTargetFilepath(measurement, datetime_yyyy_MM_ddTHH_mm_ss_fffffff);
-                if (IsDelayedInsert(measurement, datetime_yyyy_MM_ddTHH_mm_ss_fffffff))
-                {
-                    DateOnly dt = new DateOnly(int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(0, 4)), int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(5, 2)), int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(8, 2)));
-                    CachingLayer.Mark2Invalidate(measurement, dt);
-                }
-                else
-                {
-                    filePath = StorageAccess.SetSortMark(filePath, true);
-                }
+                using(this.LockManager.AcquireLock(filePath)) {
 
-                BufferedWriterSvc.DoWrite(filePath, (writer) =>
-                {
-                    // Format the line to write
-                    writer.Append(datetimeHHmmssfffffff);
-                    writer.Append(" ");
-                    writer.Append(valueString);
-                    writer.AppendNewline();
-                });
+                    if (IsDelayedInsert(measurement, datetime_yyyy_MM_ddTHH_mm_ss_fffffff))
+                    {
+                        DateOnly dt = new DateOnly(int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(0, 4)), int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(5, 2)), int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(8, 2)));
+                        CachingLayer.Mark2Invalidate(measurement, dt);
+                    }
+                    else
+                    {
+                        filePath = StorageAccess.SetSortMark(filePath, true);
+                    }
+
+                    BufferedWriterSvc.DoWrite(filePath, (writer) =>
+                    {
+                        // Format the line to write
+                        writer.Append(datetimeHHmmssfffffff);
+                        writer.Append(" ");
+                        writer.Append(valueString);
+                        writer.AppendNewline();
+                    });
+                }
             }
         }
 
@@ -275,31 +248,6 @@ namespace FKala.Core
                 return true;
             }
         }
-
-
-        ///// <summary>
-        ///// Expects Data in the Form
-        ///// "<measurement> <timestamp:YYYY-MM-DDTHH:mm:ss.zzzzzzz <value>"
-        ///// </summary>
-        ///// <param name="rawData"></param>
-        ///// <param name="locking"></param>
-        //public void Insert(string rawData, string source, string filePath)
-        //{
-        //    string measurement, datetimeHHmmssfffffff, valueString;
-        //    ReadOnlySpan<char> datetime;
-        //    ParseRawData(rawData, out measurement, out datetime, out datetimeHHmmssfffffff, out valueString);
-        //    if (!IsBlacklisted(measurement, false))
-        //    {
-        //        WriterSvc.DoWrite(filePath, (writer) =>
-        //        {
-        //            // Format the line to write
-        //            writer.Append(datetimeHHmmssfffffff);
-        //            writer.Append(" ");
-        //            writer.Append(valueString);
-        //            writer.AppendNewline();
-        //        });
-        //    }
-        //}
 
         private void LoadMeasureBlacklist()
         {
@@ -427,6 +375,11 @@ namespace FKala.Core
         public void InsertError(string err)
         {
             var line = $"kala/errors {DateTime.Now.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {err.Replace("\n", " | ")}";
+            this.Insert(line);
+        }
+        public void InsertLog(string log)
+        {
+            var line = $"kala/log {DateTime.Now.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {log.Replace("\n", " | ")}";
             this.Insert(line);
         }
 
