@@ -257,7 +257,7 @@ namespace FKala.Core.DataLayers
                         File.Move(filePath + ".sorted", filePath);
                     }
 
-                    var msg = $"Sorted rewrite of file {filePath}";
+                    var msg = $"Sorted rewrite of file {filePath} {new FileInfo(filePath).Length} Bytes";
                     Console.WriteLine(msg);
                     DataLayer!.InsertLog(msg);
                     

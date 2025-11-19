@@ -145,7 +145,7 @@ public class QueryPreprocessor
             if (matches.Count == 0)
             {
                 throw new ArgumentException($"[Warning] Preprocessor: Regex '{regexPattern}' " +
-                                  $"für '{verb}' (Stil '{verb}') fand 0 Treffer.");
+                                  $"für '{verb}' fand 0 Treffer.");
             }
 
             // Erzeuge EINE Zeile, die alle Treffer kombiniert
