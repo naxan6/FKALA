@@ -31,12 +31,11 @@ namespace FKala.Core.DataLayer.Cache
                .Add(new Op_Publish("", new List<string>() { "15minutely" }, PublishMode.MultipleResultsets))
                .Execute(DataLayer);
 
-            if (aggResult?.ResultSets == null)
+            if (aggResult!.ResultSets == null)
             {
                 throw new Exception($"could not aquire aggregate for caching {string.Join(", ", aggResult.Errors)}");
             }
             var rs = aggResult.ResultSets.First().Resultset;
-            //return EnumerableHelpers.SkipLast(rs);
             return rs;
         }
 

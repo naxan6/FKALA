@@ -163,7 +163,7 @@ public class QueryPreprocessor
             string parameters = string.Join(" ", parts.Skip(3));
             regexPattern = inputTemplate.Substring("regex:".Length);
 
-            var regex = new Regex("^" + regexPattern.Replace("$", "[$]") + "$");
+            var regex = new Regex("^" + regexPattern + "$");
             var matches = sourceList.Where(s => regex.IsMatch(s)).ToList();
 
             if (matches.Count == 0)

@@ -1,4 +1,5 @@
-﻿using FKala.Core.DataLayer.Infrastructure;
+﻿using Fkala.Core.Exceptions;
+using FKala.Core.DataLayer.Infrastructure;
 using FKala.Core.Interfaces;
 using FKala.Core.KalaQl;
 using FKala.Core.KalaQl.Windowing;
@@ -32,7 +33,9 @@ namespace FKala.Core.DataLayer.Cache
 
             if (aggResult?.ResultSets == null)
             {
-                throw new Exception($"could not aquire aggregate for caching {string.Join(", ", aggResult.Errors)}");
+                string msg = $"could not aquire aggregate for caching {string.Join(", ", aggResult == null ? "aggResult is null" : aggResult.Errors)}";
+                this.DataLayer.InsertError(msg);
+                throw new KalaErrorException(msg);
             }
             var rs = aggResult.ResultSets.First().Resultset;
             //return EnumerableHelpers.SkipLast(rs);

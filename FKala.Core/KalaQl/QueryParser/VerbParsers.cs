@@ -9,6 +9,40 @@ using System.Threading.Tasks;
 
 namespace FKala.Core.KalaQl.QueryParser
 {
+
+public static class ParserHelper
+    {
+        /// <summary>
+        /// Konvertiert eine AggregateFunction in einen String
+        /// </summary>
+        /// <param name="aggregateFunction">Die zu konvertierende AggregateFunction</param>
+        /// <returns>Der konvertierte String</returns>
+        public static string GetAggregateFunctionString(AggregateFunction aggregateFunction)
+        {
+            switch (aggregateFunction)
+            {
+                case AggregateFunction.Avg:
+                    return "AVG";
+                case AggregateFunction.WAvg:
+                    return "WAVG";
+                case AggregateFunction.First:
+                    return "FIRST";
+                case AggregateFunction.Last:
+                    return "LAST";
+                case AggregateFunction.Min:
+                    return "MIN";
+                case AggregateFunction.Max:
+                    return "MAX";
+                case AggregateFunction.Count:
+                    return "COUNT";
+                case AggregateFunction.Sum:
+                    return "SUM";
+                default:
+                    throw new Exception($"Unbekannte AggregateFunction: {aggregateFunction}");
+            }
+        }
+    }
+
     /// <summary>
     /// Parser für AlignTimezone-Operationen
     /// </summary>
@@ -177,7 +211,7 @@ namespace FKala.Core.KalaQl.QueryParser
             }
             else
             {
-                string result = GetResolutionString(cacheResolution.Resolution) + "_" + GetAggregateFunctionString(cacheResolution.AggregateFunction);
+                string result = GetResolutionString(cacheResolution.Resolution) + "_" + ParserHelper.GetAggregateFunctionString(cacheResolution.AggregateFunction);
                 if (cacheResolution.ForceRebuild)
                 {
                     result += "_REBUILD";
@@ -242,36 +276,6 @@ namespace FKala.Core.KalaQl.QueryParser
                     return "FULL";
                 default:
                     return resolution.ToString();
-            }
-        }
-
-        /// <summary>
-        /// Konvertiert eine AggregateFunction in einen String
-        /// </summary>
-        /// <param name="aggregateFunction">Die zu konvertierende AggregateFunction</param>
-        /// <returns>Der konvertierte String</returns>
-        public static string GetAggregateFunctionString(AggregateFunction aggregateFunction)
-        {
-            switch (aggregateFunction)
-            {
-                case AggregateFunction.Avg:
-                    return "AVG";
-                case AggregateFunction.WAvg:
-                    return "WAVG";
-                case AggregateFunction.First:
-                    return "FIRST";
-                case AggregateFunction.Last:
-                    return "LAST";
-                case AggregateFunction.Min:
-                    return "MIN";
-                case AggregateFunction.Max:
-                    return "MAX";
-                case AggregateFunction.Count:
-                    return "COUNT";
-                case AggregateFunction.Sum:
-                    return "SUM";
-                default:
-                    throw new Exception($"Unbekannte AggregateFunction: {aggregateFunction}");
             }
         }
     }
@@ -371,7 +375,7 @@ namespace FKala.Core.KalaQl.QueryParser
             }
             else
             {
-                string result = GetResolutionString(cacheResolution.Resolution) + "_" + GetAggregateFunctionString(cacheResolution.AggregateFunction);
+                string result = GetResolutionString(cacheResolution.Resolution) + "_" + ParserHelper.GetAggregateFunctionString(cacheResolution.AggregateFunction);
                 if (cacheResolution.ForceRebuild)
                 {
                     result += "_REBUILD";
@@ -403,36 +407,6 @@ namespace FKala.Core.KalaQl.QueryParser
                     return "HOURLY";
                 default:
                     throw new Exception($"Unbekannte Resolution: {resolution}");
-            }
-        }
-
-        /// <summary>
-        /// Konvertiert eine AggregateFunction in einen String
-        /// </summary>
-        /// <param name="aggregateFunction">Die zu konvertierende AggregateFunction</param>
-        /// <returns>Der konvertierte String</returns>
-        public static string GetAggregateFunctionString(AggregateFunction aggregateFunction)
-        {
-            switch (aggregateFunction)
-            {
-                case AggregateFunction.Avg:
-                    return "AVG";
-                case AggregateFunction.WAvg:
-                    return "WAVG";
-                case AggregateFunction.First:
-                    return "FIRST";
-                case AggregateFunction.Last:
-                    return "LAST";
-                case AggregateFunction.Min:
-                    return "MIN";
-                case AggregateFunction.Max:
-                    return "MAX";
-                case AggregateFunction.Count:
-                    return "COUNT";
-                case AggregateFunction.Sum:
-                    return "SUM";
-                default:
-                    throw new Exception($"Unbekannte AggregateFunction: {aggregateFunction}");
             }
         }
     }
@@ -479,7 +453,7 @@ namespace FKala.Core.KalaQl.QueryParser
         /// <returns>Die generierte Zeile</returns>
         public static string GenerateLine(AggregateParams parameters)
         {
-            string result = $"Aggregate {parameters.Name}: {parameters.Input} {GetWindowString(parameters.Window)} {GetAggregateFunctionString(parameters.AggregateFunction)}";
+            string result = $"Aggregate {parameters.Name}: {parameters.Input} {GetWindowString(parameters.Window)} {ParserHelper.GetAggregateFunctionString(parameters.AggregateFunction)}";
             if (parameters.EmptyWindows)
             {
                 result += " EmptyWindows";
@@ -547,37 +521,7 @@ namespace FKala.Core.KalaQl.QueryParser
                 }
                 return "Infinite";
             }
-        }
-
-        /// <summary>
-        /// Konvertiert eine AggregateFunction in einen String
-        /// </summary>
-        /// <param name="aggregateFunction">Die zu konvertierende AggregateFunction</param>
-        /// <returns>Der konvertierte String</returns>
-        public static string GetAggregateFunctionString(AggregateFunction aggregateFunction)
-        {
-            switch (aggregateFunction)
-            {
-                case AggregateFunction.Avg:
-                    return "AVG";
-                case AggregateFunction.WAvg:
-                    return "WAVG";
-                case AggregateFunction.First:
-                    return "FIRST";
-                case AggregateFunction.Last:
-                    return "LAST";
-                case AggregateFunction.Min:
-                    return "MIN";
-                case AggregateFunction.Max:
-                    return "MAX";
-                case AggregateFunction.Count:
-                    return "COUNT";
-                case AggregateFunction.Sum:
-                    return "SUM";
-                default:
-                    throw new Exception($"Unbekannte AggregateFunction: {aggregateFunction}");
-            }
-        }
+        }       
     }
 
     /// <summary>

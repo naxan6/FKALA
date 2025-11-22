@@ -38,7 +38,6 @@ namespace FKala.Core
 
         ConcurrentDictionary<string, byte> CreatedDirectories = new ConcurrentDictionary<string, byte>();
         DefaultObjectPool<StringBuilder> stringBuilderPool = new DefaultObjectPool<StringBuilder>(new StringBuilderPooledObjectPolicy());
-        private LockManager LockManager;
 
         public DataLayer_Readable_Caching_V1(string storagePath)
         {
@@ -52,8 +51,6 @@ namespace FKala.Core
             CachingLayer = new CachingLayer(this, storagePath);
             BufferedWriterSvc = new BufferedWriterService(WriteBuffer, this);
             LoadMeasureBlacklist();
-            this.LockManager = new LockManager();
-
         }
 
 
@@ -128,7 +125,15 @@ namespace FKala.Core
         private IEnumerable<DataPoint> LoadFullResolution(string measurement, DateTime startTime, DateTime endTime, KalaQlContext context, bool dontInvalidateCache_ForUseWhileCacheRebuild)
         {
             (string measurementPathPart, string measurementPath) = GetMeasurementDirectory(measurement);
-            using (var sa = StorageAccess.ForReadMultiFile(measurementPath, measurementPathPart, startTime, endTime, context, this.LockManager))
+
+            //using (var sa = StorageAccess.ForRead(measurementPath, measurementPathPart, startTime, endTime, context, doSortRawFiles))
+            //{
+            //    foreach (var dp in sa.OpenStreamReaders().StreamDataPoints())
+            //    {
+            //        yield return dp;
+            //    }
+            //}
+            using (var sa = StorageAccess.ForReadMultiFile(measurementPath, measurementPathPart, startTime, endTime, context))
             {
                 foreach (var dp in sa.OpenStreamReaders().StreamMergeDataPoints_MaterializeSortIfNeeded(measurement, dontInvalidateCache_ForUseWhileCacheRebuild))
                 {
@@ -198,27 +203,24 @@ namespace FKala.Core
             if (!IsBlacklisted(measurement, false))
             {
                 string filePath = GetInsertTargetFilepath(measurement, datetime_yyyy_MM_ddTHH_mm_ss_fffffff);
-                using(this.LockManager.AcquireLock(filePath)) {
-
-                    if (IsDelayedInsert(measurement, datetime_yyyy_MM_ddTHH_mm_ss_fffffff))
-                    {
-                        DateOnly dt = new DateOnly(int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(0, 4)), int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(5, 2)), int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(8, 2)));
-                        CachingLayer.Mark2Invalidate(measurement, dt);
-                    }
-                    else
-                    {
-                        filePath = StorageAccess.SetSortMark(filePath, true);
-                    }
-
-                    BufferedWriterSvc.DoWrite(filePath, (writer) =>
-                    {
-                        // Format the line to write
-                        writer.Append(datetimeHHmmssfffffff);
-                        writer.Append(" ");
-                        writer.Append(valueString);
-                        writer.AppendNewline();
-                    });
+                if (IsDelayedInsert(measurement, datetime_yyyy_MM_ddTHH_mm_ss_fffffff))
+                {
+                    DateOnly dt = new DateOnly(int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(0, 4)), int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(5, 2)), int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(8, 2)));
+                    CachingLayer.Mark2Invalidate(measurement, dt);
                 }
+                else
+                {
+                    filePath = StorageAccess.SetSortMark(filePath, true);
+                }
+
+                BufferedWriterSvc.DoWrite(filePath, (writer) =>
+                {
+                    // Format the line to write
+                    writer.Append(datetimeHHmmssfffffff);
+                    writer.Append(" ");
+                    writer.Append(valueString);
+                    writer.AppendNewline();
+                });
             }
         }
 
@@ -377,9 +379,9 @@ namespace FKala.Core
             var line = $"kala/errors {DateTime.Now.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {err.Replace("\n", " | ")}";
             this.Insert(line);
         }
-        public void InsertLog(string log)
+        public void InsertLog(string msg)
         {
-            var line = $"kala/log {DateTime.Now.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {log.Replace("\n", " | ")}";
+            var line = $"kala/logs {DateTime.Now.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {msg.Replace("\n", " | ")}";
             this.Insert(line);
         }
 

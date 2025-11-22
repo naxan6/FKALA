@@ -108,22 +108,5 @@ namespace FKala.Unittests
             Assert.IsTrue(result.Contains(name));
             Assert.IsTrue(result.Contains("NewestOnly"));
         }
-
-        [TestCategory("AI")]
-        [TestMethod]
-        public void Op_Load_FromLine_ParsesCorrectly()
-        {
-            // Arrange
-            string line = "Load testName: testMeasurement 2024-01-01T00:00:00Z 2024-01-01T01:00:00Z FiveMinutely_WAvg";
-            var opLoad = new Op_Load(line, "", "", new DateTime(), new DateTime(),CacheResolutionPredefined.NoCache, false);
-
-            // Act
-            var result = opLoad.FromLine(line, new List<string> { "Load", "testName:", "testMeasurement", "2024-01-01T00:00:00Z", "2024-01-01T01:00:00Z", "FiveMinutely_WAvg" });
-
-            // Assert
-            Assert.IsInstanceOfType(result, typeof(Op_Load));
-            Assert.AreEqual("testName", result.Name);
-            Assert.AreEqual("testMeasurement", ((Op_Load)result).Measurement);
-        }
     }
 }

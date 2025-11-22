@@ -91,7 +91,7 @@ namespace FKala.Core.KalaQl
             return context.Result;
         }
 
-        public KalaQuery FromQuery(string queryText, IDataLayer dataLayer = null)
+        public KalaQuery FromQuery(string queryText, IDataLayer dataLayer = null!)
         {
             queryText = Regex.Unescape(queryText);
 
