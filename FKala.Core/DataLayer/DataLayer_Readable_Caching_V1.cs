@@ -189,9 +189,9 @@ namespace FKala.Core
         /// Expects Data in the Form
         /// "<measurement> <timestamp:YYYY-MM-DDTHH:mm:ss.zzzzzzz <value>"
         /// </summary>
-        /// <param name="rawData"></param>
+        /// <param name="kalaLinedata"></param>
         /// <param name="locking"></param>
-        public void Insert(string rawData, string? source = "input")
+        public void Insert(string kalaLinedata, string? source = "input")
         {
             if (ShuttingDown)
             {
@@ -199,7 +199,7 @@ namespace FKala.Core
             }
             string measurement, datetimeHHmmssfffffff, valueString;
             ReadOnlySpan<char> datetime_yyyy_MM_ddTHH_mm_ss_fffffff;
-            ParseRawData(rawData, out measurement, out datetime_yyyy_MM_ddTHH_mm_ss_fffffff, out datetimeHHmmssfffffff, out valueString);
+            ParseRawData(kalaLinedata, out measurement, out datetime_yyyy_MM_ddTHH_mm_ss_fffffff, out datetimeHHmmssfffffff, out valueString);
             if (!IsBlacklisted(measurement, false))
             {
                 string filePath = GetInsertTargetFilepath(measurement, datetime_yyyy_MM_ddTHH_mm_ss_fffffff);

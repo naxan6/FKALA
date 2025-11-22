@@ -223,37 +223,6 @@ public static class ParserHelper
                 return result;
             }
         }
-
-        /// <summary>
-        /// Konvertiert eine Resolution in einen String
-        /// </summary>
-        /// <param name="resolution">Die zu konvertierende Resolution</param>
-        /// <param name="cacheResolution">Die CacheResolution, die die Resolution enthält</param>
-        /// <returns>Der konvertierte String</returns>
-        public static string GetResolutionString(Resolution resolution, CacheResolution cacheResolution)
-        {
-            // Wenn die OriginalAutoWindowSize-Eigenschaft gesetzt ist, verwenden wir das AUTO-Format
-            if (cacheResolution.OriginalAutoWindowSize.HasValue)
-            {
-                return $"AUTO({cacheResolution.OriginalAutoWindowSize.Value})";
-            }
-            
-            switch (resolution)
-            {
-                case Resolution.Minutely:
-                    return "MINUTELY";
-                case Resolution.FiveMinutely:
-                    return "FIVEMINUTELY";
-                case Resolution.FifteenMinutely:
-                    return "FIFTEENMINUTELY";
-                case Resolution.Hourly:
-                    return "HOURLY";
-                case Resolution.Full:
-                    return "FULL";
-                default:
-                    return resolution.ToString();
-            }
-        }
         
         /// <summary>
         /// Konvertiert eine Resolution in einen String

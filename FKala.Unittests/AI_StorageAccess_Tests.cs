@@ -29,14 +29,14 @@ namespace FKala.Unittests
                 _mockDataLayer = new Mock<IDataLayer>();
                 _mockDataLayer.Setup(x => x.ReadBuffer).Returns(131072);
                 _mockDataLayer.Setup(x => x.WriteBuffer).Returns(131072);
-                
+
                 // Initialize context with mocked data layer
                 _context = new KalaQlContext(null!, _mockDataLayer.Object);
 
                 // Create a temporary test directory
                 _testDirectory = Path.Combine(Path.GetTempPath(), TestDirectoryName);
                 Directory.CreateDirectory(_testDirectory);
-                
+
                 // Create some test year directories
                 Directory.CreateDirectory(Path.Combine(_testDirectory, "2024"));
                 Directory.CreateDirectory(Path.Combine(_testDirectory, "2023"));
@@ -66,34 +66,6 @@ namespace FKala.Unittests
         }
 
         [TestMethod]
-        public void Constructor_ShouldInitializeWithValidParameters()
-        {
-            // Arrange
-            var dataLayer = new Mock<IDataLayer>().Object;
-            var context = new KalaQlContext(null!, dataLayer);
-
-            // Act
-            var storageAccess = StorageAccess.ForRead(_testDirectory ?? "test_path", "test_part", DateTime.Now, DateTime.Now.AddDays(1), context, false);
-
-            // Assert
-            storageAccess.Should().NotBeNull();
-        }
-
-        [TestMethod]
-        public void ForRead_ShouldCreateStorageAccessInstance()
-        {
-            // Arrange
-            var startTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            var endTime = new DateTime(2024, 1, 2, 0, 0, 0, DateTimeKind.Utc);
-
-            // Act
-            var result = StorageAccess.ForRead(_testDirectory ?? "test_path", "test_part", startTime, endTime, _context ?? throw new InvalidOperationException("Context is null"), false);
-
-            // Assert
-            result.Should().NotBeNull();
-        }
-
-        [TestMethod]
         public void ForReadMultiFile_ShouldCreateStorageAccessInstance()
         {
             // Arrange
@@ -102,40 +74,6 @@ namespace FKala.Unittests
 
             // Act
             var result = StorageAccess.ForReadMultiFile(_testDirectory ?? "test_path", "test_part", startTime, endTime, _context ?? throw new InvalidOperationException("Context is null"));
-
-            // Assert
-            result.Should().NotBeNull();
-        }
-
-        [TestMethod]
-        public void ForSort_ShouldCreateStorageAccessInstance()
-        {
-            // Arrange
-            var startTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            var endTime = new DateTime(2024, 1, 2, 0, 0, 0, DateTimeKind.Utc);
-
-            // Act
-            var result = StorageAccess.ForSort(_testDirectory ?? "test_path", "test_part", startTime, endTime, _context ?? throw new InvalidOperationException("Context is null"));
-
-            // Assert
-            result.Should().NotBeNull();
-        }
-
-        [TestMethod]
-        public void ForMerging_ShouldCreateStorageAccessInstance()
-        {
-            // Act
-            var result = StorageAccess.ForMerging(_testDirectory ?? "test_path", "test_part", _context ?? throw new InvalidOperationException("Context is null"));
-
-            // Assert
-            result.Should().NotBeNull();
-        }
-
-        [TestMethod]
-        public void ForCleanup_ShouldCreateStorageAccessInstance()
-        {
-            // Act
-            var result = StorageAccess.ForCleanup(_testDirectory ?? "test_path", "test_part", _context ?? throw new InvalidOperationException("Context is null"));
 
             // Assert
             result.Should().NotBeNull();
@@ -191,70 +129,6 @@ namespace FKala.Unittests
 
             // Assert
             result.Should().BeFalse();
-        }
-
-        [TestMethod]
-        public void GetReaders_ShouldReturnEmptyListWhenNoReaders()
-        {
-            // Arrange
-            var storageAccess = StorageAccess.ForCleanup(_testDirectory, "test_part", _context);
-
-            // Act
-            var readers = storageAccess.GetReaders();
-
-            // Assert
-            readers.Should().BeEmpty();
-        }
-
-        [TestMethod]
-        public void TimeFormat_ShouldReturnCorrectFormat()
-        {
-            // Arrange
-            var storageAccess = StorageAccess.ForRead(_testDirectory, "test_part", DateTime.Now, DateTime.Now.AddDays(1), _context, false);
-
-            // Act
-            var timeFormat = StorageAccess.TimeFormat;
-
-            // Assert
-            timeFormat.Should().Be("HH:mm:ss.fffffff");
-        }
-
-        [TestMethod]
-        public void Constructor_ShouldSetDefaultValues()
-        {
-            // Arrange
-            var startTime = new DateTime(2024, 1, 1);
-            var endTime = new DateTime(2024, 1, 2);
-
-            // Act
-            var storageAccess = StorageAccess.ForRead(_testDirectory, "test_part", startTime, endTime, _context, false);
-
-            // Assert
-            storageAccess.Context.Should().NotBeNull();
-            storageAccess.ReadBuffer.Should().Be(131072);
-            storageAccess.WriteBuffer.Should().Be(131072);
-        }
-
-        [TestMethod]
-        public void GetReaders_ShouldHandleDifferentStorageAccessTypes()
-        {
-            // Test ForRead
-            var readAccess = StorageAccess.ForRead(_testDirectory, "test_part", DateTime.Now, DateTime.Now.AddDays(1), _context, false);
-            var readers1 = readAccess.GetReaders();
-            readers1.Should().BeAssignableTo<IEnumerable<ReaderTuple>>();
-            readers1.Should().NotBeNull();
-
-            // Test ForMerging
-            var mergeAccess = StorageAccess.ForMerging(_testDirectory, "test_part", _context);
-            var readers2 = mergeAccess.GetReaders();
-            readers2.Should().BeAssignableTo<IEnumerable<ReaderTuple>>();
-            readers2.Should().NotBeNull();
-
-            // Test ForCleanup
-            var cleanupAccess = StorageAccess.ForCleanup(_testDirectory, "test_part", _context);
-            var readers3 = cleanupAccess.GetReaders();
-            readers3.Should().BeAssignableTo<IEnumerable<ReaderTuple>>();
-            readers3.Should().NotBeNull();
         }
     }
 }
