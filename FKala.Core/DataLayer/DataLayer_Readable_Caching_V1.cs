@@ -18,6 +18,8 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics.Arm;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace FKala.Core
 {
@@ -32,6 +34,12 @@ namespace FKala.Core
         public CachingLayer CachingLayer { get; init; }
         public BufferedWriterService BufferedWriterSvc { get; init; }
         public bool ShuttingDown { get; private set; }
+
+        private readonly ConcurrentQueue<string> _insertQueue = new ConcurrentQueue<string>();
+        private readonly Task _queueProcessorTask;
+        private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+        private readonly SemaphoreSlim _workAvailable = new SemaphoreSlim(0);
+        private bool _disposed = false;
 
         ConcurrentDictionary<string, bool> MeasurementBlacklist = new ConcurrentDictionary<string, bool>();
         ConcurrentDictionary<string, string> LatestEntries = new ConcurrentDictionary<string, string>();
@@ -51,6 +59,7 @@ namespace FKala.Core
             CachingLayer = new CachingLayer(this, storagePath);
             BufferedWriterSvc = new BufferedWriterService(WriteBuffer, this);
             LoadMeasureBlacklist();
+            _queueProcessorTask = Task.Run(ProcessInsertQueueAsync);
         }
 
 
@@ -224,7 +233,109 @@ namespace FKala.Core
         /// <param name="source"></param>
         public void InsertQueued(string kalaLinedata, string? source = "input")
         {
-            
+            if (ShuttingDown)
+            {
+                return;
+            }
+            _insertQueue.Enqueue(kalaLinedata);
+            _workAvailable.Release();
+        }
+
+        private void ProcessLines(IEnumerable<string> linesToProcess)
+        {
+            if (!linesToProcess.Any()) return;
+
+            var writesByFile = new Dictionary<string, List<string>>();
+
+            foreach (var kalaLinedata in linesToProcess)
+            {
+                ParseRawData(kalaLinedata, out string measurement, out ReadOnlySpan<char> datetime_yyyy_MM_ddTHH_mm_ss_fffffff, out string datetimeHHmmssfffffff, out string valueString);
+
+                if (IsBlacklisted(measurement, false))
+                {
+                    continue;
+                }
+
+                string filePath = GetInsertTargetFilepath(measurement, datetime_yyyy_MM_ddTHH_mm_ss_fffffff);
+
+                if (IsDelayedInsert(measurement, datetime_yyyy_MM_ddTHH_mm_ss_fffffff))
+                {
+                    DateOnly dt = new DateOnly(
+                        int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(0, 4)),
+                        int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(5, 2)),
+                        int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(8, 2))
+                    );
+                    CachingLayer.Mark2Invalidate(measurement, dt);
+                }
+                else
+                {
+                    filePath = StorageAccess.SetSortMark(filePath, true);
+                }
+
+                var sb = stringBuilderPool.Get();
+                sb.Clear();
+                sb.Append(datetimeHHmmssfffffff);
+                sb.Append(" ");
+                sb.Append(valueString);
+                var lineToWrite = sb.ToString();
+                stringBuilderPool.Return(sb);
+
+                if (!writesByFile.TryGetValue(filePath, out var lines))
+                {
+                    lines = new List<string>();
+                    writesByFile[filePath] = lines;
+                }
+                lines.Add(lineToWrite);
+            }
+
+            foreach (var kvp in writesByFile)
+            {
+                var filePath = kvp.Key;
+                var fileLines = kvp.Value;
+                BufferedWriterSvc.DoWrite(filePath, (writer) =>
+                {
+                    foreach (var line in fileLines)
+                    {
+                        writer.Append(line);
+                        writer.AppendNewline();
+                    }
+                });
+            }
+        }
+
+        private async Task ProcessInsertQueueAsync()
+        {
+            var token = _cancellationTokenSource.Token;
+            var itemsToProcess = new List<string>();
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    await _workAvailable.WaitAsync(token);
+                }
+                catch (OperationCanceledException)
+                {
+                    break; // Exit loop on cancellation
+                }
+
+                while (_insertQueue.TryDequeue(out var item))
+                {
+                    itemsToProcess.Add(item);
+                }
+                
+                ProcessLines(itemsToProcess);
+                itemsToProcess.Clear();
+            }
+        }
+        
+        private void ProcessRemainingQueueItems()
+        {
+            var itemsToProcess = new List<string>();
+            while (_insertQueue.TryDequeue(out var item))
+            {
+                itemsToProcess.Add(item);
+            }
+            ProcessLines(itemsToProcess);
         }
 
         private bool IsDelayedInsert(string measurement, ReadOnlySpan<char> datetime_yyyy_MM_ddTHH_mm_ss_fffffff)
@@ -364,7 +475,22 @@ namespace FKala.Core
 
         public void Dispose()
         {
-            this.BufferedWriterSvc.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                Shutdown();
+            }
+            _disposed = true;
         }
 
         public void Flush()
@@ -411,8 +537,26 @@ namespace FKala.Core
 
         public void Shutdown()
         {
-            this.ShuttingDown = true;
-            this.Dispose();
+            if (ShuttingDown) return;
+            ShuttingDown = true;
+
+            _cancellationTokenSource.Cancel();
+            _workAvailable.Release();
+            try
+            {
+                _queueProcessorTask.Wait();
+            }
+            catch (AggregateException ex) when (ex.InnerExceptions.All(e => e is OperationCanceledException))
+            {
+                // Expected exception on cancellation.
+            }
+            finally
+            {
+                _cancellationTokenSource.Dispose();
+                _workAvailable.Dispose();
+            }
+            ProcessRemainingQueueItems();
+            this.BufferedWriterSvc.Dispose();
         }
 
         public bool DoesMeasurementExist(string measurement)
