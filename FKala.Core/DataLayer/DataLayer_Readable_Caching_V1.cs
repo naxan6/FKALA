@@ -126,13 +126,6 @@ namespace FKala.Core
         {
             (string measurementPathPart, string measurementPath) = GetMeasurementDirectory(measurement);
 
-            //using (var sa = StorageAccess.ForRead(measurementPath, measurementPathPart, startTime, endTime, context, doSortRawFiles))
-            //{
-            //    foreach (var dp in sa.OpenStreamReaders().StreamDataPoints())
-            //    {
-            //        yield return dp;
-            //    }
-            //}
             using (var sa = StorageAccess.ForReadMultiFile(measurementPath, measurementPathPart, startTime, endTime, context))
             {
                 foreach (var dp in sa.OpenStreamReaders().StreamMergeDataPoints_MaterializeSortIfNeeded(measurement, dontInvalidateCache_ForUseWhileCacheRebuild))
@@ -222,6 +215,16 @@ namespace FKala.Core
                     writer.AppendNewline();
                 });
             }
+        }
+        
+        /// <summary>
+        /// Fügt die angelieferten Daten in eine Queue je Zieldatei ein, die Queues werden asynchron abgearbeitet und dabei mittels einer Logik synonym Methode public void Insert(string kalaLinedata, string? source = "input") eingefügt
+        /// </summary>
+        /// <param name="kalaLinedata"></param>
+        /// <param name="source"></param>
+        public void InsertQueued(string kalaLinedata, string? source = "input")
+        {
+            
         }
 
         private bool IsDelayedInsert(string measurement, ReadOnlySpan<char> datetime_yyyy_MM_ddTHH_mm_ss_fffffff)
@@ -499,7 +502,7 @@ namespace FKala.Core
                 {
                     // Query beginnt ab der zweiten Zeile (Index 1)
                     this.Query = string.Join(Environment.NewLine, lines.Skip(1));
-                }                
+                }
                 // Wenn lines.Length == 1 (nur Timestamp), ist Query string.Empty
                 // Wenn lines.Length == 0 (leere Datei), ist Query string.Empty
             }
