@@ -1,296 +1,573 @@
-﻿<!DOCTYPE html>
-<html>
+<!DOCTYPE html>
+<html lang="de">
 <head>
     <meta charset="utf-8" />
-    <title>Stream Query Viewer</title>
+    <title>Kala Stream Query</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        /* ... [CSS für Spinner, etc. bleibt gleich] ... */
-        /* Das Lade-DIV (nur für die Optik) */
-        #ladeAnzeige {
-        margin-top: 0px;
-        display: flex;
-        align-items: center;
+        :root {
+            --bg-color: #ffffff;
+            --card-bg-color: #f9f9f9;
+            --text-color: #222222;
+            --primary-color: #007acc;
+            --border-color: #e0e0e0;
+            --label-color: #666;
+            --input-bg-color: #f0f0f0;
+            --table-header-bg: #f2f2f2;
+            --table-hover-bg: #f5f5f5;
+            --button-bg-color: #f0f0f0;
+            --button-text-color: #222;
+            --button-border-color: #ccc;
         }
 
-        #ladeAnzeige p {
-        margin-left: 10px;
+        body.dark-theme {
+            --bg-color: #1a1a1a;
+            --card-bg-color: #2c2c2c;
+            --text-color: #e0e0e0;
+            --primary-color: #00bcd4;
+            --border-color: #444;
+            --label-color: #aaa;
+            --input-bg-color: #333;
+            --table-header-bg: #3c3c3c;
+            --table-hover-bg: #3f3f3f;
+            --button-bg-color: #333;
+            --button-text-color: #e0e0e0;
+            --button-border-color: #555;
         }
 
-        /* Der eigentliche Spinner */
-        .spinner {
-        border: 5px solid #f3f3f3; /* Hellgrauer Kreis */
-        border-top: 5px solid #3498db; /* Blauer "Lade"-Teil */
-        border-radius: 50%;
-        width: 7px;
-        height: 7px;
-        animation: spin 1s linear infinite;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
         }
 
-        /* Die CSS-Animation (blockiert nichts) */
-        @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+        .container {
+            max-width: 1200px;
+            margin: 0; /* Left-aligned */
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            transition: max-width 0.3s ease-in-out;
         }
 
-        /* DIV für die Ausgabe */
-        .scrollable-div {
-            width: 98%;
-            height: 200px;
-            overflow: auto; /* Enables scrolling */
-            border: 1px solid #ccc;
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 20px;
             padding: 10px;
-            resize: both;
-            background-color: #fdfdfd;
+            background-color: var(--card-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .nav {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .nav a {
+            color: var(--text-color);
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: normal;
+        }
+
+        .nav a.active {
+            font-weight: bold;
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .nav a:not(.active):hover {
+            background-color: var(--border-color);
+        }
+        
+        .header-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.8em;
+            margin-bottom: 5px;
+            color: var(--label-color);
+        }
+
+        input[type="text"], textarea, select {
+            background-color: var(--input-bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 1em;
+        }
+        input#url { flex-grow: 1; min-width: 300px;}
+        textarea#query {
             font-family: 'Courier New', Courier, monospace;
+            width: 100%;
+            box-sizing: border-box;
+            min-width: 0;
         }
 
-        #table-output {
-            height: 300px; /* Etwas mehr Platz für die volle Tabelle */
-            margin-top: 10px;
-            font-family: Arial, sans-serif; /* Besser lesbare Schrift für Tabelle */
+        button {
+             background-color: var(--button-bg-color);
+             color: var(--button-text-color);
+             border: 1px solid var(--button-border-color);
+             border-radius: 4px;
+             padding: 8px 12px;
+             cursor: pointer;
+             font-size: 0.9em;
+        }
+        button:hover {
+            border-color: var(--primary-color);
         }
 
-        /* CSS für die JSON-Tabelle */
+        .card {
+            background-color: var(--card-bg-color);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .card-content {
+             transition: all 0.3s ease-in-out;
+        }
+        .hidden {
+            display: none !important;
+        }
+
+
+        .query-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 20px;
+        }
+        
+        #query-examples a {
+            color: var(--primary-color);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 8px;
+        }
+        #query-examples a:hover {
+            text-decoration: underline;
+        }
+        
+        .card h3 {
+            margin: 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card h3 .title {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        .card h3 .controls {
+            display: flex;
+            gap: 10px;
+        }
+        .card h3 .controls button {
+            font-size: 0.8em;
+            font-weight: normal;
+            margin-left: 5px;
+        }
+
+        .scrollable-div {
+            width: 100%;
+            min-height: 200px;
+            overflow: auto;
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            background-color: var(--input-bg-color);
+            font-family: 'Courier New', Courier, monospace;
+            box-sizing: border-box;
+            display: block;
+        }
+        #table-output-container {
+            resize: none; /* Disable native resize */
+        }
+        
+        .resize-handle-v {
+            cursor: ns-resize;
+            width: 100%;
+            height: 10px;
+            background-color: var(--border-color);
+            margin-top: -10px; /* Overlap with border */
+            position: relative;
+            z-index: 50;
+        }
+        .resize-handle-v:hover {
+            background-color: var(--primary-color);
+        }
+
         .json-table {
             width: 100%;
             border-collapse: collapse;
             font-size: 0.9em;
         }
         .json-table th, .json-table td {
-            border: 1px solid #ddd;
+            border: 1px solid var(--border-color);
             padding: 6px;
             text-align: left;
             vertical-align: top;
             word-break: break-all;
+            position: relative; 
+        }
+        .json-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
         .json-table th {
-            background-color: #f2f2f2;
-            position: sticky; /* Wichtig: Header beim Scrollen fixieren */
-            top: 0;
+            background-color: var(--table-header-bg);
         }
         .json-table tbody tr:hover {
-            background-color: #f9f9f9;
+            background-color: var(--table-hover-bg);
         }
-        
-        /* --- NEU: Style für die Toggle-Buttons --- */
-        h3 button {
-            font-size: 0.7em;
-            font-weight: normal;
-            padding: 2px 5px;
-            margin-left: 15px;
-            cursor: pointer;
+
+        .resize-handle-h {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 5px;
+            height: 100%;
+            cursor: col-resize;
+            user-select: none;
+            z-index: 20;
         }
+
+        .spinner {
+            border: 5px solid var(--border-color);
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 10px;
+            height: 10px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 10px;
+            vertical-align: middle;
+            transition: background-color 0.5s ease;
+        }
+        .status-ok { background-color: var(--success-color); }
+        .status-error { background-color: var(--error-color); }
+        .status-pending { background-color: #ffc107; }
+
     </style>
     <script>
+        const URL_STORAGE_KEY = 'kala-stats-url'; 
+        const THEME_STORAGE_KEY = 'kala-stats-theme';
+        const INTERVAL_STORAGE_KEY = 'kala-ui-interval';
+
+        function applyTheme(theme) {
+            document.body.classList.toggle('dark-theme', theme === 'dark');
+            document.getElementById('theme-toggle').textContent = theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+        }
+        function toggleTheme() {
+            const newTheme = document.body.classList.contains('dark-theme') ? 'light' : 'dark';
+            localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+            applyTheme(newTheme);
+        }
+
+        function makeTableResizable(table) {
+            const headers = table.querySelectorAll('th');
+            headers.forEach(header => {
+                const resizeHandle = document.createElement('div');
+                resizeHandle.classList.add('resize-handle-h');
+                header.appendChild(resizeHandle);
+
+                resizeHandle.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const startX = e.pageX;
+                    const startWidth = header.offsetWidth;
+                    
+                    const onMouseMove = (e) => {
+                        const newWidth = startWidth + (e.pageX - startX);
+                        if (newWidth > 40) {
+                           header.style.width = `${newWidth}px`;
+                           table.style.tableLayout = 'fixed';
+                        }
+                    };
+
+                    const onMouseUp = () => {
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+                    };
+
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                });
+            });
+        }
+
+        function makeCardResizable(cardContentId, handleId) {
+            const handle = document.getElementById(handleId);
+            const cardContent = document.getElementById(cardContentId);
+
+            handle.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                const startY = e.pageY;
+                const startHeight = cardContent.offsetHeight;
+
+                const onMouseMove = (e) => {
+                    const newHeight = startHeight + (e.pageY - startY);
+                    if (newHeight > 100) { // min height
+                        cardContent.style.height = `${newHeight}px`;
+                    }
+                };
+
+                const onMouseUp = () => {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                };
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+        }
+        
         var cancelled = false;
         let isProgrammaticScroll = false;
         let userScrolled = false;
-
-        // --- Globale Puffer für die Tabellenerstellung ---
-        let jsonBuffer = "";     // Puffer für unvollständige JSON-Chunks
-        let allData = [];        // Speichert ALLE geparsten Objekte
-        let tableHeaders = [];   // Geordnete Liste aller Spalten-Keys
-        let isArrayStream = false; // Flag, ob wir in einem JSON-Array parsen
+        let jsonBuffer = "";
+        let allData = [];
+        let tableHeaders = [];
+        let isArrayStream = false;
+        let refreshTimer = null;
 
         function prefill(selection) {
-            // ... [prefill-Funktion bleibt unverändert] ...
-             let text = "";
-            if (selection == "List Measurements") {
-                text = `Mgmt ListMeasurements`
-            } else if (selection == "Regex Zisterne") {
-                text = `Load <measure:.*[$].*[$](.*)>: regex:zisterne[$]esp_ping[$].* NewestOnly
-Aggr a<measure>: regex:.* Infinite Last
-Publ regex:a.* Table`                
-            } else if (selection == "Regex Beispiel TempBatt") {
-                text = `Load l<measure>: regex:.*Mi.*_.*battery now-1d now NoCache
-Load t<measure>: regex:.*Mi.*_.*temperature now-1d now NoCache
-
-Aggr <measure:.*[$]Mi(.*)_.*>_Batt: regex:l.* Infinite Last EmptyWindows
-Aggr <measure:.*[$]Mi(.*)_.*>_Temp: regex:t.* Infinite Last EmptyWindows
-
-Publ regex:.*(_Batt|_Temp) Table`
-            } else if (selection == "Kala-Fehler") {            
-                text = `Load k<measure>: regex:kala.* now-10m now NoCache
-Publ regex:k.* Table`
-            } else if(selection == "PV Beispiel") {
-                text = `#Var $FROM "\${__from:date:iso:YYYY-MM-DDTHH:mm:ss}"
-#Var $TO "\${__to:date:iso:YYYY-MM-DDTHH:mm:ss}"
-#Var $CACHE Auto(\${__interval_ms})_WAvg_REFRESHINCREMENTAL
-#Var $INTERVAL \${__interval_ms}
-
-Var $FROM 2025-01-01T00:00:00
-Var $TO 2025-01-02T00:00:00
-Var $CACHE NoCache
-Var $INTERVAL 3600000
-
-Var $AGG "WAvg EmptyWindows"
-
-
-Load rPV1: Sofar/measure/PVInput1/0x586_Leistung_PV1[kW] $FROM $TO $CACHE
-Load rPV2: Sofar/measure/PVInput1/0x589_Leistung_PV2[kW] $FROM $TO $CACHE
-Load rNetz: Sofar/measure/OnGridOutput/0x488_ActivePower_PCC_Total[kW] $FROM $TO $CACHE
-Load rAkku: Sofar/measure/batteryInput1/0x606_Power_Bat1[kW] $FROM $TO $CACHE
-Load rVerbrauch: Sofar/measure/OnGridOutput/0x4AF_ActivePower_Load_Sys[kW] $FROM $TO $CACHE
-Load rPrognoseSolcast: prognose$solcast$50 $FROM $TO NoCache
-Load rPrognoseForecast: prognose$forecastsolar $FROM $TO NoCache
-
-Aggr aPV1: rPV1 $INTERVAL $AGG
-Aggr aPV2: rPV2 $INTERVAL $AGG
-Aggr aNetz: rNetz $INTERVAL $AGG
-Aggr aAkku: rAkku $INTERVAL $AGG
-Aggr aVerbrauch: rVerbrauch $INTERVAL $AGG
-Aggr aAkkuladung: rAkku $INTERVAL $AGG
-Aggr aPrognoseSolcast: rPrognoseSolcast  $INTERVAL $AGG
-Aggr aPrognoseForecast: rPrognoseForecast  $INTERVAL $AGG
-
-Expr PV: "aPV1.Value + aPV2.Value"
-Expr Netzbezug: "aNetz.Value > 0 ? 0 : -aNetz.Value"
-Expr Netzeinspeisung: "aNetz.Value < 0 ? 0 : -aNetz.Value"
-Expr Akkuentladung: "aAkku.Value > 0 ? 0 : -aAkku.Value"
-Expr Akkuladung: "aAkku.Value < 0 ? 0 : -aAkku.Value"
-Expr Verbrauch: "-aVerbrauch.Value"
-Expr PrognoseSolcast: "aPrognoseSolcast.Value"
-Expr PrognoseForecast: "aPrognoseForecast.Value / 1000.0"
-Expr Verluste: "-(PV.Value+Netzbezug.Value+Akkuentladung.Value+Verbrauch.Value+Netzeinspeisung.Value+Akkuladung.Value)"
-
-Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch,PrognoseSolcast,PrognoseForecast,Verluste" Table
-`
-            } else if(selection == "Mgmt Examples") {
-                text = `Mgmt FSCHK kala$errors
-#Mgmt FSCHK
-#Mgmt ListMeasurements
-#Mgmt COPY
-#Mgmt RENAME
-#Mgmt CLEAN
-#Mgmt BLACKLIST
-#Mgmt UNBLACKLIST
-#Mgmt SORTRAWFILES   - UNNÖTIG!
-#Mgmt BENCHIO
-#Mgmt IMPORTINFLUX
-#Mgmt IMPORTTSTSFE
-`
+            let text = '';
+            if (selection == 'List Measurements') {
+                text = 'Mgmt ListMeasurements';
+            } else if (selection == 'Regex Zisterne') {
+                text = 'Load <measure:.*[$].*[$](.*)>: regex:zisterne[$]esp_ping[$].* NewestOnly\n' +
+                       'Aggr a<measure>: regex:.* Infinite Last\n' +
+                       'Publ regex:a.* Table';
+            } else if (selection == 'Regex Beispiel TempBatt') {
+                text = 'Load l<measure>: regex:.*Mi.*_.*battery now-1d now NoCache\n' +
+                       'Load t<measure>: regex:.*Mi.*_.*temperature now-1d now NoCache\n\n' +
+                       'Aggr <measure:.*[$]Mi(.*)_.*>_Batt: regex:l.* Infinite Last EmptyWindows\n' +
+                       'Aggr <measure:.*[$]Mi(.*)_.*>_Temp: regex:t.* Infinite Last EmptyWindows\n\n' +
+                       'Publ regex:.*(_Batt|_Temp) Table';
+            } else if (selection == 'Kala-Fehler') {
+                text = 'Load k<measure>: regex:kala.* now-10m now NoCache\n' +
+                       'Publ regex:k.* Table';
+            } else if (selection == 'PV Beispiel') {
+                text = '#Var $FROM "${__from:date:iso:YYYY-MM-DDTHH:mm:ss}"\n' +
+                       '#Var $TO "${__to:date:iso:YYYY-MM-DDTHH:mm:ss}"\n' +
+                       '#Var $CACHE Auto(${__interval_ms})_WAvg_REFRESHINCREMENTAL\n' +
+                       '#Var $INTERVAL ${__interval_ms}\n\n' +
+                       'Var $FROM 2025-01-01T00:00:00\n' +
+                       'Var $TO 2025-01-02T00:00:00\n' +
+                       'Var $CACHE NoCache\n' +
+                       'Var $INTERVAL 3600000\n\n' +
+                       'Var $AGG "WAvg EmptyWindows"\n\n\n' +
+                       'Load rPV1: Sofar/measure/PVInput1/0x586_Leistung_PV1[kW] $FROM $TO $CACHE\n' +
+                       'Load rPV2: Sofar/measure/PVInput1/0x589_Leistung_PV2[kW] $FROM $TO $CACHE\n' +
+                       'Load rNetz: Sofar/measure/OnGridOutput/0x488_ActivePower_PCC_Total[kW] $FROM $TO $CACHE\n' +
+                       'Load rAkku: Sofar/measure/batteryInput1/0x606_Power_Bat1[kW] $FROM $TO $CACHE\n' +
+                       'Load rVerbrauch: Sofar/measure/OnGridOutput/0x4AF_ActivePower_Load_Sys[kW] $FROM $TO $CACHE\n' +
+                       'Load rPrognoseSolcast: prognose$solcast$50 $FROM $TO NoCache\n' +
+                       'Load rPrognoseForecast: prognose$forecastsolar $FROM $TO NoCache\n\n' +
+                       'Aggr aPV1: rPV1 $INTERVAL $AGG\n' +
+                       'Aggr aPV2: rPV2 $INTERVAL $AGG\n' +
+                       'Aggr aNetz: rNetz $INTERVAL $AGG\n' +
+                       'Aggr aAkku: rAkku $INTERVAL $AGG\n' +
+                       'Aggr aVerbrauch: rVerbrauch $INTERVAL $AGG\n' +
+                       'Aggr aAkkuladung: rAkku $INTERVAL $AGG\n' +
+                       'Aggr aPrognoseSolcast: rPrognoseSolcast  $INTERVAL $AGG\n' +
+                       'Aggr aPrognoseForecast: rPrognoseForecast  $INTERVAL $AGG\n\n' +
+                       'Expr PV: "aPV1.Value + aPV2.Value"\n' +
+                       'Expr Netzbezug: "aNetz.Value > 0 ? 0 : -aNetz.Value"\n' +
+                       'Expr Netzeinspeisung: "aNetz.Value < 0 ? 0 : -aNetz.Value"\n' +
+                       'Expr Akkuentladung: "aAkku.Value > 0 ? 0 : -aAkku.Value"\n' +
+                       'Expr Akkuladung: "aAkku.Value < 0 ? 0 : -aAkku.Value"\n' +
+                       'Expr Verbrauch: "-aVerbrauch.Value"\n' +
+                       'Expr PrognoseSolcast: "aPrognoseSolcast.Value"\n' +
+                       'Expr PrognoseForecast: "aPrognoseForecast.Value / 1000.0"\n' +
+                       'Expr Verluste: "-(PV.Value+Netzbezug.Value+Akkuentladung.Value+Verbrauch.Value+Netzeinspeisung.Value+Akkuladung.Value)"\n\n' +
+                       'Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch,PrognoseSolcast,PrognoseForecast,Verluste" Table\n';
+            } else if (selection == 'Mgmt Examples') {
+                text = 'Mgmt FSCHK kala$errors\n' +
+                       '#Mgmt FSCHK\n' +
+                       '#Mgmt ListMeasurements\n' +
+                       '#Mgmt COPY\n' +
+                       '#Mgmt RENAME\n' +
+                       '#Mgmt CLEAN\n' +
+                       '#Mgmt BLACKLIST\n' +
+                       '#Mgmt UNBLACKLIST\n' +
+                       '#Mgmt SORTRAWFILES   - UNNÖTIG!\n' +
+                       '#Mgmt BENCHIO\n' +
+                       '#Mgmt IMPORTINFLUX\n' +
+                       '#Mgmt IMPORTTSTSFE\n';
             }
             document.getElementById('query').value = text;
-            document.getElementById('send').click();
         }
 
-        window.onload = (ev) => {
-            // ... [Setup url, clearButton, cancelButton, scroll-Listener bleiben unverändert] ...
+        function handleIntervalChange() {
+            const intervalSelect = document.getElementById('refresh-interval');
+            const interval = parseInt(intervalSelect.value, 10);
+            localStorage.setItem(INTERVAL_STORAGE_KEY, interval);
 
-            var url = document.getElementById('url');
-            var base_url = window.location.origin;
-            url.value = base_url + "/" + "api/StreamQuery";
-            
-            var sendButton = document.getElementById('send');
-            sendButton.addEventListener('click', async () => {
-                var url = document.getElementById('url');
+            if (refreshTimer) {
+                clearInterval(refreshTimer);
+                refreshTimer = null;
+            }
 
-                var query = document.getElementById('query');
-                console.log("URL: " + url.value);
-                console.log("QUERY: " + query.value);
-                
-                // --- Reset für neuen Lauf ---
-                cancelled = false;
-                jsonBuffer = "";
-                allData = [];
-                tableHeaders = [];
-                isArrayStream = false;
-                
-                // Tabelle und Output leeren
-                document.getElementById('table-output').innerHTML = ""; 
-                document.getElementById('output').innerHTML = "";
+            if (interval > 0) {
+                refreshTimer = setInterval(() => handleSendClick(false), interval);
+            }
+        }
+        
+        async function handleSendClick(isManual) {
+            const sendButton = document.getElementById('send');
+            if(sendButton.disabled) return;
 
-                // --- NEU: Sicherstellen, dass die Divs bei "Send" sichtbar sind ---
-                document.getElementById('table-output').style.display = "block";
-                document.getElementById('output').style.display = "block";
-                document.getElementById('toggleRaw').innerText = "Verbergen";
-                document.getElementById('toggleTable').innerText = "Verbergen";
-
-
-                let ladeDiv = document.getElementById("ladeAnzeige");
-                document.getElementById('send').disabled = true
-                ladeDiv.style.display = "inline-flex";
-                
-                await streamquery(url.value, query.value);
-            });
-            var clearButton = document.getElementById('clear');
-            clearButton.addEventListener('click', async () => {
-                const outputDiv = document.getElementById('output');
-                outputDiv.innerHTML = "";
-                const tableDiv = document.getElementById('table-output');
-                tableDiv.innerHTML = "";
-            });
-            var cancelButton = document.getElementById('cancel');
-            cancelButton.addEventListener('click', async () => {
-                cancelled = true;
-            });
-            const scrollableDiv = document.getElementById('output');
-            scrollableDiv.addEventListener('scroll', () => {
-                if (!isProgrammaticScroll) {                    
-                    const isScrolledToBottom = scrollableDiv.scrollHeight - scrollableDiv.clientHeight <= scrollableDiv.scrollTop + 1;
-                    if (isScrolledToBottom) {
-                        userScrolled = false;
-                    } else {
-                        userScrolled = true;
-                    }
-                    // console.log("Der Benutzer hat gescrollt."); // Zu gesprächig
+            if (isManual) {
+                const intervalSelect = document.getElementById('refresh-interval');
+                if (intervalSelect.value !== "0") {
+                    intervalSelect.value = "0";
+                    handleIntervalChange();
                 }
-                // Resetting the flag for programmatic scrolls
+            }
+            
+            const urlInput = document.getElementById('url');
+            const query = document.getElementById('query').value;
+            const statusIndicator = document.getElementById('status-indicator');
+            const lastUpdatedSpan = document.getElementById('last-updated');
+            
+            statusIndicator.className = 'status-indicator status-pending';
+            lastUpdatedSpan.textContent = 'Sending...';
+            
+            cancelled = false;
+            jsonBuffer = "";
+            allData = [];
+            tableHeaders = [];
+            isArrayStream = false;
+            
+            document.getElementById('table-output-container').innerHTML = ""; 
+            document.getElementById('output').innerHTML = ""; 
+            
+            sendButton.disabled = true;
+            document.getElementById("ladeAnzeige").style.display = "inline-flex";
+            
+            await streamquery(urlInput.value, query);
+        }
+
+        window.onload = () => {
+            const urlInput = document.getElementById('url');
+            const intervalSelect = document.getElementById('refresh-interval');
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const queryTextarea = document.getElementById('query');
+
+            urlInput.value = localStorage.getItem(URL_STORAGE_KEY) || (window.location.origin + "/api/StreamQuery");
+            urlInput.addEventListener('change', () => localStorage.setItem(URL_STORAGE_KEY, urlInput.value));
+
+            const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'light';
+            applyTheme(savedTheme);
+            themeToggleBtn.addEventListener('click', toggleTheme);
+            
+            const savedInterval = localStorage.getItem(INTERVAL_STORAGE_KEY);
+            if (savedInterval) {
+                intervalSelect.value = savedInterval;
+            }
+            intervalSelect.addEventListener('change', handleIntervalChange);
+            handleIntervalChange();
+
+            queryTextarea.addEventListener('input', () => {
+                if (intervalSelect.value !== "0") {
+                    intervalSelect.value = "0";
+                    handleIntervalChange();
+                }
+            });
+
+            document.getElementById('send').addEventListener('click', () => handleSendClick(true));
+
+            document.getElementById('clear').addEventListener('click', () => {
+                document.getElementById('output').innerHTML = "";
+                document.getElementById('table-output-container').innerHTML = "";
+            });
+
+            document.getElementById('cancel').addEventListener('click', () => cancelled = true);
+
+            document.getElementById('output').addEventListener('scroll', () => {
+                const outputDiv = document.getElementById('output');
+                if (!isProgrammaticScroll) {                    
+                    const isScrolledToBottom = outputDiv.scrollHeight - outputDiv.clientHeight <= outputDiv.scrollTop + 1;
+                    userScrolled = !isScrolledToBottom;
+                }
                 isProgrammaticScroll = false;
             });
-
+            
+            makeCardResizable('table-output-container', 'table-resize-handle');
         }
 
-        /**
-         * --- NEU: Schaltet die Sichtbarkeit eines Elements um ---
-         */
-        function toggleVisibility(elementId, button) {
-            const element = document.getElementById(elementId);
-            
-            if (element.style.display === "none") {
-                // Aktuell verborgen -> Anzeigen
-                element.style.display = "block"; // 'block' ist der Standard für <div>
-                button.innerText = "Verbergen";
-            } else {
-                // Aktuell sichtbar -> Verbergen
-                element.style.display = "none";
-                button.innerText = "Anzeigen";
-            }
+        function toggleContent(contentId, button) {
+            const content = document.getElementById(contentId);
+            const isHidden = content.classList.toggle('hidden');
+            button.textContent = isHidden ? 'Show' : 'Hide';
         }
 
         function autoScroll() {
-            // ... [Funktion bleibt unverändert] ...
             const outputDiv = document.getElementById('output');
             if (!userScrolled) {
-                // Scroll to bottom
                 isProgrammaticScroll = true;
-                outputDiv.scrollTop = outputDiv.scrollHeight - 100;
+                outputDiv.scrollTop = outputDiv.scrollHeight;
             }
         }
 
-        function resetUI() {
-            // ... [Funktion bleibt unverändert] ...
-            let ladeDiv = document.getElementById("ladeAnzeige");
-            ladeDiv.style.display = "none";
+        function resetUI(status) {
+            const statusIndicator = document.getElementById('status-indicator');
+            const lastUpdatedSpan = document.getElementById('last-updated');
+
+            document.getElementById("ladeAnzeige").style.display = "none";
             document.getElementById('send').disabled = false;
+            
+            if(status === 'ok') {
+                 statusIndicator.className = 'status-indicator status-ok';
+                 lastUpdatedSpan.textContent = new Date().toLocaleTimeString();
+            } else if (status === 'error') {
+                 statusIndicator.className = 'status-indicator status-error';
+                 lastUpdatedSpan.textContent = 'Error';
+            } else {
+                 statusIndicator.className = 'status-indicator';
+                 lastUpdatedSpan.textContent = 'Idle';
+            }
             autoScroll(); 
         }
 
-        // --- Tabellen-Logik [bleibt unverändert] ---
-
         function appendRowToTable(row) {
             const tbody = document.getElementById('json-table-body');
-            if (!tbody) return; 
+            if (!tbody) { return; }
 
             let html = '<tr>';
             for (const header of tableHeaders) {
-                let value = row[header]; 
-                
-                if (typeof value === 'number') {
-                    value = value.toFixed(4); 
-                } else if (value === null || typeof value === 'undefined') {
-                    value = '<em>null</em>';
-                }
+                let value = row[header];
+                if (typeof value === 'number') value = value.toFixed(4);
+                else if (value === null || typeof value === 'undefined') value = '<em>null</em>';
                 html += `<td>${value}</td>`;
             }
             html += '</tr>';
@@ -298,21 +575,16 @@ Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch,PrognoseSo
         }
 
         function rebuildTableWithNewHeaders() {
-            const tableDiv = document.getElementById('table-output');
-            
-            let html = '<table class="json-table"><thead id="json-table-head"><tr>';
-            for (const key of tableHeaders) {
-                html += `<th>${key}</th>`;
-            }
-            html += '</tr></thead>';
-            html += '<tbody id="json-table-body">';
-            html += '</tbody></table>';
-            
-            tableDiv.innerHTML = html;
+            const tableContainer = document.getElementById('table-output-container');
+            if (tableContainer.classList.contains('hidden') || !tableContainer) { return; }
 
-            for (const row of allData) {
-                appendRowToTable(row);
-            }
+            let html = '<table class="json-table"><thead><tr>';
+            for (const key of tableHeaders) html += `<th>${key}</th>`;
+            html += '</tr></thead><tbody id="json-table-body"></tbody></table>';
+            tableContainer.innerHTML = html;
+            for (const row of allData) appendRowToTable(row);
+            const table = tableContainer.querySelector('.json-table');
+            if (table) makeTableResizable(table);
         }
 
         function findCompleteObject(buffer, startIndex) {
@@ -322,29 +594,14 @@ Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch,PrognoseSo
 
             for (let i = startIndex; i < buffer.length; i++) {
                 const char = buffer[i];
-
-                if (escape) {
-                    escape = false;
-                    continue; 
-                }
-                if (char === '\\') {
-                    escape = true;
-                    continue;
-                }
-                if (char === '"') {
-                    inString = !inString;
-                    continue;
-                }
-                if (inString) {
-                    continue; 
-                }
-                if (char === '{') {
-                    braceDepth++;
-                } else if (char === '}') {
+                if (escape) { escape = false; continue; }
+                if (char === '\\') { escape = true; continue; }
+                if (char === '"') { inString = !inString; continue; }
+                if (inString) continue;
+                if (char === '{') braceDepth++;
+                else if (char === '}') {
                     braceDepth--;
-                    if (braceDepth === 0) {
-                        return [ buffer.substring(startIndex, i + 1), i ];
-                    }
+                    if (braceDepth === 0) return [ buffer.substring(startIndex, i + 1), i ];
                 }
             }
             return [ null, -1 ];
@@ -352,28 +609,20 @@ Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch,PrognoseSo
 
         function parseAndRenderBuffer() {
             if (!isArrayStream) return; 
-            
-            let newObjectsFound = false;
             let newHeadersFound = false;
 
             while(true) { 
                 let objectStartIndex = jsonBuffer.indexOf('{');
-                if (objectStartIndex === -1) {
-                    break; 
-                }
+                if (objectStartIndex === -1) break; 
                 
                 const [objectString, objectEndIndex] = findCompleteObject(jsonBuffer, objectStartIndex);
-
-                if (objectString === null) {
-                    break; 
-                }
+                if (objectString === null) break; 
 
                 jsonBuffer = jsonBuffer.substring(objectEndIndex + 1);
 
                 try {
                     const parsedObject = JSON.parse(objectString);
                     allData.push(parsedObject); 
-                    newObjectsFound = true;
 
                     const keys = Object.keys(parsedObject);
                     for (const key of keys) {
@@ -383,29 +632,21 @@ Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch,PrognoseSo
                         }
                     }
 
-                    if (newHeadersFound) {
-                        // Wird nach der Schleife aufgerufen
-                    } else {
-                        appendRowToTable(parsedObject);
-                    }
+                    if (!newHeadersFound) appendRowToTable(parsedObject);
 
                 } catch (e) {
-                    console.warn("Konnte JSON-Objekt nicht parsen:", objectString, e);
+                    console.warn("Could not parse JSON object:", objectString, e);
                 }
-            } // Ende while(true)
-
-            if (newHeadersFound) {
-                rebuildTableWithNewHeaders();
             }
+
+            if (newHeadersFound) rebuildTableWithNewHeaders();
         }
 
-
         function datePrefix() {
-            return "<span style='color:grey;'>" + new Date().toISOString() + " # </span>";
+            return `<span style="color:var(--label-color);">${new Date().toISOString()} # </span>`;
         }
 
         async function streamquery(url, query) {
-            
             const outputDiv = document.getElementById('output');
             let reader;
             let firstline = true;
@@ -413,18 +654,11 @@ Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch,PrognoseSo
             try {
                 const response = await fetch(url, {
                     method: "POST",
-                    headers: {
-                        'Content-Type': 'text/plain'
-                    },
+                    headers: { 'Content-Type': 'text/plain' },
                     body: query,
-                })
+                });
 
-                if (!response.body) {
-                    console.error('ReadableStream not supported in this browser.');
-                    outputDiv.innerHTML += "<br/>" + datePrefix() + "<span style='color:red;'>ReadableStream not supported!</span><br/>";
-                    resetUI();
-                    return;
-                }
+                if (!response.body) throw new Error('ReadableStream not supported in this browser.');
 
                 reader = response.body.getReader();
                 const decoder = new TextDecoder('utf-8');
@@ -433,16 +667,15 @@ Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch,PrognoseSo
                     const { done, value } = await reader.read();
                     
                     if (done) {
-                        console.log('Stream complete');                    
-                        outputDiv.innerHTML += "<br/>" + datePrefix() + "Stream Complete ===========================<br/>"
-                        resetUI();
+                        outputDiv.innerHTML += "<br>" + datePrefix() + "Stream Complete ===========================<br/>";
+                        resetUI('ok');
                         break; 
                     }
 
                     const chunk = decoder.decode(value, { stream: true });
                     
                     if (firstline) {
-                        outputDiv.innerHTML += "<br/>" + datePrefix() + "Stream Start ===========================<br/>"
+                        outputDiv.innerHTML += "<br>" + datePrefix() + "Stream Start ===========================<br/>";
                         if (chunk.trim().startsWith("[")) {
                             isArrayStream = true;
                             rebuildTableWithNewHeaders(); 
@@ -450,7 +683,7 @@ Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch,PrognoseSo
                         firstline = false;
                     }
 
-                    outputDiv.innerHTML += chunk.replaceAll("{", "<br>" + datePrefix() + "{");                
+                    outputDiv.innerHTML += chunk.replaceAll("{ " , "<br>" + datePrefix() + "{");                
                     autoScroll();
 
                     if (isArrayStream) {
@@ -460,56 +693,99 @@ Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch,PrognoseSo
 
                     if (cancelled) {
                         reader.cancel("user");
-                        outputDiv.innerHTML += "<br/>" + datePrefix() + "Stream Cancelled ===========================<br/>"
-                        resetUI();
+                        outputDiv.innerHTML += "<br>" + datePrefix() + "Stream Cancelled ===========================<br/>";
+                        resetUI('ok');
                         break; 
                     }
                 }
 
             } catch (error) {
-                if (!cancelled) { 
-                    console.error('Stream query failed:', error);
-                    outputDiv.innerHTML += "<br/>" + datePrefix() + `<span style='color:red;'>Stream Failed/Aborted: ${error.message}</span> ===========================<br/>`;
-                } else {
-                    console.log("Stream cancelled by user.");
-                }
-                resetUI();
+                const message = cancelled ? "Stream cancelled by user." : `Stream Failed/Aborted: ${error.message}`;
+                console.error(message, error);
+                if (!cancelled) outputDiv.innerHTML += "<br>" + datePrefix() + `<span style='color:red;'>${message}</span><br/>`;
+                resetUI('error');
             }
         }
     </script>
 </head>
 <body>
-    URL: <br />
-    
-    <input id="url" value="http://server/api/StreamQuery" size="80"></input><br />
-    Query: <br />
-    <table>
-        <tr>            
-            <td><textarea id="query" name="Text1" cols="80" rows="15" spellcheck="false">Mgmt ListMeasurements</textarea></td>
-            <td style="vertical-align: top;">
-                <a href="#" onClick="prefill('Kala-Fehler');">Kala-Fehler Und Logs</a><br>
-                <a href="#" onClick="prefill('List Measurements');">List Measurements</a><br>
-                <a href="#" onClick="prefill('PV Beispiel');">PV Beispiel</a><br>
-                <a href="#" onClick="prefill('Mgmt Examples');">Mgmt Examples</a><br>
-                <a href="#" onClick="prefill('Regex Beispiel TempBatt');">Regex Beispiel TempBatt</a><br>
-                <a href="#" onClick="prefill('Regex Zisterne');">Regex Zisterne</a><br>
-                
-            </td>
-        </tr>
-    </table>
-    
-    <br />
-    <button id="send">Send</button>&nbsp;<div id="ladeAnzeige" style="display: none;"><div class="spinner"></div></div>&nbsp;<button id="cancel">Cancel</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id="clear">Clear</button>
-    
-    <h3>Raw Stream Output:
-        <button id="toggleRaw" onclick="toggleVisibility('output', this)">Verbergen</button>
-    </h3>
-    <div id="output" class="scrollable-div"></div>
-    
-    <h3>Vollständige Tabellendaten (Live):
-        <button id="toggleTable" onclick="toggleVisibility('table-output', this)">Verbergen</button>
-    </h3>
-    <div id="table-output" class="scrollable-div"></div>
+    <div class="container">
+        <header class="header">
+            <nav class="nav">
+                <a href="./index.html" class="active">Stream Query</a>
+                <a href="../stat/index.html">Statistics</a>
+            </nav>
+            <div class="header-item" style="flex-grow: 1;">
+                <label for="url">API URL (/api/StreamQuery)</label>
+                <input id="url" type="text" spellcheck="false">
+            </div>
+             <div class="header-item">
+                <label for="refresh-interval">Auto-Refresh</label>
+                <select id="refresh-interval">
+                    <option value="0">Off</option>
+                    <option value="1000">1s</option>
+                    <option value="5000">5s</option>
+                    <option value="10000">10s</option>
+                    <option value="30000">30s</option>
+                </select>
+            </div>
+            <div class="header-item">
+                <label>Theme</label>
+                <button id="theme-toggle">Toggle Theme</button>
+            </div>
+             <div class="header-item">
+                <label>Status</label>
+                <div style="padding-top: 8px;">
+                    <span id="last-updated">Idle</span>
+                    <span id="status-indicator" class="status-indicator"></span>
+                </div>
+            </div>
+        </header>
 
+        <main class="card">
+            <h3><span class="title">Query</span></h3>
+            <div class="query-grid">
+                <div>
+                    <textarea id="query" name="Text1" rows="15" spellcheck="false">Mgmt ListMeasurements</textarea>
+                </div>
+                <div id="query-examples">
+                    <label>Examples</label>
+                    <a href="#" onClick="prefill('Kala-Fehler');">Kala Errors & Logs</a><br>
+                    <a href="#" onClick="prefill('List Measurements');">List Measurements</a><br>
+                    <a href="#" onClick="prefill('PV Beispiel');">PV Example</a><br>
+                    <a href="#" onClick="prefill('Mgmt Examples');">Mgmt Examples</a><br>
+                    <a href="#" onClick="prefill('Regex Beispiel TempBatt');">Regex Temp/Batt</a><br>
+                    <a href="#" onClick="prefill('Regex Zisterne');">Regex Cistern</a><br>
+                </div>
+            </div>
+            <div>
+                <button id="send">Send</button>
+                <span id="ladeAnzeige" style="display: none; vertical-align: middle; margin-left: 10px;"><div class="spinner"></div></span>
+                <button id="cancel">Cancel</button>
+                <button id="clear">Clear Output</button>
+            </div>
+        </main>
+        
+        <div id="raw-stream-card" class="card">
+            <h3>
+                <span class="title">Raw Stream Output</span>
+                <span class="controls">
+                     <button onclick="toggleContent('output', this)">Hide</button>
+                </span>
+            </h3>
+            <div id="output" class="scrollable-div card-content"></div>
+        </div>
+        
+        <div id="table-data-card" class="card">
+            <h3>
+                <span class="title">Table Data</span>
+                 <span class="controls">
+                    <button onclick="toggleContent('table-output-container', this)">Hide</button>
+                </span>
+            </h3>
+            <div id="table-output-container" class="scrollable-div card-content"></div>
+            <div id="table-resize-handle" class="resize-handle-v"></div>
+        </div>
+    </div>
 </body>
 </html>
