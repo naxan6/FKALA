@@ -16,7 +16,7 @@ namespace FKala.Unittests
         [TestMethod]
         public void KalaQuery_OutOfOrder_LateInsert_CacheInvalide()
         {
-            using var DataFaker = new DataFaker();
+            using var DataFaker = new DataFaker("fkalatest_ooo");
             DataFaker.FakeMeasure_OutOfOrder("m1", new DateTime(2024, 01, 01), new DateTime(2024, 3, 15), new TimeSpan(0, 0, 5), new TimeSpan(0, 0, 15));
             {
                 // Prepare

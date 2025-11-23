@@ -199,39 +199,8 @@ namespace FKala.Core
         public void Insert(string kalaLinedata, string? source = "input")
         {
             InsertQueued(kalaLinedata, source);
-            return;
-
-            if (ShuttingDown)
-            {
-                return;
-            }
-            string measurement, datetimeHHmmssfffffff, valueString;
-            ReadOnlySpan<char> datetime_yyyy_MM_ddTHH_mm_ss_fffffff;
-            ParseRawData(kalaLinedata, out measurement, out datetime_yyyy_MM_ddTHH_mm_ss_fffffff, out datetimeHHmmssfffffff, out valueString);
-            if (!IsBlacklisted(measurement, false))
-            {
-                string filePath = GetInsertTargetFilepath(measurement, datetime_yyyy_MM_ddTHH_mm_ss_fffffff);
-                if (IsDelayedInsert(measurement, datetime_yyyy_MM_ddTHH_mm_ss_fffffff))
-                {
-                    DateOnly dt = new DateOnly(int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(0, 4)), int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(5, 2)), int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(8, 2)));
-                    CachingLayer.Mark2Invalidate(measurement, dt);
-                }
-                else
-                {
-                    filePath = StorageAccess.SetSortMark(filePath, true);
-                }
-
-                BufferedWriterSvc.DoWrite(filePath, (writer) =>
-                {
-                    // Format the line to write
-                    writer.Append(datetimeHHmmssfffffff);
-                    writer.Append(" ");
-                    writer.Append(valueString);
-                    writer.AppendNewline();
-                });
-            }
         }
-        
+
         /// <summary>
         /// Fügt die angelieferten Daten in eine Queue je Zieldatei ein, die Queues werden asynchron abgearbeitet und dabei mittels einer Logik synonym Methode public void Insert(string kalaLinedata, string? source = "input") eingefügt
         /// </summary>
@@ -254,7 +223,7 @@ namespace FKala.Core
             var writesByFile = new Dictionary<string, List<string>>();
             int processedCount = 0;
 
-            foreach (var kalaLinedata in linesToProcess.OrderDescending())
+            foreach (var kalaLinedata in linesToProcess.Order())
             {
                 try
                 {
@@ -325,6 +294,7 @@ namespace FKala.Core
             }
         }
 
+        public bool TaskIsWaiting { get; set; } = true;
         private async Task ProcessInsertQueueAsync()
         {
             var token = _cancellationTokenSource.Token;
@@ -333,7 +303,9 @@ namespace FKala.Core
             {
                 try
                 {
+                    TaskIsWaiting = true;
                     await _workAvailable.WaitAsync(token);
+                    TaskIsWaiting = false;
                 }
                 catch (OperationCanceledException)
                 {
@@ -344,12 +316,12 @@ namespace FKala.Core
                 {
                     itemsToProcess.Add(item);
                 }
-                
+
                 ProcessLines(itemsToProcess);
                 itemsToProcess.Clear();
             }
         }
-        
+
         public void ProcessRemainingQueueItems()
         {
             var itemsToProcess = new List<string>();
@@ -572,7 +544,7 @@ namespace FKala.Core
             this.BufferedWriterSvc.ForceFlushWriter(filePath);
         }
 
-        public void InsertError(string err)
+        private void InsertError(string err)
         {
             var line = $"kala/errors {DateTime.Now.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {err.Replace("\n", " | ")}";
             this.Insert(line);
@@ -583,7 +555,7 @@ namespace FKala.Core
             this.Insert(line);
         }
 
-        private void LogException(Exception ex, string? context = null)
+        public void LogException(Exception ex, string? context = null)
         {
             var errorForMemory = $"[{DateTime.UtcNow:O}] {(context != null ? $"Context: {context}\n" : "")}{ex.ToString()}";
             _lastExceptions.Enqueue(errorForMemory);
@@ -621,7 +593,6 @@ namespace FKala.Core
         {
             if (ShuttingDown) return;
             ShuttingDown = true;
-
             _cancellationTokenSource.Cancel();
             _workAvailable.Release();
             try

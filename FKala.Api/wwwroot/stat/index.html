@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <title>Kala Mgmt Statistics</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --card-bg-color: #f9f9f9;
+            --text-color: #222222;
+            --primary-color: #007acc;
+            --border-color: #e0e0e0;
+            --error-color: #d32f2f;
+            --success-color: #388e3c;
+            --label-color: #666;
+            --input-bg-color: #f0f0f0;
+            --exception-bg: #f5f5f5;
+            --exception-border: #ddd;
+        }
+
+        body.dark-theme {
+            --bg-color: #1a1a1a;
+            --card-bg-color: #2c2c2c;
+            --text-color: #e0e0e0;
+            --primary-color: #00bcd4;
+            --border-color: #444;
+            --error-color: #ff5252;
+            --success-color: #4caf50;
+            --label-color: #aaa;
+            --input-bg-color: #333;
+            --exception-bg: #111;
+            --exception-border: #444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0; /* Left-align content */
+        }
+
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: var(--card-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .nav {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .nav a {
+            color: var(--text-color);
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: normal; /* Consistent font weight */
+        }
+
+        .nav a.active {
+            font-weight: bold;
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .nav a:not(.active):hover {
+            background-color: var(--border-color);
+        }
+
+        .header-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.8em;
+            margin-bottom: 5px;
+            color: var(--label-color);
+        }
+
+        input[type="text"], select {
+            background-color: var(--input-bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 1em;
+        }
+        
+        button#theme-toggle {
+            padding: 8px 12px;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--card-bg-color);
+            color: var(--text-color);
+        }
+
+        input#url {
+            flex-grow: 1;
+            min-width: 300px;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--card-bg-color);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .card h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+        .stat-item .label {
+            color: var(--label-color);
+        }
+        .stat-item .value {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        #exceptions-list {
+            height: 300px;
+            overflow-y: auto;
+            background-color: var(--exception-bg);
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.8em;
+            white-space: pre-wrap;
+            border: 1px solid var(--exception-border);
+        }
+        .exception-item {
+            padding: 10px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+        .exception-item:last-child {
+            border-bottom: none;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 10px;
+            vertical-align: middle;
+            transition: background-color 0.5s ease;
+        }
+        .status-ok { background-color: var(--success-color); }
+        .status-error { background-color: var(--error-color); }
+        .status-pending { background-color: #ffc107; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header class="header">
+             <nav class="nav">
+                <a href="../ui/index.html">Stream Query</a>
+                <a href="./index.html" class="active">Statistics</a>
+            </nav>
+            <div class="header-item" style="flex-grow: 1;">
+                <label for="url">API URL (/api/StreamQuery)</label>
+                <input id="url" type="text" spellcheck="false">
+            </div>
+            <div class="header-item">
+                <label for="refresh-interval">Auto-Refresh</label>
+                <select id="refresh-interval">
+                    <option value="0">Off</option>
+                    <option value="1000">1s</option>
+                    <option value="5000">5s</option>
+                    <option value="10000">10s</option>
+                    <option value="30000">30s</option>
+                </select>
+            </div>
+             <div class="header-item">
+                <label>Theme</label>
+                <button id="theme-toggle">Toggle Theme</button>
+            </div>
+            <div class="header-item">
+                <label>Status</label>
+                <div style="padding-top: 8px;">
+                    <span id="last-updated">Never</span>
+                    <span id="status-indicator" class="status-indicator"></span>
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard">
+            <div class="card">
+                <h3>Queue & Throughput</h3>
+                <div class="stat-item">
+                    <span class="label">Insert Queue Length</span>
+                    <span id="stat-InsertQueueLength" class="value">...</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Throughput (1 sec)</span>
+                    <span id="stat-ThroughputLast1Sec" class="value">...</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Throughput (10 sec)</span>
+                    <span id="stat-ThroughputLast10Sec" class="value">...</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Throughput (1 min)</span>
+                    <span id="stat-ThroughputLast1Min" class="value">...</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Throughput (5 min)</span>
+                    <span id="stat-ThroughputLast5Min" class="value">...</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Throughput (10 min)</span>
+                    <span id="stat-ThroughputLast10Min" class="value">...</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Throughput (15 min)</span>
+                    <span id="stat-ThroughputLast15Min" class="value">...</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Internal State</h3>
+                 <div class="stat-item">
+                    <span class="label">Cached 'Latest Entries'</span>
+                    <span id="stat-LatestEntriesCacheCount" class="value">...</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Created Directories</span>
+                    <span id="stat-CreatedDirectoriesCount" class="value">...</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Blacklisted Measurements</span>
+                    <span id="stat-BlacklistedMeasurementsCount" class="value">...</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Throughput Timestamps Cached</span>
+                    <span id="stat-ProcessedItemsTimestampCache" class="value">...</span>
+                </div>
+            </div>
+
+            <div class="card" style="grid-column: 1 / -1;">
+                <h3>Last 10 Exceptions</h3>
+                <div id="exceptions-list">
+                    <span style="color: var(--label-color);">No exceptions logged yet.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const URL_STORAGE_KEY = 'kala-stats-url';
+        const INTERVAL_STORAGE_KEY = 'kala-stats-interval';
+        const THEME_STORAGE_KEY = 'kala-stats-theme';
+
+        const urlInput = document.getElementById('url');
+        const intervalSelect = document.getElementById('refresh-interval');
+        const lastUpdatedSpan = document.getElementById('last-updated');
+        const statusIndicator = document.getElementById('status-indicator');
+        const themeToggleBtn = document.getElementById('theme-toggle');
+
+        let refreshTimer = null;
+
+        async function fetchStats() {
+            const apiUrl = urlInput.value;
+            if (!apiUrl) {
+                console.error("API URL is not set.");
+                return;
+            }
+            
+            statusIndicator.className = 'status-indicator status-pending';
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: 'Mgmt Statistics'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                if (!response.body) {
+                    throw new Error('ReadableStream not available.');
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+                let result = '';
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    result += decoder.decode(value, { stream: true });
+                }
+
+                const data = JSON.parse(result);
+                const stats = data[0]; 
+                
+                if (stats) {
+                    updateDashboard(stats);
+                    statusIndicator.className = 'status-indicator status-ok';
+                    lastUpdatedSpan.textContent = new Date().toLocaleTimeString();
+                } else {
+                     throw new Error('Statistics data not found in response.');
+                }
+            } catch (error) {
+                console.error('Failed to fetch statistics:', error);
+                statusIndicator.className = 'status-indicator status-error';
+                lastUpdatedSpan.textContent = `Error!`;
+            }
+        }
+
+        function updateDashboard(stats) {
+            for (const key in stats) {
+                const element = document.getElementById(`stat-${key}`);
+                if (element) {
+                    element.textContent = stats[key];
+                }
+            }
+            
+            const exceptionsList = document.getElementById('exceptions-list');
+            if (stats.Last10Exceptions && stats.Last10Exceptions.length > 0) {
+                exceptionsList.innerHTML = '';
+                stats.Last10Exceptions.slice().reverse().forEach(ex => {
+                    const item = document.createElement('div');
+                    item.className = 'exception-item';
+                    item.textContent = ex;
+                    exceptionsList.appendChild(item);
+                });
+            } else {
+                exceptionsList.innerHTML = `<span style="color: var(--label-color);">No exceptions logged yet.</span>`;
+            }
+        }
+
+        function handleIntervalChange() {
+            const interval = parseInt(intervalSelect.value, 10);
+            localStorage.setItem(INTERVAL_STORAGE_KEY, interval);
+
+            if (refreshTimer) {
+                clearInterval(refreshTimer);
+                refreshTimer = null;
+            }
+
+            if (interval > 0) {
+                refreshTimer = setInterval(fetchStats, interval);
+            }
+        }
+
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('dark-theme');
+                themeToggleBtn.textContent = '☀️ Light Mode';
+            } else {
+                document.body.classList.remove('dark-theme');
+                themeToggleBtn.textContent = '🌙 Dark Mode';
+            }
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+            applyTheme(newTheme);
+        }
+
+        function setup() {
+            // Setup URL
+            const savedUrl = localStorage.getItem(URL_STORAGE_KEY);
+            if (savedUrl) {
+                urlInput.value = savedUrl;
+            } else {
+                const baseUrl = window.location.origin;
+                urlInput.value = baseUrl + "/api/StreamQuery"; 
+            }
+            urlInput.addEventListener('change', () => {
+                localStorage.setItem(URL_STORAGE_KEY, urlInput.value);
+            });
+
+            // Setup refresh interval
+            const savedInterval = localStorage.getItem(INTERVAL_STORAGE_KEY);
+            if (savedInterval) {
+                intervalSelect.value = savedInterval;
+            }
+            intervalSelect.addEventListener('change', handleIntervalChange);
+            
+            // Setup Theme
+            const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'light'; // Light is default
+            applyTheme(savedTheme);
+            themeToggleBtn.addEventListener('click', toggleTheme);
+
+
+            // Initial fetch and setup timer
+            fetchStats();
+            handleIntervalChange();
+        }
+
+        window.onload = setup;
+    </script>
+
+</body>
+</html>
