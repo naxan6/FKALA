@@ -153,6 +153,74 @@
         .status-ok { background-color: var(--success-color); } /* Assuming --success-color is defined elsewhere or a fallback */
         .status-error { background-color: var(--error-color); } /* Assuming --error-color is defined elsewhere or a fallback */
         .status-pending { background-color: #ffc107; }
+
+        /* Dropdown styles */
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown button {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .dropdown-content {
+            display: none; /* Initially hidden */
+            position: absolute;
+            background-color: var(--card-bg-color);
+            min-width: 180px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 100;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            padding: 10px 0;
+            right: 0; /* Align to the right of the button */
+        }
+        .dropdown-content.hidden { display: none; }
+        .dropdown-content:not(.hidden) { display: block; }
+        
+        /* Toggle Switch styles */
+        .view-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px;
+            cursor: pointer;
+            -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+            transition: background-color 0.2s;
+        }
+        .view-toggle:hover { background-color: var(--border-color); }
+        .view-toggle span { flex-grow: 1; padding-right: 10px; }
+        .view-toggle input {
+            position: relative;
+            width: 40px;
+            height: 20px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--input-bg-color);
+            outline: none;
+            border-radius: 20px;
+            border: 1px solid var(--button-border-color);
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .view-toggle input:checked {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .view-toggle input::before {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            top: 1px;
+            left: 1px;
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .view-toggle input:checked::before {
+            transform: translateX(20px);
+            background: #fff;
+        }
     </style>
     <script>
         const URL_STORAGE_KEY = 'kala-stats-url'; 
@@ -201,7 +269,7 @@
         function prefill(selection) {
             let text = '';
             if (selection === 'List Measurements') { text = 'Mgmt ListMeasurements';
-            } else if (selection === 'Kala-Fehler') { text = 'Load k<measure>: regex:kala.* now-10m now NoCache\nPubl regex:k.* Table';
+            } else if (selection === 'Kala-Fehler') { text = 'Load k<measure>: regex:kala.*s now-10m now NoCache\nPubl regex:k.* Table';
             } else if (selection == 'Regex Zisterne') {
                 text = 'Load <measure:.*[$].*[$](.*)>: regex:zisterne[$]esp_ping[$].* NewestOnly\n' + 
                        'Aggr a<measure>: regex:.* Infinite Last\n' + 
@@ -466,19 +534,11 @@
             }
         }
         
-        function toggleCard(cardId) {
-            const card = document.getElementById(cardId);
-            card.classList.toggle('hidden');
-            const button = document.querySelector(`[onclick="toggleCard('${cardId}')"]`);
-            if (button) {
-                button.textContent = card.classList.contains('hidden') ? 'Show' : 'Hide';
-            }
-        }
-
         window.onload = () => {
             const urlInput = document.getElementById('url'), intervalSelect = document.getElementById('refresh-interval');
             const themeToggleBtn = document.getElementById('theme-toggle'), queryTextarea = document.getElementById('query');
 
+            // --- Re-establish existing listeners ---
             urlInput.value = localStorage.getItem(URL_STORAGE_KEY) || (window.location.origin + "/api/StreamQuery");
             urlInput.addEventListener('change', () => localStorage.setItem(URL_STORAGE_KEY, urlInput.value));
 
@@ -506,23 +566,48 @@
             document.getElementById('cancel').addEventListener('click', () => {
                 cancelled = true;
                 if (streamReader) {
-                    streamReader.cancel("user").catch(() => {}); // Suppress unhandled rejection
+                    streamReader.cancel("user").catch(() => {}); // Instant cancel logic
                 }
             });
-            document.getElementById('show-all-btn').addEventListener('click', () => {
-                document.querySelectorAll('.card.hidden').forEach(c => c.classList.remove('hidden'));
-                document.getElementById('show-all-btn').classList.add('hidden');
-            });
-
+            
             const outputDiv = document.getElementById('output');
             const tableOutputContainer = document.getElementById('table-output-container');
 
             outputDiv.addEventListener('scroll', () => {
-                // If user scrolls up, set the flag. If they scroll back to bottom, unset it.
                 userScrolledRaw = outputDiv.scrollTop + outputDiv.clientHeight < outputDiv.scrollHeight - 20;
             });
             tableOutputContainer.addEventListener('scroll', () => {
                 userScrolledTable = tableOutputContainer.scrollTop + tableOutputContainer.clientHeight < tableOutputContainer.scrollHeight - 20;
+            });
+
+            // --- New View Menu Logic ---
+            const viewMenuBtn = document.getElementById('view-menu-btn');
+            const viewMenuDropdown = document.getElementById('view-menu-dropdown');
+            
+            viewMenuBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+                viewMenuDropdown.classList.toggle('hidden');
+            });
+
+            // Hide dropdown if clicking outside
+            document.addEventListener('click', (event) => {
+                if (!viewMenuBtn.contains(event.target) && !viewMenuDropdown.contains(event.target)) {
+                    viewMenuDropdown.classList.add('hidden');
+                }
+            });
+
+            viewMenuDropdown.querySelectorAll('input[type="checkbox"]').forEach(toggle => {
+                const cardId = toggle.getAttribute('data-card-id');
+                const card = document.getElementById(cardId);
+                if (!card) return;
+
+                // Set initial checkbox state based on card visibility
+                toggle.checked = !card.classList.contains('hidden');
+
+                // Add listener to toggle card visibility
+                toggle.addEventListener('change', () => {
+                    card.classList.toggle('hidden', !toggle.checked);
+                });
             });
         };
     </script>
@@ -560,7 +645,15 @@
                 </div>
             </div>
             <div class="header-item">
-                <button id="show-all-btn" class="hidden">Show Hidden Cards</button>
+                <label>View</label>
+                <div class="dropdown">
+                    <button id="view-menu-btn">Sections &#9662;</button>
+                    <div id="view-menu-dropdown" class="dropdown-content hidden">
+                        <label class="view-toggle"><span>Query</span><input type="checkbox" id="toggle-query-card" data-card-id="query-card" checked></label>
+                        <label class="view-toggle"><span>Raw Stream</span><input type="checkbox" id="toggle-raw-stream-card" data-card-id="raw-stream-card" checked></label>
+                        <label class="view-toggle"><span>Table Data</span><input type="checkbox" id="toggle-table-data-card" data-card-id="table-data-card" checked></label>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -591,9 +684,6 @@
         <div id="raw-stream-card" class="card resizable-card" style="height: 260px;">
             <h3>
                 <span class="title">Raw Stream Output</span>
-                <span class="controls">
-                     <button onclick="toggleCard('raw-stream-card')">Hide</button>
-                </span>
             </h3>
             <div id="output" class="scrollable-div"></div>
         </div>
@@ -601,9 +691,6 @@
         <div id="table-data-card" class="card resizable-card" style="height: 260px;">
             <h3>
                 <span class="title">Table Data</span>
-                 <span class="controls">
-                    <button onclick="toggleCard('table-data-card')">Hide</button>
-                </span>
             </h3>
             <div id="table-output-container" class="scrollable-div"></div>
         </div>
