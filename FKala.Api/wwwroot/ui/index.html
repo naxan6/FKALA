@@ -41,16 +41,14 @@
             color: var(--text-color);
             margin: 0;
             padding: 20px;
-            transition: background-color 0.3s, color 0.3s;
         }
 
         .container {
             max-width: 1200px;
-            margin: 0; /* Left-aligned */
+            margin: 0;
             display: flex;
             flex-direction: column;
             gap: 20px;
-            transition: max-width 0.3s ease-in-out;
         }
 
         .header {
@@ -64,198 +62,84 @@
             border-radius: 8px;
         }
 
-        .nav {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
         .nav a {
-            color: var(--text-color);
-            text-decoration: none;
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-weight: normal;
+            color: var(--text-color); text-decoration: none; padding: 8px 12px;
+            border-radius: 4px; font-weight: normal;
         }
-
-        .nav a.active {
-            font-weight: bold;
-            background-color: var(--primary-color);
-            color: white;
-        }
+        .nav a.active { font-weight: bold; background-color: var(--primary-color); color: white; }
+        .nav a:not(.active):hover { background-color: var(--border-color); }
         
-        .nav a:not(.active):hover {
-            background-color: var(--border-color);
-        }
-        
-        .header-item {
-            display: flex;
-            flex-direction: column;
-        }
-
-        label {
-            font-size: 0.8em;
-            margin-bottom: 5px;
-            color: var(--label-color);
-        }
+        .header-item { display: flex; flex-direction: column; }
+        label { font-size: 0.8em; margin-bottom: 5px; color: var(--label-color); }
 
         input[type="text"], textarea, select {
-            background-color: var(--input-bg-color);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 8px;
-            font-size: 1em;
+            background-color: var(--input-bg-color); color: var(--text-color); border: 1px solid var(--border-color);
+            border-radius: 4px; padding: 8px; font-size: 1em;
         }
         input#url { flex-grow: 1; min-width: 300px;}
         textarea#query {
-            font-family: 'Courier New', Courier, monospace;
-            width: 100%;
-            box-sizing: border-box;
-            min-width: 0;
+            font-family: 'Courier New', Courier, monospace; width: 100%; box-sizing: border-box;
+            min-width: 0; flex-grow: 1; resize: none; 
         }
 
         button {
-             background-color: var(--button-bg-color);
-             color: var(--button-text-color);
-             border: 1px solid var(--button-border-color);
-             border-radius: 4px;
-             padding: 8px 12px;
-             cursor: pointer;
-             font-size: 0.9em;
+             background-color: var(--button-bg-color); color: var(--button-text-color); border: 1px solid var(--button-border-color);
+             border-radius: 4px; padding: 8px 12px; cursor: pointer; font-size: 0.9em;
         }
-        button:hover {
-            border-color: var(--primary-color);
-        }
+        button:hover { border-color: var(--primary-color); }
 
         .card {
-            background-color: var(--card-bg-color);
-            border-radius: 8px;
-            padding: 20px;
-            border: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            transition: all 0.3s ease-in-out;
+            background-color: var(--card-bg-color); border-radius: 8px; padding: 20px;
+            border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 15px;
+        }
+        .resizable-card {
+            resize: both;
+            overflow: auto;
+            min-height: 250px;
+            min-width: 350px;
         }
         
-        .card-content {
-             transition: all 0.3s ease-in-out;
-        }
-        .hidden {
-            display: none !important;
-        }
+        .hidden { display: none !important; }
 
-
-        .query-grid {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
-            gap: 20px;
-        }
+        .query-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px; flex-grow: 1; }
+        .query-grid > div:first-child { display: flex; flex-direction: column; }
         
-        #query-examples a {
-            color: var(--primary-color);
-            text-decoration: none;
-            display: block;
-            margin-bottom: 8px;
-        }
-        #query-examples a:hover {
-            text-decoration: underline;
-        }
+        #query-examples a { color: var(--primary-color); text-decoration: none; display: block; }
+        #query-examples a:hover { text-decoration: underline; }
         
         .card h3 {
-            margin: 0;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            margin: 0; padding-bottom: 10px; border-bottom: 1px solid var(--border-color);
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .card h3 .title {
-            color: var(--primary-color);
-            font-weight: bold;
-        }
-        .card h3 .controls {
-            display: flex;
-            gap: 10px;
-        }
-        .card h3 .controls button {
-            font-size: 0.8em;
-            font-weight: normal;
-            margin-left: 5px;
-        }
+        .card h3 .title { color: var(--primary-color); font-weight: bold; }
+        .card h3 .controls button { font-size: 0.8em; font-weight: normal; margin-left: 5px; }
 
         .scrollable-div {
-            width: 100%;
-            min-height: 200px;
-            overflow: auto;
-            border: 1px solid var(--border-color);
-            padding: 10px;
-            background-color: var(--input-bg-color);
-            font-family: 'Courier New', Courier, monospace;
-            box-sizing: border-box;
-            display: block;
-        }
-        #table-output-container {
-            resize: none; /* Disable native resize */
-        }
-        
-        .resize-handle-v {
-            cursor: ns-resize;
-            width: 100%;
-            height: 10px;
-            background-color: var(--border-color);
-            margin-top: -10px; /* Overlap with border */
-            position: relative;
-            z-index: 50;
-        }
-        .resize-handle-v:hover {
-            background-color: var(--primary-color);
+            width: 100%; overflow: auto; border: 1px solid var(--border-color);
+            padding: 10px; background-color: var(--input-bg-color);
+            font-family: 'Courier New', Courier, monospace; box-sizing: border-box;
+            flex-grow: 1; /* Let it fill the card */
         }
 
         .json-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.9em;
+            width: 100%; border-collapse: collapse; font-size: 0.9em;
         }
         .json-table th, .json-table td {
-            border: 1px solid var(--border-color);
-            padding: 6px;
-            text-align: left;
-            vertical-align: top;
-            word-break: break-all;
-            position: relative; 
+            border: 1px solid var(--border-color); padding: 6px; text-align: left;
+            vertical-align: top; word-break: break-all; position: relative; 
         }
-        .json-table thead {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-        .json-table th {
-            background-color: var(--table-header-bg);
-        }
-        .json-table tbody tr:hover {
-            background-color: var(--table-hover-bg);
-        }
+        .json-table thead { position: sticky; top: -1px; z-index: 10; }
+        .json-table th { background-color: var(--table-header-bg); }
+        .json-table tbody tr:hover { background-color: var(--table-hover-bg); }
 
         .resize-handle-h {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 5px;
-            height: 100%;
-            cursor: col-resize;
-            user-select: none;
-            z-index: 20;
+            position: absolute; top: 0; right: 0; width: 5px; height: 100%;
+            cursor: col-resize; user-select: none; z-index: 20;
         }
 
         .spinner {
-            border: 5px solid var(--border-color);
-            border-top: 5px solid var(--primary-color);
-            border-radius: 50%;
-            width: 10px;
-            height: 10px;
-            animation: spin 1s linear infinite;
+            border: 5px solid var(--border-color); border-top: 5px solid var(--primary-color);
+            border-radius: 50%; width: 10px; height: 10px; animation: spin 1s linear infinite;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -263,105 +147,61 @@
         }
 
         .status-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-left: 10px;
-            vertical-align: middle;
-            transition: background-color 0.5s ease;
+            width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-left: 10px;
+            vertical-align: middle; transition: background-color 0.5s ease;
         }
-        .status-ok { background-color: var(--success-color); }
-        .status-error { background-color: var(--error-color); }
+        .status-ok { background-color: var(--success-color); } /* Assuming --success-color is defined elsewhere or a fallback */
+        .status-error { background-color: var(--error-color); } /* Assuming --error-color is defined elsewhere or a fallback */
         .status-pending { background-color: #ffc107; }
-
     </style>
     <script>
         const URL_STORAGE_KEY = 'kala-stats-url'; 
         const THEME_STORAGE_KEY = 'kala-stats-theme';
         const INTERVAL_STORAGE_KEY = 'kala-ui-interval';
+        
+        var cancelled = false, isProgrammaticScroll = false, userScrolled = false;
+        let jsonBuffer = "", allData = [], tableHeaders = [], isArrayStream = false, refreshTimer = null;
 
         function applyTheme(theme) {
             document.body.classList.toggle('dark-theme', theme === 'dark');
             document.getElementById('theme-toggle').textContent = theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
         }
+
         function toggleTheme() {
             const newTheme = document.body.classList.contains('dark-theme') ? 'light' : 'dark';
             localStorage.setItem(THEME_STORAGE_KEY, newTheme);
             applyTheme(newTheme);
         }
-
+        
         function makeTableResizable(table) {
             const headers = table.querySelectorAll('th');
             headers.forEach(header => {
                 const resizeHandle = document.createElement('div');
                 resizeHandle.classList.add('resize-handle-h');
                 header.appendChild(resizeHandle);
-
                 resizeHandle.addEventListener('mousedown', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
+                    e.preventDefault(); e.stopPropagation();
                     const startX = e.pageX;
                     const startWidth = header.offsetWidth;
-                    
-                    const onMouseMove = (e) => {
-                        const newWidth = startWidth + (e.pageX - startX);
-                        if (newWidth > 40) {
-                           header.style.width = `${newWidth}px`;
-                           table.style.tableLayout = 'fixed';
-                        }
+                    table.style.tableLayout = 'fixed';
+                    const onMouseMove = (moveEvent) => {
+                        const newWidth = startWidth + (moveEvent.pageX - startX);
+                        if (newWidth > 40) header.style.width = `${newWidth}px`;
                     };
-
                     const onMouseUp = () => {
                         document.removeEventListener('mousemove', onMouseMove);
                         document.removeEventListener('mouseup', onMouseUp);
                     };
-
                     document.addEventListener('mousemove', onMouseMove);
                     document.addEventListener('mouseup', onMouseUp);
                 });
             });
         }
-
-        function makeCardResizable(cardContentId, handleId) {
-            const handle = document.getElementById(handleId);
-            const cardContent = document.getElementById(cardContentId);
-
-            handle.addEventListener('mousedown', (e) => {
-                e.preventDefault();
-                const startY = e.pageY;
-                const startHeight = cardContent.offsetHeight;
-
-                const onMouseMove = (e) => {
-                    const newHeight = startHeight + (e.pageY - startY);
-                    if (newHeight > 100) { // min height
-                        cardContent.style.height = `${newHeight}px`;
-                    }
-                };
-
-                const onMouseUp = () => {
-                    document.removeEventListener('mousemove', onMouseMove);
-                    document.removeEventListener('mouseup', onMouseUp);
-                };
-
-                document.addEventListener('mousemove', onMouseMove);
-                document.addEventListener('mouseup', onMouseUp);
-            });
-        }
         
-        var cancelled = false;
-        let isProgrammaticScroll = false;
-        let userScrolled = false;
-        let jsonBuffer = "";
-        let allData = [];
-        let tableHeaders = [];
-        let isArrayStream = false;
-        let refreshTimer = null;
-
         function prefill(selection) {
             let text = '';
-            if (selection == 'List Measurements') {
-                text = 'Mgmt ListMeasurements';
+            if (selection === 'List Measurements') { text = 'Mgmt ListMeasurements';
+            } else if (selection === 'Kala-Fehler') { text = 'Load k<measure>: regex:kala.* now-10m now NoCache\nPubl regex:k.* Table';
             } else if (selection == 'Regex Zisterne') {
                 text = 'Load <measure:.*[$].*[$](.*)>: regex:zisterne[$]esp_ping[$].* NewestOnly\n' +
                        'Aggr a<measure>: regex:.* Infinite Last\n' +
@@ -372,10 +212,7 @@
                        'Aggr <measure:.*[$]Mi(.*)_.*>_Batt: regex:l.* Infinite Last EmptyWindows\n' +
                        'Aggr <measure:.*[$]Mi(.*)_.*>_Temp: regex:t.* Infinite Last EmptyWindows\n\n' +
                        'Publ regex:.*(_Batt|_Temp) Table';
-            } else if (selection == 'Kala-Fehler') {
-                text = 'Load k<measure>: regex:kala.* now-10m now NoCache\n' +
-                       'Publ regex:k.* Table';
-            } else if (selection == 'PV Beispiel') {
+            } else if (selection === 'PV Beispiel') {
                 text = '#Var $FROM "${__from:date:iso:YYYY-MM-DDTHH:mm:ss}"\n' +
                        '#Var $TO "${__to:date:iso:YYYY-MM-DDTHH:mm:ss}"\n' +
                        '#Var $CACHE Auto(${__interval_ms})_WAvg_REFRESHINCREMENTAL\n' +
@@ -410,8 +247,7 @@
                        'Expr PrognoseForecast: "aPrognoseForecast.Value / 1000.0"\n' +
                        'Expr Verluste: "-(PV.Value+Netzbezug.Value+Akkuentladung.Value+Verbrauch.Value+Netzeinspeisung.Value+Akkuladung.Value)"\n\n' +
                        'Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch,PrognoseSolcast,PrognoseForecast,Verluste" Table\n';
-            } else if (selection == 'Mgmt Examples') {
-                text = 'Mgmt FSCHK kala$errors\n' +
+            } else if (selection === 'Mgmt Examples') { text = 'Mgmt FSCHK kala$errors\n' +
                        '#Mgmt FSCHK\n' +
                        '#Mgmt ListMeasurements\n' +
                        '#Mgmt COPY\n' +
@@ -422,21 +258,16 @@
                        '#Mgmt SORTRAWFILES   - UNNÖTIG!\n' +
                        '#Mgmt BENCHIO\n' +
                        '#Mgmt IMPORTINFLUX\n' +
-                       '#Mgmt IMPORTTSTSFE\n';
-            }
+                       '#Mgmt IMPORTTSTSFE\n';; } /* Corrected escape for newline */
             document.getElementById('query').value = text;
+            handleSendClick(true);
         }
 
         function handleIntervalChange() {
             const intervalSelect = document.getElementById('refresh-interval');
             const interval = parseInt(intervalSelect.value, 10);
             localStorage.setItem(INTERVAL_STORAGE_KEY, interval);
-
-            if (refreshTimer) {
-                clearInterval(refreshTimer);
-                refreshTimer = null;
-            }
-
+            if (refreshTimer) clearInterval(refreshTimer);
             if (interval > 0) {
                 refreshTimer = setInterval(() => handleSendClick(false), interval);
             }
@@ -444,8 +275,7 @@
         
         async function handleSendClick(isManual) {
             const sendButton = document.getElementById('send');
-            if(sendButton.disabled) return;
-
+            if (sendButton.disabled) return;
             if (isManual) {
                 const intervalSelect = document.getElementById('refresh-interval');
                 if (intervalSelect.value !== "0") {
@@ -453,35 +283,161 @@
                     handleIntervalChange();
                 }
             }
-            
-            const urlInput = document.getElementById('url');
-            const query = document.getElementById('query').value;
-            const statusIndicator = document.getElementById('status-indicator');
-            const lastUpdatedSpan = document.getElementById('last-updated');
-            
+            const urlInput = document.getElementById('url'), query = document.getElementById('query').value;
+            const statusIndicator = document.getElementById('status-indicator'), lastUpdatedSpan = document.getElementById('last-updated');
             statusIndicator.className = 'status-indicator status-pending';
             lastUpdatedSpan.textContent = 'Sending...';
-            
-            cancelled = false;
-            jsonBuffer = "";
-            allData = [];
-            tableHeaders = [];
-            isArrayStream = false;
-            
+            cancelled = false, jsonBuffer = "", allData = [], tableHeaders = [], isArrayStream = false;
             document.getElementById('table-output-container').innerHTML = ""; 
             document.getElementById('output').innerHTML = ""; 
-            
             sendButton.disabled = true;
             document.getElementById("ladeAnzeige").style.display = "inline-flex";
-            
             await streamquery(urlInput.value, query);
         }
 
+        function resetUI(status) {
+            const statusIndicator = document.getElementById('status-indicator'), lastUpdatedSpan = document.getElementById('last-updated');
+            document.getElementById("ladeAnzeige").style.display = "none";
+            document.getElementById('send').disabled = false;
+            if (status === 'ok') {
+                 statusIndicator.className = 'status-indicator status-ok';
+                 lastUpdatedSpan.textContent = new Date().toLocaleTimeString();
+            } else if (status === 'error') {
+                 statusIndicator.className = 'status-indicator status-error';
+                 lastUpdatedSpan.textContent = 'Error';
+            } else {
+                 statusIndicator.className = 'status-indicator';
+                 lastUpdatedSpan.textContent = 'Idle';
+            }
+        }
+
+        function appendRowToTable(row) {
+            const tbody = document.getElementById('json-table-body');
+            if (!tbody) return;
+            let html = '<tr>';
+            tableHeaders.forEach(header => {
+                let value = row[header];
+                if (typeof value === 'number') value = value.toFixed(4);
+                else if (value === null || typeof value === 'undefined') value = '<em>null</em>';
+                html += `<td>${value}</td>`;
+            });
+            html += '</tr>';
+            tbody.insertAdjacentHTML('beforeend', html);
+        }
+
+        function rebuildTableWithNewHeaders() {
+            const tableContainer = document.getElementById('table-output-container');
+            if (tableContainer.classList.contains('hidden')) return;
+            let html = '<table class="json-table"><thead><tr>';
+            tableHeaders.forEach(key => html += `<th>${key}</th>`);
+            html += '</tr></thead><tbody id="json-table-body"></tbody></table>';
+            tableContainer.innerHTML = html;
+            allData.forEach(row => appendRowToTable(row));
+            const table = tableContainer.querySelector('.json-table');
+            if (table) makeTableResizable(table);
+        }
+
+        function findCompleteObject(buffer, startIndex) {
+            let braceDepth = 0, inString = false, escape = false;
+            for (let i = startIndex; i < buffer.length; i++) {
+                const char = buffer[i];
+                if (escape) { escape = false; continue; } /* Corrected escape character */
+                if (char === '\\') { escape = true; continue; } /* Corrected escape character */
+                if (char === '"') { inString = !inString; continue; } /* Corrected quote character */
+                if (inString) { continue; }
+                if (char === '{') { braceDepth++; } 
+                else if (char === '}') {
+                    braceDepth--;
+                    if (braceDepth === 0) return [buffer.substring(startIndex, i + 1), i];
+                }
+            }
+            return [null, -1];
+        }
+
+        function parseAndRenderBuffer() {
+            if (!isArrayStream) return;
+            let newHeadersFound = false;
+            while(true) { 
+                let objectStartIndex = jsonBuffer.indexOf('{');
+                if (objectStartIndex === -1) break;
+                const [objectString, objectEndIndex] = findCompleteObject(jsonBuffer, objectStartIndex);
+                if (objectString === null) break;
+                jsonBuffer = jsonBuffer.substring(objectEndIndex + 1);
+                try {
+                    const parsedObject = JSON.parse(objectString);
+                    allData.push(parsedObject);
+                    Object.keys(parsedObject).forEach(key => {
+                        if (!tableHeaders.includes(key)) {
+                            tableHeaders.push(key); newHeadersFound = true;
+                        }
+                    });
+                    if (!newHeadersFound) appendRowToTable(parsedObject);
+                } catch(e) { console.warn("Could not parse JSON object:", objectString, e); }
+            }
+            if (newHeadersFound) rebuildTableWithNewHeaders();
+        }
+
+        function datePrefix() { return `<span style="color:var(--label-color);">${new Date().toISOString()} # </span>`; }
+
+        async function streamquery(url, query) {
+            const outputDiv = document.getElementById('output');
+            let reader, firstline = true;
+            try {
+                const fetchOptions = {
+                    method: "POST",
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: query
+                };
+                const response = await fetch(url, fetchOptions);
+                if (!response.body) throw new Error('ReadableStream not supported.');
+                reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+                while(true) {
+                    const { done, value } = await reader.read();
+                    if (done) {
+                        outputDiv.innerHTML += `<br>${datePrefix()}Stream Complete<br>`;
+                        resetUI('ok'); break;
+                    }
+                    const chunk = decoder.decode(value, {stream: true});
+                    if (firstline) {
+                        outputDiv.innerHTML = `<br>${datePrefix()}Stream Start<br>`;
+                        if (chunk.trim().startsWith("[")) {
+                            isArrayStream = true;
+                            rebuildTableWithNewHeaders();
+                        }
+                        firstline = false;
+                    }
+                    outputDiv.innerHTML += chunk.replace(/{/g, `<br>${datePrefix()}{`);
+                    if (isArrayStream) {
+                        jsonBuffer += chunk;
+                        parseAndRenderBuffer();
+                    }
+                    if (cancelled) {
+                        reader.cancel("user");
+                        outputDiv.innerHTML += `<br>${datePrefix()}Stream Cancelled<br>`;
+                        resetUI('ok'); break;
+                    }
+                }
+            } catch(error) {
+                const message = cancelled ? "Stream cancelled by user." : `Stream Failed/Aborted: ${error.message}`;
+                console.error(message, error);
+                if (!cancelled) outputDiv.innerHTML += `<br>${datePrefix()}<span style='color:red;'>${message}</span><br>`;
+                resetUI('error');
+            }
+        }
+        
+        function toggleCard(cardId) {
+            const card = document.getElementById(cardId);
+            card.classList.toggle('hidden');
+            const button = document.querySelector(`[onclick="toggleCard('${cardId}')"]`);
+            if (button) {
+                button.textContent = card.classList.contains('hidden') ? 'Show' : 'Hide';
+            }
+        }
+
         window.onload = () => {
-            const urlInput = document.getElementById('url');
-            const intervalSelect = document.getElementById('refresh-interval');
-            const themeToggleBtn = document.getElementById('theme-toggle');
-            const queryTextarea = document.getElementById('query');
+            const urlInput = document.getElementById('url'), intervalSelect = document.getElementById('refresh-interval');
+            const themeToggleBtn = document.getElementById('theme-toggle'), queryTextarea = document.getElementById('query');
 
             urlInput.value = localStorage.getItem(URL_STORAGE_KEY) || (window.location.origin + "/api/StreamQuery");
             urlInput.addEventListener('change', () => localStorage.setItem(URL_STORAGE_KEY, urlInput.value));
@@ -491,9 +447,7 @@
             themeToggleBtn.addEventListener('click', toggleTheme);
             
             const savedInterval = localStorage.getItem(INTERVAL_STORAGE_KEY);
-            if (savedInterval) {
-                intervalSelect.value = savedInterval;
-            }
+            if (savedInterval) intervalSelect.value = savedInterval;
             intervalSelect.addEventListener('change', handleIntervalChange);
             handleIntervalChange();
 
@@ -505,207 +459,16 @@
             });
 
             document.getElementById('send').addEventListener('click', () => handleSendClick(true));
-
             document.getElementById('clear').addEventListener('click', () => {
                 document.getElementById('output').innerHTML = "";
                 document.getElementById('table-output-container').innerHTML = "";
             });
-
             document.getElementById('cancel').addEventListener('click', () => cancelled = true);
-
-            document.getElementById('output').addEventListener('scroll', () => {
-                const outputDiv = document.getElementById('output');
-                if (!isProgrammaticScroll) {                    
-                    const isScrolledToBottom = outputDiv.scrollHeight - outputDiv.clientHeight <= outputDiv.scrollTop + 1;
-                    userScrolled = !isScrolledToBottom;
-                }
-                isProgrammaticScroll = false;
+            document.getElementById('show-all-btn').addEventListener('click', () => {
+                document.querySelectorAll('.card.hidden').forEach(c => c.classList.remove('hidden'));
+                document.getElementById('show-all-btn').classList.add('hidden');
             });
-            
-            makeCardResizable('table-output-container', 'table-resize-handle');
-        }
-
-        function toggleContent(contentId, button) {
-            const content = document.getElementById(contentId);
-            const isHidden = content.classList.toggle('hidden');
-            button.textContent = isHidden ? 'Show' : 'Hide';
-        }
-
-        function autoScroll() {
-            const outputDiv = document.getElementById('output');
-            if (!userScrolled) {
-                isProgrammaticScroll = true;
-                outputDiv.scrollTop = outputDiv.scrollHeight;
-            }
-        }
-
-        function resetUI(status) {
-            const statusIndicator = document.getElementById('status-indicator');
-            const lastUpdatedSpan = document.getElementById('last-updated');
-
-            document.getElementById("ladeAnzeige").style.display = "none";
-            document.getElementById('send').disabled = false;
-            
-            if(status === 'ok') {
-                 statusIndicator.className = 'status-indicator status-ok';
-                 lastUpdatedSpan.textContent = new Date().toLocaleTimeString();
-            } else if (status === 'error') {
-                 statusIndicator.className = 'status-indicator status-error';
-                 lastUpdatedSpan.textContent = 'Error';
-            } else {
-                 statusIndicator.className = 'status-indicator';
-                 lastUpdatedSpan.textContent = 'Idle';
-            }
-            autoScroll(); 
-        }
-
-        function appendRowToTable(row) {
-            const tbody = document.getElementById('json-table-body');
-            if (!tbody) { return; }
-
-            let html = '<tr>';
-            for (const header of tableHeaders) {
-                let value = row[header];
-                if (typeof value === 'number') value = value.toFixed(4);
-                else if (value === null || typeof value === 'undefined') value = '<em>null</em>';
-                html += `<td>${value}</td>`;
-            }
-            html += '</tr>';
-            tbody.insertAdjacentHTML('beforeend', html);
-        }
-
-        function rebuildTableWithNewHeaders() {
-            const tableContainer = document.getElementById('table-output-container');
-            if (tableContainer.classList.contains('hidden') || !tableContainer) { return; }
-
-            let html = '<table class="json-table"><thead><tr>';
-            for (const key of tableHeaders) html += `<th>${key}</th>`;
-            html += '</tr></thead><tbody id="json-table-body"></tbody></table>';
-            tableContainer.innerHTML = html;
-            for (const row of allData) appendRowToTable(row);
-            const table = tableContainer.querySelector('.json-table');
-            if (table) makeTableResizable(table);
-        }
-
-        function findCompleteObject(buffer, startIndex) {
-            let braceDepth = 0;
-            let inString = false;
-            let escape = false;
-
-            for (let i = startIndex; i < buffer.length; i++) {
-                const char = buffer[i];
-                if (escape) { escape = false; continue; }
-                if (char === '\\') { escape = true; continue; }
-                if (char === '"') { inString = !inString; continue; }
-                if (inString) continue;
-                if (char === '{') braceDepth++;
-                else if (char === '}') {
-                    braceDepth--;
-                    if (braceDepth === 0) return [ buffer.substring(startIndex, i + 1), i ];
-                }
-            }
-            return [ null, -1 ];
-        }
-
-        function parseAndRenderBuffer() {
-            if (!isArrayStream) return; 
-            let newHeadersFound = false;
-
-            while(true) { 
-                let objectStartIndex = jsonBuffer.indexOf('{');
-                if (objectStartIndex === -1) break; 
-                
-                const [objectString, objectEndIndex] = findCompleteObject(jsonBuffer, objectStartIndex);
-                if (objectString === null) break; 
-
-                jsonBuffer = jsonBuffer.substring(objectEndIndex + 1);
-
-                try {
-                    const parsedObject = JSON.parse(objectString);
-                    allData.push(parsedObject); 
-
-                    const keys = Object.keys(parsedObject);
-                    for (const key of keys) {
-                        if (!tableHeaders.includes(key)) {
-                            tableHeaders.push(key);
-                            newHeadersFound = true;
-                        }
-                    }
-
-                    if (!newHeadersFound) appendRowToTable(parsedObject);
-
-                } catch (e) {
-                    console.warn("Could not parse JSON object:", objectString, e);
-                }
-            }
-
-            if (newHeadersFound) rebuildTableWithNewHeaders();
-        }
-
-        function datePrefix() {
-            return `<span style="color:var(--label-color);">${new Date().toISOString()} # </span>`;
-        }
-
-        async function streamquery(url, query) {
-            const outputDiv = document.getElementById('output');
-            let reader;
-            let firstline = true;
-            
-            try {
-                const response = await fetch(url, {
-                    method: "POST",
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: query,
-                });
-
-                if (!response.body) throw new Error('ReadableStream not supported in this browser.');
-
-                reader = response.body.getReader();
-                const decoder = new TextDecoder('utf-8');
-                
-                while (true) {
-                    const { done, value } = await reader.read();
-                    
-                    if (done) {
-                        outputDiv.innerHTML += "<br>" + datePrefix() + "Stream Complete ===========================<br/>";
-                        resetUI('ok');
-                        break; 
-                    }
-
-                    const chunk = decoder.decode(value, { stream: true });
-                    
-                    if (firstline) {
-                        outputDiv.innerHTML += "<br>" + datePrefix() + "Stream Start ===========================<br/>";
-                        if (chunk.trim().startsWith("[")) {
-                            isArrayStream = true;
-                            rebuildTableWithNewHeaders(); 
-                        }
-                        firstline = false;
-                    }
-
-                    outputDiv.innerHTML += chunk.replaceAll("{ " , "<br>" + datePrefix() + "{");                
-                    autoScroll();
-
-                    if (isArrayStream) {
-                        jsonBuffer += chunk; 
-                        parseAndRenderBuffer(); 
-                    }
-
-                    if (cancelled) {
-                        reader.cancel("user");
-                        outputDiv.innerHTML += "<br>" + datePrefix() + "Stream Cancelled ===========================<br/>";
-                        resetUI('ok');
-                        break; 
-                    }
-                }
-
-            } catch (error) {
-                const message = cancelled ? "Stream cancelled by user." : `Stream Failed/Aborted: ${error.message}`;
-                console.error(message, error);
-                if (!cancelled) outputDiv.innerHTML += "<br>" + datePrefix() + `<span style='color:red;'>${message}</span><br/>`;
-                resetUI('error');
-            }
-        }
+        };
     </script>
 </head>
 <body>
@@ -740,22 +503,25 @@
                     <span id="status-indicator" class="status-indicator"></span>
                 </div>
             </div>
+            <div class="header-item">
+                <button id="show-all-btn" class="hidden">Show Hidden Cards</button>
+            </div>
         </header>
 
-        <main class="card">
+        <main id="query-card" class="card resizable-card">
             <h3><span class="title">Query</span></h3>
             <div class="query-grid">
                 <div>
-                    <textarea id="query" name="Text1" rows="15" spellcheck="false">Mgmt ListMeasurements</textarea>
+                    <textarea id="query" name="Text1" spellcheck="false">Mgmt ListMeasurements</textarea>
                 </div>
                 <div id="query-examples">
                     <label>Examples</label>
-                    <a href="#" onClick="prefill('Kala-Fehler');">Kala Errors & Logs</a><br>
-                    <a href="#" onClick="prefill('List Measurements');">List Measurements</a><br>
-                    <a href="#" onClick="prefill('PV Beispiel');">PV Example</a><br>
-                    <a href="#" onClick="prefill('Mgmt Examples');">Mgmt Examples</a><br>
-                    <a href="#" onClick="prefill('Regex Beispiel TempBatt');">Regex Temp/Batt</a><br>
-                    <a href="#" onClick="prefill('Regex Zisterne');">Regex Cistern</a><br>
+                    <a href="#" onClick="prefill('Kala-Fehler');">Kala Errors & Logs</a>
+                    <a href="#" onClick="prefill('List Measurements');">List Measurements</a>
+                    <a href="#" onClick="prefill('PV Beispiel');">PV Example</a>
+                    <a href="#" onClick="prefill('Mgmt Examples');">Mgmt Examples</a>           
+                    <a href="#" onClick="prefill('Regex Beispiel TempBatt');">Regex Temp/Batt</a>
+                    <a href="#" onClick="prefill('Regex Zisterne');">Regex Zisterne</a><br>                
                 </div>
             </div>
             <div>
@@ -766,25 +532,24 @@
             </div>
         </main>
         
-        <div id="raw-stream-card" class="card">
+        <div id="raw-stream-card" class="card resizable-card" style="height: 260px;">
             <h3>
                 <span class="title">Raw Stream Output</span>
                 <span class="controls">
-                     <button onclick="toggleContent('output', this)">Hide</button>
+                     <button onclick="toggleCard('raw-stream-card')">Hide</button>
                 </span>
             </h3>
-            <div id="output" class="scrollable-div card-content"></div>
+            <div id="output" class="scrollable-div"></div>
         </div>
         
-        <div id="table-data-card" class="card">
+        <div id="table-data-card" class="card resizable-card" style="height: 260px;">
             <h3>
                 <span class="title">Table Data</span>
                  <span class="controls">
-                    <button onclick="toggleContent('table-output-container', this)">Hide</button>
+                    <button onclick="toggleCard('table-data-card')">Hide</button>
                 </span>
             </h3>
-            <div id="table-output-container" class="scrollable-div card-content"></div>
-            <div id="table-resize-handle" class="resize-handle-v"></div>
+            <div id="table-output-container" class="scrollable-div"></div>
         </div>
     </div>
 </body>
