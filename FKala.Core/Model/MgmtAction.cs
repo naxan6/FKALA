@@ -11,6 +11,7 @@
         Rename,
         BenchmarkIo,
         UnBlacklist,
-        Blacklist        
+        Blacklist,
+        Statistics
     }
 }

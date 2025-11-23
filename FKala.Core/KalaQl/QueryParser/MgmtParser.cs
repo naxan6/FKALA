@@ -82,6 +82,8 @@ namespace FKala.Core.KalaQl.QueryParser
                     return "BLACKLIST";
                 case MgmtAction.UnBlacklist:
                     return "UNBLACKLIST";
+                case MgmtAction.Statistics:
+                    return "STATISTICS";
                 default:
                     throw new Exception($"Unbekannte MgmtAction: {action}");
             }

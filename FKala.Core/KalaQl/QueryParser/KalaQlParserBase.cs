@@ -460,6 +460,10 @@ namespace FKala.Core.KalaQl.QueryParser
             {
                 return MgmtAction.UnBlacklist;
             }
+            else if (v.ToUpper() == "STATISTICS")
+            {
+                return MgmtAction.Statistics;
+            }
 
             throw new ArgumentException($"MgmtAction {v} is invalid");
         }

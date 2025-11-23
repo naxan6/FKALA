@@ -35,6 +35,7 @@ namespace FKala.Core.Interfaces
 
         IEnumerable<Dictionary<string, object?>> Blacklist(string measurement);
         IEnumerable<Dictionary<string, object?>> UnBlacklist(string measurement);
+        IEnumerable<Dictionary<string, object>> GetStatistics();
         bool IsBlacklisted(string filePath, bool checkOnDisk);
         void InsertError(string err);
         void InsertLog(string msg);

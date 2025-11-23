@@ -114,6 +114,12 @@ namespace FKala.Core.KalaQl
                 context.Result.StreamResult = Bench(context.DataLayer.DataDirectory)!;
                 this.hasExecuted = true;
             }
+            else if (MgmtAction == MgmtAction.Statistics)
+            {
+                context.Result = new KalaResult();
+                context.Result.StreamResult = context.DataLayer.GetStatistics()!;
+                this.hasExecuted = true;
+            }
         }
 
         private static IEnumerable<Dictionary<string, object?>>? Bench(string baseDir)
