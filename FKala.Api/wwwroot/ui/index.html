@@ -159,7 +159,7 @@
         const THEME_STORAGE_KEY = 'kala-stats-theme';
         const INTERVAL_STORAGE_KEY = 'kala-ui-interval';
         
-        var cancelled = false, userScrolledRaw = false, userScrolledTable = false;
+        var cancelled = false, userScrolledRaw = false, userScrolledTable = false, streamReader = null;
         let jsonBuffer = "", allData = [], tableHeaders = [], isArrayStream = false, refreshTimer = null;
 
         function applyTheme(theme) {
@@ -367,6 +367,7 @@
             let newHeadersFound = false;
             let hasNewRows = false;
             while(true) { 
+                if (cancelled) break;
                 let objectStartIndex = jsonBuffer.indexOf('{');
                 if (objectStartIndex === -1) break;
                 const [objectString, objectEndIndex] = findCompleteObject(jsonBuffer, objectStartIndex);
@@ -397,7 +398,9 @@
 
         async function streamquery(url, query) {
             const outputDiv = document.getElementById('output');
-            let reader, firstline = true;
+            let firstline = true;
+            streamReader = null;
+
             try {
                 const fetchOptions = {
                     method: "POST",
@@ -406,19 +409,25 @@
                 };
                 const response = await fetch(url, fetchOptions);
                 if (!response.body) throw new Error('ReadableStream not supported.');
-                reader = response.body.getReader();
+
+                const reader = response.body.getReader();
+                streamReader = reader;
+
                 const decoder = new TextDecoder('utf-8');
                 while(true) {
-                    const { done, value } = await reader.read();
+                    const { done, value } = await reader.read(); // This will reject on cancel
                     if (done) {
-                        outputDiv.innerHTML += `<br>${datePrefix()}Stream Complete<br>`;
+                        const doneMessage = document.createElement('span');
+                        doneMessage.innerHTML = `<br>${datePrefix()}Stream Complete<br>`;
+                        outputDiv.appendChild(doneMessage);
                         autoScroll(outputDiv, userScrolledRaw);
-
-                        resetUI('ok'); break;                        
-
+                        resetUI('ok'); 
+                        break;
                     }
+                    
                     const chunk = decoder.decode(value, {stream: true});
                     if (firstline) {
+                        // This only runs once, so innerHTML is fine to clear/set initial content
                         outputDiv.innerHTML = `<br>${datePrefix()}Stream Start<br>`;
                         if (chunk.trim().startsWith("[")) {
                             isArrayStream = true;
@@ -426,25 +435,34 @@
                         }
                         firstline = false;
                     }
+
                     const newContent = document.createElement('span');
                     newContent.innerHTML = chunk.replace(/{/g, `<br>${datePrefix()}{`);
                     outputDiv.appendChild(newContent);
                     autoScroll(outputDiv, userScrolledRaw);
+
                     if (isArrayStream) {
                         jsonBuffer += chunk;
                         parseAndRenderBuffer();
                     }
-                    if (cancelled) {
-                        reader.cancel("user");
-                        outputDiv.innerHTML += `<br>${datePrefix()}Stream Cancelled<br>`;
-                        resetUI('ok'); break;
-                    }
                 }
             } catch(error) {
-                const message = cancelled ? "Stream cancelled by user." : `Stream Failed/Aborted: ${error.message}`;
-                console.error(message, error);
-                if (!cancelled) outputDiv.innerHTML += `<br>${datePrefix()}<span style='color:red;'>${message}</span><br>`;
-                resetUI('error');
+                if (cancelled) {
+                    console.log("Stream cancelled by user.");
+                    const cancelMessage = document.createElement('span');
+                    cancelMessage.innerHTML = `<br>${datePrefix()}Stream Cancelled<br>`;
+                    outputDiv.appendChild(cancelMessage);
+                    resetUI('ok');
+                } else {
+                    const message = `Stream Failed/Aborted: ${error.message}`;
+                    console.error(message, error);
+                    const errorMessage = document.createElement('span');
+                    errorMessage.innerHTML = `<br>${datePrefix()}<span style='color:red;'>${message}</span><br>`;
+                    outputDiv.appendChild(errorMessage);
+                    resetUI('error');
+                }
+            } finally {
+                streamReader = null;
             }
         }
         
@@ -485,7 +503,12 @@
                 document.getElementById('output').innerHTML = "";
                 document.getElementById('table-output-container').innerHTML = "";
             });
-            document.getElementById('cancel').addEventListener('click', () => cancelled = true);
+            document.getElementById('cancel').addEventListener('click', () => {
+                cancelled = true;
+                if (streamReader) {
+                    streamReader.cancel("user").catch(() => {}); // Suppress unhandled rejection
+                }
+            });
             document.getElementById('show-all-btn').addEventListener('click', () => {
                 document.querySelectorAll('.card.hidden').forEach(c => c.classList.remove('hidden'));
                 document.getElementById('show-all-btn').classList.add('hidden');
