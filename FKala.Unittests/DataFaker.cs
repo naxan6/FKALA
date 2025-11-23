@@ -38,6 +38,7 @@ namespace FKala.Unittests
                 variation = randomTime.NextInt64(range);
                 currentFakeTime = currentFakeTime.Add(distMin).AddTicks(variation);
             }
+            TestDataLayer.ProcessRemainingQueueItems();
             TestDataLayer.BufferedWriterSvc.ForceFlushWriters();
             return this;
         }

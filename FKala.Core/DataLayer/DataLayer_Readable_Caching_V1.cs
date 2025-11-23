@@ -254,7 +254,7 @@ namespace FKala.Core
             var writesByFile = new Dictionary<string, List<string>>();
             int processedCount = 0;
 
-            foreach (var kalaLinedata in linesToProcess)
+            foreach (var kalaLinedata in linesToProcess.OrderDescending())
             {
                 try
                 {
@@ -350,7 +350,7 @@ namespace FKala.Core
             }
         }
         
-        private void ProcessRemainingQueueItems()
+        public void ProcessRemainingQueueItems()
         {
             var itemsToProcess = new List<string>();
             while (_insertQueue.TryDequeue(out var item))
@@ -566,13 +566,9 @@ namespace FKala.Core
             _disposed = true;
         }
 
-        public void Flush()
-        {
-            this.BufferedWriterSvc.ForceFlushWriters();
-        }
-
         public void Flush(string filePath)
         {
+            ProcessRemainingQueueItems();
             this.BufferedWriterSvc.ForceFlushWriter(filePath);
         }
 

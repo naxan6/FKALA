@@ -27,7 +27,6 @@ namespace FKala.Core.Interfaces
         IEnumerable<Dictionary<string, object>> CopyFilesFromMeasurementToMeasurement(string measurement, string targetmeasurement, KalaQlContext context);
         IEnumerable<Dictionary<string, object>> MoveMeasurement(string measurementOld, string measurementNew, KalaQlContext context);
         
-        void Flush();
         void Flush(string filePath);
 
         int ReadBuffer { get; }
