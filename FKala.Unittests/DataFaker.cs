@@ -15,9 +15,9 @@ namespace FKala.Unittests
         public DirectoryInfo TestStorage { get; }
         public DataLayer_Readable_Caching_V1 TestDataLayer { get; }
 
-        public DataFaker()
+        public DataFaker(string testdir = "fkalaunittest")
         {
-            TestStorage = Directory.CreateTempSubdirectory("fkalaunittest");
+            TestStorage = Directory.CreateTempSubdirectory(testdir);
             TestDataLayer = new DataLayer_Readable_Caching_V1(TestStorage.FullName);
         }
 
@@ -38,6 +38,10 @@ namespace FKala.Unittests
                 variation = randomTime.NextInt64(range);
                 currentFakeTime = currentFakeTime.Add(distMin).AddTicks(variation);
             }
+            while (!TestDataLayer.TaskIsWaiting) // Warten bis der async task alles geschrieben hat und auf neue Arbeit wartet
+            {
+                Thread.Sleep(10);
+            }            
             TestDataLayer.ProcessRemainingQueueItems();
             TestDataLayer.BufferedWriterSvc.ForceFlushWriters();
             return this;

@@ -34,8 +34,9 @@ namespace FKala.Core.DataLayer.Cache
             if (aggResult?.ResultSets == null)
             {
                 string msg = $"could not aquire aggregate for 5Min caching {string.Join(", ", aggResult == null ? "aggResult is null" : aggResult.Errors)}";
-                this.DataLayer.InsertError(msg);
-                throw new KalaErrorException(msg);
+                var ex =  new KalaErrorException(msg);
+                this.DataLayer.LogException(ex);
+                throw ex;
             }
             var rs = aggResult.ResultSets.First().Resultset;
             //return EnumerableHelpers.SkipLast(rs);
