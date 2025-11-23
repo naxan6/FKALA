@@ -159,7 +159,7 @@
         const THEME_STORAGE_KEY = 'kala-stats-theme';
         const INTERVAL_STORAGE_KEY = 'kala-ui-interval';
         
-        var cancelled = false, isProgrammaticScroll = false, userScrolled = false;
+        var cancelled = false, userScrolledRaw = false, userScrolledTable = false;
         let jsonBuffer = "", allData = [], tableHeaders = [], isArrayStream = false, refreshTimer = null;
 
         function applyTheme(theme) {
@@ -203,62 +203,62 @@
             if (selection === 'List Measurements') { text = 'Mgmt ListMeasurements';
             } else if (selection === 'Kala-Fehler') { text = 'Load k<measure>: regex:kala.* now-10m now NoCache\nPubl regex:k.* Table';
             } else if (selection == 'Regex Zisterne') {
-                text = 'Load <measure:.*[$].*[$](.*)>: regex:zisterne[$]esp_ping[$].* NewestOnly\n' +
-                       'Aggr a<measure>: regex:.* Infinite Last\n' +
+                text = 'Load <measure:.*[$].*[$](.*)>: regex:zisterne[$]esp_ping[$].* NewestOnly\n' + 
+                       'Aggr a<measure>: regex:.* Infinite Last\n' + 
                        'Publ regex:a.* Table';
             } else if (selection == 'Regex Beispiel TempBatt') {
-                text = 'Load l<measure>: regex:.*Mi.*_.*battery now-1d now NoCache\n' +
-                       'Load t<measure>: regex:.*Mi.*_.*temperature now-1d now NoCache\n\n' +
-                       'Aggr <measure:.*[$]Mi(.*)_.*>_Batt: regex:l.* Infinite Last EmptyWindows\n' +
-                       'Aggr <measure:.*[$]Mi(.*)_.*>_Temp: regex:t.* Infinite Last EmptyWindows\n\n' +
+                text = 'Load l<measure>: regex:.*Mi.*_.*battery now-1d now NoCache\n' + 
+                       'Load t<measure>: regex:.*Mi.*_.*temperature now-1d now NoCache\n\n' + 
+                       'Aggr <measure:.*[$]Mi(.*)_.*>_Batt: regex:l.* Infinite Last EmptyWindows\n' + 
+                       'Aggr <measure:.*[$]Mi(.*)_.*>_Temp: regex:t.* Infinite Last EmptyWindows\n\n' + 
                        'Publ regex:.*(_Batt|_Temp) Table';
             } else if (selection === 'PV Beispiel') {
-                text = '#Var $FROM "${__from:date:iso:YYYY-MM-DDTHH:mm:ss}"\n' +
-                       '#Var $TO "${__to:date:iso:YYYY-MM-DDTHH:mm:ss}"\n' +
-                       '#Var $CACHE Auto(${__interval_ms})_WAvg_REFRESHINCREMENTAL\n' +
-                       '#Var $INTERVAL ${__interval_ms}\n\n' +
-                       'Var $FROM 2025-01-01T00:00:00\n' +
-                       'Var $TO 2025-01-02T00:00:00\n' +
-                       'Var $CACHE NoCache\n' +
-                       'Var $INTERVAL 3600000\n\n' +
-                       'Var $AGG "WAvg EmptyWindows"\n\n\n' +
-                       'Load rPV1: Sofar/measure/PVInput1/0x586_Leistung_PV1[kW] $FROM $TO $CACHE\n' +
-                       'Load rPV2: Sofar/measure/PVInput1/0x589_Leistung_PV2[kW] $FROM $TO $CACHE\n' +
-                       'Load rNetz: Sofar/measure/OnGridOutput/0x488_ActivePower_PCC_Total[kW] $FROM $TO $CACHE\n' +
-                       'Load rAkku: Sofar/measure/batteryInput1/0x606_Power_Bat1[kW] $FROM $TO $CACHE\n' +
-                       'Load rVerbrauch: Sofar/measure/OnGridOutput/0x4AF_ActivePower_Load_Sys[kW] $FROM $TO $CACHE\n' +
-                       'Load rPrognoseSolcast: prognose$solcast$50 $FROM $TO NoCache\n' +
-                       'Load rPrognoseForecast: prognose$forecastsolar $FROM $TO NoCache\n\n' +
-                       'Aggr aPV1: rPV1 $INTERVAL $AGG\n' +
-                       'Aggr aPV2: rPV2 $INTERVAL $AGG\n' +
-                       'Aggr aNetz: rNetz $INTERVAL $AGG\n' +
-                       'Aggr aAkku: rAkku $INTERVAL $AGG\n' +
-                       'Aggr aVerbrauch: rVerbrauch $INTERVAL $AGG\n' +
-                       'Aggr aAkkuladung: rAkku $INTERVAL $AGG\n' +
-                       'Aggr aPrognoseSolcast: rPrognoseSolcast  $INTERVAL $AGG\n' +
-                       'Aggr aPrognoseForecast: rPrognoseForecast  $INTERVAL $AGG\n\n' +
-                       'Expr PV: "aPV1.Value + aPV2.Value"\n' +
-                       'Expr Netzbezug: "aNetz.Value > 0 ? 0 : -aNetz.Value"\n' +
-                       'Expr Netzeinspeisung: "aNetz.Value < 0 ? 0 : -aNetz.Value"\n' +
-                       'Expr Akkuentladung: "aAkku.Value > 0 ? 0 : -aAkku.Value"\n' +
-                       'Expr Akkuladung: "aAkku.Value < 0 ? 0 : -aAkku.Value"\n' +
-                       'Expr Verbrauch: "-aVerbrauch.Value"\n' +
-                       'Expr PrognoseSolcast: "aPrognoseSolcast.Value"\n' +
-                       'Expr PrognoseForecast: "aPrognoseForecast.Value / 1000.0"\n' +
-                       'Expr Verluste: "-(PV.Value+Netzbezug.Value+Akkuentladung.Value+Verbrauch.Value+Netzeinspeisung.Value+Akkuladung.Value)"\n\n' +
+                text = '#Var $FROM "${__from:date:iso:YYYY-MM-DDTHH:mm:ss}"\n' + 
+                       '#Var $TO "${__to:date:iso:YYYY-MM-DDTHH:mm:ss}"\n' + 
+                       '#Var $CACHE Auto(${__interval_ms})_WAvg_REFRESHINCREMENTAL\n' + 
+                       '#Var $INTERVAL ${__interval_ms}\n\n' + 
+                       'Var $FROM 2025-01-01T00:00:00\n' + 
+                       'Var $TO 2025-01-02T00:00:00\n' + 
+                       'Var $CACHE NoCache\n' + 
+                       'Var $INTERVAL 3600000\n\n' + 
+                       'Var $AGG "WAvg EmptyWindows"\n\n\n' + 
+                       'Load rPV1: Sofar/measure/PVInput1/0x586_Leistung_PV1[kW] $FROM $TO $CACHE\n' + 
+                       'Load rPV2: Sofar/measure/PVInput1/0x589_Leistung_PV2[kW] $FROM $TO $CACHE\n' + 
+                       'Load rNetz: Sofar/measure/OnGridOutput/0x488_ActivePower_PCC_Total[kW] $FROM $TO $CACHE\n' + 
+                       'Load rAkku: Sofar/measure/batteryInput1/0x606_Power_Bat1[kW] $FROM $TO $CACHE\n' + 
+                       'Load rVerbrauch: Sofar/measure/OnGridOutput/0x4AF_ActivePower_Load_Sys[kW] $FROM $TO $CACHE\n' + 
+                       'Load rPrognoseSolcast: prognose$solcast$50 $FROM $TO NoCache\n' + 
+                       'Load rPrognoseForecast: prognose$forecastsolar $FROM $TO NoCache\n\n' + 
+                       'Aggr aPV1: rPV1 $INTERVAL $AGG\n' + 
+                       'Aggr aPV2: rPV2 $INTERVAL $AGG\n' + 
+                       'Aggr aNetz: rNetz $INTERVAL $AGG\n' + 
+                       'Aggr aAkku: rAkku $INTERVAL $AGG\n' + 
+                       'Aggr aVerbrauch: rVerbrauch $INTERVAL $AGG\n' + 
+                       'Aggr aAkkuladung: rAkku $INTERVAL $AGG\n' + 
+                       'Aggr aPrognoseSolcast: rPrognoseSolcast  $INTERVAL $AGG\n' + 
+                       'Aggr aPrognoseForecast: rPrognoseForecast  $INTERVAL $AGG\n\n' + 
+                       'Expr PV: "aPV1.Value + aPV2.Value"\n' + 
+                       'Expr Netzbezug: "aNetz.Value > 0 ? 0 : -aNetz.Value"\n' + 
+                       'Expr Netzeinspeisung: "aNetz.Value < 0 ? 0 : -aNetz.Value"\n' + 
+                       'Expr Akkuentladung: "aAkku.Value > 0 ? 0 : -aAkku.Value"\n' + 
+                       'Expr Akkuladung: "aAkku.Value < 0 ? 0 : -aAkku.Value"\n' + 
+                       'Expr Verbrauch: "-aVerbrauch.Value"\n' + 
+                       'Expr PrognoseSolcast: "aPrognoseSolcast.Value"\n' + 
+                       'Expr PrognoseForecast: "aPrognoseForecast.Value / 1000.0"\n' + 
+                       'Expr Verluste: "-(PV.Value+Netzbezug.Value+Akkuentladung.Value+Verbrauch.Value+Netzeinspeisung.Value+Akkuladung.Value)"\n\n' + 
                        'Publ "Netzbezug,PV,Netzeinspeisung,Akkuentladung,Akkuladung,Verbrauch,PrognoseSolcast,PrognoseForecast,Verluste" Table\n';
-            } else if (selection === 'Mgmt Examples') { text = 'Mgmt FSCHK kala$errors\n' +
-                       '#Mgmt FSCHK\n' +
-                       '#Mgmt ListMeasurements\n' +
-                       '#Mgmt COPY\n' +
-                       '#Mgmt RENAME\n' +
-                       '#Mgmt CLEAN\n' +
-                       '#Mgmt BLACKLIST\n' +
-                       '#Mgmt UNBLACKLIST\n' +
-                       '#Mgmt SORTRAWFILES   - UNNÖTIG!\n' +
-                       '#Mgmt BENCHIO\n' +
-                       '#Mgmt IMPORTINFLUX\n' +
-                       '#Mgmt IMPORTTSTSFE\n';; } /* Corrected escape for newline */
+            } else if (selection === 'Mgmt Examples') { text = 'Mgmt FSCHK kala$errors\n' + 
+                       '#Mgmt FSCHK\n' + 
+                       '#Mgmt ListMeasurements\n' + 
+                       '#Mgmt COPY\n' + 
+                       '#Mgmt RENAME\n' + 
+                       '#Mgmt CLEAN\n' + 
+                       '#Mgmt BLACKLIST\n' + 
+                       '#Mgmt UNBLACKLIST\n' + 
+                       '#Mgmt SORTRAWFILES   - UNNÖTIG!\n' + 
+                       '#Mgmt BENCHIO\n' + 
+                       '#Mgmt IMPORTINFLUX\n' + 
+                       '#Mgmt IMPORTTSTSFE\n'; } /* Corrected escape for newline */
             document.getElementById('query').value = text;
             handleSendClick(true);
         }
@@ -288,6 +288,7 @@
             statusIndicator.className = 'status-indicator status-pending';
             lastUpdatedSpan.textContent = 'Sending...';
             cancelled = false, jsonBuffer = "", allData = [], tableHeaders = [], isArrayStream = false;
+            userScrolledRaw = false; userScrolledTable = false;
             document.getElementById('table-output-container').innerHTML = ""; 
             document.getElementById('output').innerHTML = ""; 
             sendButton.disabled = true;
@@ -308,6 +309,12 @@
             } else {
                  statusIndicator.className = 'status-indicator';
                  lastUpdatedSpan.textContent = 'Idle';
+            }
+        }
+
+        function autoScroll(element, userScrolledFlag) {
+            if (element && !userScrolledFlag) {
+                element.scrollTop = element.scrollHeight;
             }
         }
 
@@ -335,6 +342,7 @@
             allData.forEach(row => appendRowToTable(row));
             const table = tableContainer.querySelector('.json-table');
             if (table) makeTableResizable(table);
+            autoScroll(tableContainer, userScrolledTable);
         }
 
         function findCompleteObject(buffer, startIndex) {
@@ -357,6 +365,7 @@
         function parseAndRenderBuffer() {
             if (!isArrayStream) return;
             let newHeadersFound = false;
+            let hasNewRows = false;
             while(true) { 
                 let objectStartIndex = jsonBuffer.indexOf('{');
                 if (objectStartIndex === -1) break;
@@ -371,10 +380,17 @@
                             tableHeaders.push(key); newHeadersFound = true;
                         }
                     });
-                    if (!newHeadersFound) appendRowToTable(parsedObject);
+                    if (!newHeadersFound) {
+                        appendRowToTable(parsedObject);
+                        hasNewRows = true;
+                    }
                 } catch(e) { console.warn("Could not parse JSON object:", objectString, e); }
             }
-            if (newHeadersFound) rebuildTableWithNewHeaders();
+            if (newHeadersFound) {
+                rebuildTableWithNewHeaders(); // This also scrolls
+            } else if (hasNewRows) {
+                autoScroll(document.getElementById('table-output-container'), userScrolledTable);
+            }
         }
 
         function datePrefix() { return `<span style="color:var(--label-color);">${new Date().toISOString()} # </span>`; }
@@ -396,7 +412,10 @@
                     const { done, value } = await reader.read();
                     if (done) {
                         outputDiv.innerHTML += `<br>${datePrefix()}Stream Complete<br>`;
-                        resetUI('ok'); break;
+                        autoScroll(outputDiv, userScrolledRaw);
+
+                        resetUI('ok'); break;                        
+
                     }
                     const chunk = decoder.decode(value, {stream: true});
                     if (firstline) {
@@ -407,7 +426,10 @@
                         }
                         firstline = false;
                     }
-                    outputDiv.innerHTML += chunk.replace(/{/g, `<br>${datePrefix()}{`);
+                    const newContent = document.createElement('span');
+                    newContent.innerHTML = chunk.replace(/{/g, `<br>${datePrefix()}{`);
+                    outputDiv.appendChild(newContent);
+                    autoScroll(outputDiv, userScrolledRaw);
                     if (isArrayStream) {
                         jsonBuffer += chunk;
                         parseAndRenderBuffer();
@@ -467,6 +489,17 @@
             document.getElementById('show-all-btn').addEventListener('click', () => {
                 document.querySelectorAll('.card.hidden').forEach(c => c.classList.remove('hidden'));
                 document.getElementById('show-all-btn').classList.add('hidden');
+            });
+
+            const outputDiv = document.getElementById('output');
+            const tableOutputContainer = document.getElementById('table-output-container');
+
+            outputDiv.addEventListener('scroll', () => {
+                // If user scrolls up, set the flag. If they scroll back to bottom, unset it.
+                userScrolledRaw = outputDiv.scrollTop + outputDiv.clientHeight < outputDiv.scrollHeight - 20;
+            });
+            tableOutputContainer.addEventListener('scroll', () => {
+                userScrolledTable = tableOutputContainer.scrollTop + tableOutputContainer.clientHeight < tableOutputContainer.scrollHeight - 20;
             });
         };
     </script>
