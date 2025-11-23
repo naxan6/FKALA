@@ -23,7 +23,7 @@ namespace FKala.Core.KalaQl
         /// </summary>
         public void ConsumeResultSetsNoOutput()
         {
-            foreach (var rs in this.ResultSets) // iterate to load everything
+            foreach (var rs in this.ResultSets!) // iterate to load everything
 
                 foreach (var r in rs.Resultset) // iterate to load everything
                 {

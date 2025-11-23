@@ -10,6 +10,9 @@
         Min,
         Max,
         Count,
-        Sum
+        Sum,
+        TextFirst,
+        TextLast,
+        TextCount
     }
 }

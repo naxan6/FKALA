@@ -110,7 +110,7 @@ Aggr <measure:.*[$]Mi(.*)_.*>_Temp: regex:t.* Infinite Last EmptyWindows
 
 Publ regex:.*(_Batt|_Temp) Table`
             } else if (selection == "Kala-Fehler") {            
-                text = `Load k<measure>: regex:kala.* now-10h now NoCache
+                text = `Load k<measure>: regex:kala.* now-10m now NoCache
 Publ regex:k.* Table`
             } else if(selection == "PV Beispiel") {
                 text = `#Var $FROM "\${__from:date:iso:YYYY-MM-DDTHH:mm:ss}"

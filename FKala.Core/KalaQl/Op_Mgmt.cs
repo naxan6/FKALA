@@ -114,6 +114,12 @@ namespace FKala.Core.KalaQl
                 context.Result.StreamResult = Bench(context.DataLayer.DataDirectory)!;
                 this.hasExecuted = true;
             }
+            else if (MgmtAction == MgmtAction.Statistics)
+            {
+                context.Result = new KalaResult();
+                context.Result.StreamResult = context.DataLayer.GetStatistics()!;
+                this.hasExecuted = true;
+            }
         }
 
         private static IEnumerable<Dictionary<string, object?>>? Bench(string baseDir)
@@ -247,7 +253,7 @@ namespace FKala.Core.KalaQl
                     }
                     catch (UnexpectedlyUnsortedException uuex)
                     {
-                        StorageAccess.UnMarkFileAsSorted(uuex.File, context.DataLayer);
+                        StorageAccess.UnMarkFileAsSorted(uuex.File);
                         continue;
                     }
                     catch (Exception ex)

@@ -170,8 +170,14 @@ namespace FKala.Core.KalaQl.QueryParser
                     return AggregateFunction.Count;
                 case "SUM":
                     return AggregateFunction.Sum;
+                case "TEXTFIRST":
+                    return AggregateFunction.TextFirst;
+                case "TEXTLAST":
+                    return AggregateFunction.TextLast;
+                case "TEXTCOUNT":
+                    return AggregateFunction.TextCount;
                 default:
-                    throw new Exception($"Unkown Aggregate <{v}>");
+                    throw new ArgumentException($"Unkown Aggregate <{v}>");
             }
         }
 
@@ -453,6 +459,10 @@ namespace FKala.Core.KalaQl.QueryParser
             else if (v.ToUpper() == "UNBLACKLIST")
             {
                 return MgmtAction.UnBlacklist;
+            }
+            else if (v.ToUpper() == "STATISTICS")
+            {
+                return MgmtAction.Statistics;
             }
 
             throw new ArgumentException($"MgmtAction {v} is invalid");

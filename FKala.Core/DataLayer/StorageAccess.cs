@@ -34,7 +34,6 @@ namespace FKala.Core.DataLayers
         };
 
         public static string TimeFormat { get { return "HH:mm:ss.fffffff"; } }
-        private SortedDictionary<DateOnly, ReaderTuple>? TimeSortedStreamReader;
         private ILookup<DateOnly, ReaderTuple>? StreamReaderLookupForMerge;
         private DateTime StartTime;
         private DateTime EndTime;
@@ -48,7 +47,7 @@ namespace FKala.Core.DataLayers
 
         private LockManager LockManager;
 
-        private StorageAccess(IDataLayer dataLayer, KalaQlContext context, LockManager lockManager)
+        private StorageAccess(IDataLayer dataLayer, KalaQlContext context)
         {
             this.DataLayer = dataLayer;
             this.Context = context;
@@ -56,19 +55,20 @@ namespace FKala.Core.DataLayers
             fileStreamOptions.BufferSize = dataLayer.ReadBuffer;
             optionFindFilesRecursive.BufferSize = dataLayer.ReadBuffer;
             ReadBuffer = dataLayer.ReadBuffer;
-            WriteBuffer = dataLayer.WriteBuffer;           
-            LockManager = lockManager;
+            WriteBuffer = dataLayer.WriteBuffer;
+            LockManager = new LockManager();
         }
 
-        public static StorageAccess ForReadMultiFile(string measurementPath, string measurementPathPart, DateTime startTime, DateTime endTime, KalaQl.KalaQlContext context, LockManager lockManager)
+        public static StorageAccess ForReadMultiFile(string measurementPath, string measurementPathPart, DateTime startTime, DateTime endTime, KalaQl.KalaQlContext context)
         {
-            var ret = new StorageAccess(context.DataLayer, context, lockManager);
+            var ret = new StorageAccess(context.DataLayer, context);
             ret.StartTime = startTime;
             ret.EndTime = endTime;
-            
+
             ret.StreamReaderLookupForMerge = ret.QueryFilesForMergingMultipleFiles(measurementPath, measurementPathPart, startTime, endTime);
             return ret;
         }
+
         private ILookup<DateOnly, ReaderTuple> QueryFilesForMergingMultipleFiles(string measurementPath, string measurementPathPart, DateTime startTime, DateTime endTime)
         {
             // years            
@@ -107,10 +107,6 @@ namespace FKala.Core.DataLayers
 
         public StorageAccess OpenStreamReaders()
         {
-            if (this.TimeSortedStreamReader != null)
-            {
-                this.TimeSortedStreamReader.AsParallel().ForAll(t => t.Value.StreamReader = new StreamReader(t.Value.FilePath, Encoding.UTF8, false, fileStreamOptions));
-            }
             if (this.StreamReaderLookupForMerge != null)
             {
                 //DataLayer.BufferedWriterSvc.ForceFlushWriters(); TRY FOR SPEEDUP
@@ -161,7 +157,7 @@ namespace FKala.Core.DataLayers
 
                 // ###### If out of order by multiple files per day or by only single, but unsorted, file
                 if (streamreaderDayList.Count() > 1 ||
-                    (streamreaderDayList.Count() == 1 && 
+                    (streamreaderDayList.Count() == 1 &&
                     (!streamreaderDayList.First().MarkedAsSorted || streamreaderDayList.First().MeasurementFileDiffersToPath())))
                 {
                     string genericFilePath = DataLayer.GetInsertTargetFilepath(measurement, $"{fileyear:00}-{filemonth:00}-{fileday:00}");
@@ -237,7 +233,9 @@ namespace FKala.Core.DataLayers
                                 writer.Append(" ");
                                 writer.Append(dp.Value.Value.ToString(CultureInfo.InvariantCulture));
                                 writer.AppendNewline();
-                            } else if (dp.ValueText != null) {
+                            }
+                            else if (dp.ValueText != null)
+                            {
                                 writer.Append(dp.StartTime.ToString(TimeFormat));
                                 writer.Append(" ");
                                 writer.Append(dp.ValueText);
@@ -257,32 +255,26 @@ namespace FKala.Core.DataLayers
                         File.Move(filePath + ".sorted", filePath);
                     }
 
-                    var msg = $"Sorted rewrite of file {filePath}";
+                    var msg = $"Sorted rewrite of file {filePath} {new FileInfo(filePath).Length} Bytes";
                     Console.WriteLine(msg);
                     DataLayer!.InsertLog(msg);
-                    
+
                 }
             }
         }
-
-        public static void UnMarkFileAsSorted(string currentPath, IDataLayer dataLayer)
+        public static void UnMarkFileAsSorted(string currentPath)
         {
             string filenameMarkedUnsorted = SetSortMark(currentPath, false);
-            filenameMarkedUnsorted = Path.Combine(Path.GetDirectoryName(filenameMarkedUnsorted), "unmarked_" + Path.GetFileName(filenameMarkedUnsorted));
-           try
-           {
-                File.Move(currentPath, filenameMarkedUnsorted);
-                var msg = $"unmarked {currentPath} to unsorted";
-                Console.WriteLine(msg);
-                dataLayer!.InsertLog(msg);
-
-           }
-           catch (Exception ex)
+            filenameMarkedUnsorted = Path.Combine(Path.GetDirectoryName(filenameMarkedUnsorted)!, "unmarked_" + Path.GetFileName(filenameMarkedUnsorted));
+            try
             {
-                var msg = $"failed renaming {currentPath} to unsorted. maybe already marked unsorted by parallel stream, or unsorted file {ex}";
-                Console.WriteLine(msg);
-                dataLayer!.InsertLog(msg);
-           }
+                File.Move(currentPath, filenameMarkedUnsorted);
+                Console.WriteLine($"unmarked {currentPath} to unsorted");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"failed renaming {currentPath} to unsorted. maybe already marked unsorted by parallel stream, or unsorted file {ex}");
+            }
         }
 
         private IEnumerable<DataPoint> InternalStreamDataPoints(ReaderTuple sr, int fileyear, int filemonth, int fileday, bool checkUnsorted)
@@ -337,10 +329,6 @@ namespace FKala.Core.DataLayers
 
         public void Dispose()
         {
-            if (TimeSortedStreamReader != null)
-            {
-                TimeSortedStreamReader.AsParallel().ForAll(sr => sr.Value?.StreamReader?.Dispose());
-            }
             if (StreamReaderLookupForMerge != null)
             {
                 StreamReaderLookupForMerge.AsParallel().ForAll(daySrs => daySrs.ToList().ForEach(sr => sr.StreamReader?.Dispose()));

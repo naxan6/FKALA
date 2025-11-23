@@ -162,25 +162,19 @@ namespace FKala.Core.Logic
             }
         }
 
-        public void AddValueString(DateTime time, string toIntegrate)
+        public void AddValueString(DateTime time, string? toIntegrate)
         {
             switch (AggregationFunction)
             {
-                case AggregateFunction.First:
+                case AggregateFunction.TextFirst:
                     aggregatedValueString = aggregatedValueString ?? toIntegrate;
                     break;
-                case AggregateFunction.Last:
+                case AggregateFunction.TextLast:
                     aggregatedValueString = toIntegrate;
                     break;
-                case AggregateFunction.Count:
+                case AggregateFunction.TextCount:
                     aggregatedValue = aggregatedValue != null ? aggregatedValue.Value + 1 : 1;
                     break;
-                case AggregateFunction.Min:
-                case AggregateFunction.Max:
-                case AggregateFunction.Sum:
-                case AggregateFunction.Avg:
-                case AggregateFunction.WAvg:
-
                 default:
                     throw new ArgumentException($"Ungültige Aggregationsfunktion bei Text-Measurement: {AggregationFunction}");
             }

@@ -29,14 +29,14 @@ namespace FKala.Unittests
                 _mockDataLayer = new Mock<IDataLayer>();
                 _mockDataLayer.Setup(x => x.ReadBuffer).Returns(131072);
                 _mockDataLayer.Setup(x => x.WriteBuffer).Returns(131072);
-                
+
                 // Initialize context with mocked data layer
                 _context = new KalaQlContext(null!, _mockDataLayer.Object);
 
                 // Create a temporary test directory
                 _testDirectory = Path.Combine(Path.GetTempPath(), TestDirectoryName);
                 Directory.CreateDirectory(_testDirectory);
-                
+
                 // Create some test year directories
                 Directory.CreateDirectory(Path.Combine(_testDirectory, "2024"));
                 Directory.CreateDirectory(Path.Combine(_testDirectory, "2023"));
@@ -63,6 +63,20 @@ namespace FKala.Unittests
                 // Log the exception but don't fail the test cleanup
                 Console.WriteLine($"Warning: Could not clean up test directory {_testDirectory}. Error: {ex.Message}");
             }
+        }
+
+        [TestMethod]
+        public void ForReadMultiFile_ShouldCreateStorageAccessInstance()
+        {
+            // Arrange
+            var startTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            var endTime = new DateTime(2024, 1, 2, 0, 0, 0, DateTimeKind.Utc);
+
+            // Act
+            var result = StorageAccess.ForReadMultiFile(_testDirectory ?? "test_path", "test_part", startTime, endTime, _context ?? throw new InvalidOperationException("Context is null"));
+
+            // Assert
+            result.Should().NotBeNull();
         }
 
         [TestMethod]

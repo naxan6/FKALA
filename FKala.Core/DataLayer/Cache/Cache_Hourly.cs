@@ -1,4 +1,5 @@
-﻿using FKala.Core.DataLayer.Infrastructure;
+﻿using Fkala.Core.Exceptions;
+using FKala.Core.DataLayer.Infrastructure;
 using FKala.Core.Interfaces;
 using FKala.Core.KalaQl;
 using FKala.Core.KalaQl.Windowing;
@@ -17,7 +18,7 @@ namespace FKala.Core.DataLayer.Cache
         }
         public Window Window { get; } = Window.Aligned_1Hour;
         public Cache_Hourly(IDataLayer dataLayer) : base(dataLayer)
-        {            
+        {
         }
 
         public override IEnumerable<DataPoint> GetAggregateForCaching(string measurement, DateTime start, DateTime end, AggregateFunction aggrFunc)
@@ -32,7 +33,9 @@ namespace FKala.Core.DataLayer.Cache
                             .Execute(DataLayer);
             if (aggResult?.ResultSets == null)
             {
-                throw new Exception($"could not aquire aggregate for caching {string.Join(", ", aggResult.Errors)}");
+                string msg = $"could not aquire aggregate for hourly caching {string.Join(", ", aggResult == null ? "aggResult is null" : aggResult.Errors)}";
+                this.DataLayer.InsertError(msg);
+                throw new KalaErrorException(msg);
             }
             var rs = aggResult!.ResultSets.First().Resultset;
             return rs;
@@ -55,7 +58,7 @@ namespace FKala.Core.DataLayer.Cache
             return dp;
         }
 
-        public override DateTime ShouldUpdateFromWhere(int cacheYear,  DataPoint? newestInCache, DataPoint? newestInRaw)
+        public override DateTime ShouldUpdateFromWhere(int cacheYear, DataPoint? newestInCache, DataPoint? newestInRaw)
         {
             // no refresh for non-existent cache
             if (newestInCache == null || newestInRaw == null)

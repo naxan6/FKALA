@@ -18,6 +18,8 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics.Arm;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace FKala.Core
 {
@@ -33,12 +35,20 @@ namespace FKala.Core
         public BufferedWriterService BufferedWriterSvc { get; init; }
         public bool ShuttingDown { get; private set; }
 
+        private readonly ConcurrentQueue<string> _insertQueue = new ConcurrentQueue<string>();
+        private readonly Task _queueProcessorTask;
+        private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+        private readonly SemaphoreSlim _workAvailable = new SemaphoreSlim(0);
+        private bool _disposed = false;
+
         ConcurrentDictionary<string, bool> MeasurementBlacklist = new ConcurrentDictionary<string, bool>();
         ConcurrentDictionary<string, string> LatestEntries = new ConcurrentDictionary<string, string>();
 
         ConcurrentDictionary<string, byte> CreatedDirectories = new ConcurrentDictionary<string, byte>();
         DefaultObjectPool<StringBuilder> stringBuilderPool = new DefaultObjectPool<StringBuilder>(new StringBuilderPooledObjectPolicy());
-        private LockManager LockManager;
+
+        private readonly ConcurrentQueue<DateTime> _processedItemsTimestamps = new ConcurrentQueue<DateTime>();
+        private readonly ConcurrentQueue<string> _lastExceptions = new ConcurrentQueue<string>();
 
         public DataLayer_Readable_Caching_V1(string storagePath)
         {
@@ -52,8 +62,7 @@ namespace FKala.Core
             CachingLayer = new CachingLayer(this, storagePath);
             BufferedWriterSvc = new BufferedWriterService(WriteBuffer, this);
             LoadMeasureBlacklist();
-            this.LockManager = new LockManager();
-
+            _queueProcessorTask = Task.Run(ProcessInsertQueueAsync);
         }
 
 
@@ -128,7 +137,8 @@ namespace FKala.Core
         private IEnumerable<DataPoint> LoadFullResolution(string measurement, DateTime startTime, DateTime endTime, KalaQlContext context, bool dontInvalidateCache_ForUseWhileCacheRebuild)
         {
             (string measurementPathPart, string measurementPath) = GetMeasurementDirectory(measurement);
-            using (var sa = StorageAccess.ForReadMultiFile(measurementPath, measurementPathPart, startTime, endTime, context, this.LockManager))
+
+            using (var sa = StorageAccess.ForReadMultiFile(measurementPath, measurementPathPart, startTime, endTime, context))
             {
                 foreach (var dp in sa.OpenStreamReaders().StreamMergeDataPoints_MaterializeSortIfNeeded(measurement, dontInvalidateCache_ForUseWhileCacheRebuild))
                 {
@@ -184,25 +194,86 @@ namespace FKala.Core
         /// Expects Data in the Form
         /// "<measurement> <timestamp:YYYY-MM-DDTHH:mm:ss.zzzzzzz <value>"
         /// </summary>
-        /// <param name="rawData"></param>
+        /// <param name="kalaLinedata"></param>
         /// <param name="locking"></param>
-        public void Insert(string rawData, string? source = "input")
+        public void Insert(string kalaLinedata, string? source = "input")
         {
+            InsertQueued(kalaLinedata, source);
+            return;
+
             if (ShuttingDown)
             {
                 return;
             }
             string measurement, datetimeHHmmssfffffff, valueString;
             ReadOnlySpan<char> datetime_yyyy_MM_ddTHH_mm_ss_fffffff;
-            ParseRawData(rawData, out measurement, out datetime_yyyy_MM_ddTHH_mm_ss_fffffff, out datetimeHHmmssfffffff, out valueString);
+            ParseRawData(kalaLinedata, out measurement, out datetime_yyyy_MM_ddTHH_mm_ss_fffffff, out datetimeHHmmssfffffff, out valueString);
             if (!IsBlacklisted(measurement, false))
             {
                 string filePath = GetInsertTargetFilepath(measurement, datetime_yyyy_MM_ddTHH_mm_ss_fffffff);
-                using(this.LockManager.AcquireLock(filePath)) {
+                if (IsDelayedInsert(measurement, datetime_yyyy_MM_ddTHH_mm_ss_fffffff))
+                {
+                    DateOnly dt = new DateOnly(int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(0, 4)), int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(5, 2)), int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(8, 2)));
+                    CachingLayer.Mark2Invalidate(measurement, dt);
+                }
+                else
+                {
+                    filePath = StorageAccess.SetSortMark(filePath, true);
+                }
+
+                BufferedWriterSvc.DoWrite(filePath, (writer) =>
+                {
+                    // Format the line to write
+                    writer.Append(datetimeHHmmssfffffff);
+                    writer.Append(" ");
+                    writer.Append(valueString);
+                    writer.AppendNewline();
+                });
+            }
+        }
+        
+        /// <summary>
+        /// Fügt die angelieferten Daten in eine Queue je Zieldatei ein, die Queues werden asynchron abgearbeitet und dabei mittels einer Logik synonym Methode public void Insert(string kalaLinedata, string? source = "input") eingefügt
+        /// </summary>
+        /// <param name="kalaLinedata"></param>
+        /// <param name="source"></param>
+        public void InsertQueued(string kalaLinedata, string? source = "input")
+        {
+            if (ShuttingDown)
+            {
+                return;
+            }
+            _insertQueue.Enqueue(kalaLinedata);
+            _workAvailable.Release();
+        }
+
+        private void ProcessLines(IEnumerable<string> linesToProcess)
+        {
+            if (!linesToProcess.Any()) return;
+
+            var writesByFile = new Dictionary<string, List<string>>();
+            int processedCount = 0;
+
+            foreach (var kalaLinedata in linesToProcess.OrderDescending())
+            {
+                try
+                {
+                    ParseRawData(kalaLinedata, out string measurement, out ReadOnlySpan<char> datetime_yyyy_MM_ddTHH_mm_ss_fffffff, out string datetimeHHmmssfffffff, out string valueString);
+
+                    if (IsBlacklisted(measurement, false))
+                    {
+                        continue;
+                    }
+
+                    string filePath = GetInsertTargetFilepath(measurement, datetime_yyyy_MM_ddTHH_mm_ss_fffffff);
 
                     if (IsDelayedInsert(measurement, datetime_yyyy_MM_ddTHH_mm_ss_fffffff))
                     {
-                        DateOnly dt = new DateOnly(int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(0, 4)), int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(5, 2)), int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(8, 2)));
+                        DateOnly dt = new DateOnly(
+                            int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(0, 4)),
+                            int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(5, 2)),
+                            int.Parse(datetime_yyyy_MM_ddTHH_mm_ss_fffffff.Slice(8, 2))
+                        );
                         CachingLayer.Mark2Invalidate(measurement, dt);
                     }
                     else
@@ -210,16 +281,83 @@ namespace FKala.Core
                         filePath = StorageAccess.SetSortMark(filePath, true);
                     }
 
-                    BufferedWriterSvc.DoWrite(filePath, (writer) =>
+                    var sb = stringBuilderPool.Get();
+                    sb.Clear();
+                    sb.Append(datetimeHHmmssfffffff);
+                    sb.Append(" ");
+                    sb.Append(valueString);
+                    var lineToWrite = sb.ToString();
+                    stringBuilderPool.Return(sb);
+
+                    if (!writesByFile.TryGetValue(filePath, out var lines))
                     {
-                        // Format the line to write
-                        writer.Append(datetimeHHmmssfffffff);
-                        writer.Append(" ");
-                        writer.Append(valueString);
-                        writer.AppendNewline();
-                    });
+                        lines = new List<string>();
+                        writesByFile[filePath] = lines;
+                    }
+                    lines.Add(lineToWrite);
+                    processedCount++;
+                }
+                catch (Exception ex)
+                {
+                    LogException(ex, $"Processing line: '{kalaLinedata}'");
                 }
             }
+
+            foreach (var kvp in writesByFile)
+            {
+                var filePath = kvp.Key;
+                var fileLines = kvp.Value;
+                BufferedWriterSvc.DoWrite(filePath, (writer) =>
+                {
+                    foreach (var line in fileLines)
+                    {
+                        writer.Append(line);
+                        writer.AppendNewline();
+                    }
+                });
+            }
+
+            // Track throughput
+            var now = DateTime.UtcNow;
+            for (int i = 0; i < processedCount; i++)
+            {
+                _processedItemsTimestamps.Enqueue(now);
+            }
+        }
+
+        private async Task ProcessInsertQueueAsync()
+        {
+            var token = _cancellationTokenSource.Token;
+            var itemsToProcess = new List<string>();
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    await _workAvailable.WaitAsync(token);
+                }
+                catch (OperationCanceledException)
+                {
+                    break; // Exit loop on cancellation
+                }
+
+                while (_insertQueue.TryDequeue(out var item))
+                {
+                    itemsToProcess.Add(item);
+                }
+                
+                ProcessLines(itemsToProcess);
+                itemsToProcess.Clear();
+            }
+        }
+        
+        public void ProcessRemainingQueueItems()
+        {
+            var itemsToProcess = new List<string>();
+            while (_insertQueue.TryDequeue(out var item))
+            {
+                itemsToProcess.Add(item);
+            }
+            ProcessLines(itemsToProcess);
         }
 
         private bool IsDelayedInsert(string measurement, ReadOnlySpan<char> datetime_yyyy_MM_ddTHH_mm_ss_fffffff)
@@ -309,6 +447,57 @@ namespace FKala.Core
             yield return Msg.Get("msg", $"Live Unblacklisted {measurement}");
         }
 
+        public IEnumerable<Dictionary<string, object>> GetStatistics()
+        {
+            var stats = new Dictionary<string, object>();
+
+            // Queue stats
+            stats["InsertQueueLength"] = _insertQueue.Count;
+
+            // Throughput
+            var now = DateTime.UtcNow;
+            var limit15 = now.AddMinutes(-15);
+            while (_processedItemsTimestamps.TryPeek(out var peek) && peek < limit15)
+            {
+                _processedItemsTimestamps.TryDequeue(out _);
+            }
+
+            var timestamps = _processedItemsTimestamps.ToArray();
+            int c1 = 0, c5 = 0, c10 = 0, c1s = 0, c10s = 0;
+            var c15 = timestamps.Length;
+            var limit1s = now.AddSeconds(-1);
+            var limit10s = now.AddSeconds(-10);
+            var limit1 = now.AddMinutes(-1);
+            var limit5 = now.AddMinutes(-5);
+            var limit10 = now.AddMinutes(-10);
+
+            foreach (var ts in timestamps)
+            {
+                if (ts > limit1s) c1s++;
+                if (ts > limit10s) c10s++;
+                if (ts > limit1) c1++;
+                if (ts > limit5) c5++;
+                if (ts > limit10) c10++;
+            }
+            stats["ThroughputLast1Sec"] = c1s;
+            stats["ThroughputLast10Sec"] = c10s;
+            stats["ThroughputLast1Min"] = c1;
+            stats["ThroughputLast5Min"] = c5;
+            stats["ThroughputLast10Min"] = c10;
+            stats["ThroughputLast15Min"] = c15;
+
+            // Exceptions
+            stats["Last10Exceptions"] = _lastExceptions.ToArray();
+
+            // Other stats
+            stats["CreatedDirectoriesCount"] = CreatedDirectories.Count;
+            stats["BlacklistedMeasurementsCount"] = MeasurementBlacklist.Count;
+            stats["LatestEntriesCacheCount"] = LatestEntries.Count;
+            stats["ProcessedItemsTimestampCache"] = _processedItemsTimestamps.Count;
+
+            yield return stats;
+        }
+
         public string GetInsertTargetFilepath(string measurement, ReadOnlySpan<char> datetime_yyyy_MM_dd)
         {
             // Create the directory path
@@ -359,16 +548,27 @@ namespace FKala.Core
 
         public void Dispose()
         {
-            this.BufferedWriterSvc.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
-        public void Flush()
+        protected virtual void Dispose(bool disposing)
         {
-            this.BufferedWriterSvc.ForceFlushWriters();
+            if (_disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                Shutdown();
+            }
+            _disposed = true;
         }
 
         public void Flush(string filePath)
         {
+            ProcessRemainingQueueItems();
             this.BufferedWriterSvc.ForceFlushWriter(filePath);
         }
 
@@ -377,10 +577,23 @@ namespace FKala.Core
             var line = $"kala/errors {DateTime.Now.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {err.Replace("\n", " | ")}";
             this.Insert(line);
         }
-        public void InsertLog(string log)
+        public void InsertLog(string msg)
         {
-            var line = $"kala/log {DateTime.Now.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {log.Replace("\n", " | ")}";
+            var line = $"kala/logs {DateTime.Now.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {msg.Replace("\n", " | ")}";
             this.Insert(line);
+        }
+
+        private void LogException(Exception ex, string? context = null)
+        {
+            var errorForMemory = $"[{DateTime.UtcNow:O}] {(context != null ? $"Context: {context}\n" : "")}{ex.ToString()}";
+            _lastExceptions.Enqueue(errorForMemory);
+            while (_lastExceptions.Count > 10)
+            {
+                _lastExceptions.TryDequeue(out _);
+            }
+
+            var errorForFile = (context != null ? $"Context: {context} | " : "") + ex.ToString();
+            InsertError(errorForFile);
         }
 
         public IEnumerable<Dictionary<string, object?>> SortRawFiles(string measurement, KalaQlContext context)
@@ -406,8 +619,26 @@ namespace FKala.Core
 
         public void Shutdown()
         {
-            this.ShuttingDown = true;
-            this.Dispose();
+            if (ShuttingDown) return;
+            ShuttingDown = true;
+
+            _cancellationTokenSource.Cancel();
+            _workAvailable.Release();
+            try
+            {
+                _queueProcessorTask.Wait();
+            }
+            catch (AggregateException ex) when (ex.InnerExceptions.All(e => e is OperationCanceledException))
+            {
+                // Expected exception on cancellation.
+            }
+            finally
+            {
+                _cancellationTokenSource.Dispose();
+                _workAvailable.Dispose();
+            }
+            ProcessRemainingQueueItems();
+            this.BufferedWriterSvc.Dispose();
         }
 
         public bool DoesMeasurementExist(string measurement)
@@ -497,7 +728,7 @@ namespace FKala.Core
                 {
                     // Query beginnt ab der zweiten Zeile (Index 1)
                     this.Query = string.Join(Environment.NewLine, lines.Skip(1));
-                }                
+                }
                 // Wenn lines.Length == 1 (nur Timestamp), ist Query string.Empty
                 // Wenn lines.Length == 0 (leere Datei), ist Query string.Empty
             }

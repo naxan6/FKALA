@@ -35,7 +35,7 @@ namespace FKala.Api.Controller
         {
             if (string.IsNullOrEmpty(input))
             {
-                throw new Exception("Input string is required.");
+                throw new ArgumentException("Input string is required.");
             }
 
             // Verarbeite den String hier nach Bedarf
@@ -52,7 +52,7 @@ namespace FKala.Api.Controller
         {
             if (string.IsNullOrEmpty(input))
             {
-                throw new Exception("Input string is required.");
+                throw new ArgumentException("Input string is required.");
             }
 
             // Verarbeite den String hier nach Bedarf
@@ -99,7 +99,7 @@ namespace FKala.Api.Controller
                 //}
                 else if (result?.ResultSets != null)
                 {
-                    throw new Exception("Resultset streaming is not supported. Use Table.");
+                    throw new ArgumentException("Resultset streaming is not supported. Use Table.");
                 }
                 else if (result?.StreamResult != null)
                 {
