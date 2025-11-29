@@ -307,7 +307,7 @@ namespace FKala.Core.DataLayers
                 }
                 else if (retPrev.StartTime >= ret.StartTime && checkUnsorted)
                 {
-                    string err = $"Marked sorted but unsorted at File {ret.Source} ## {dataline}";
+                    string err = $"Marked sorted but unsorted at File {sr.FilePath}, Line {lineIdx} {sr.MarkedAsSorted} ## {dataline}";
                     var ex = new UnexpectedlyUnsortedException(err, sr.FilePath);
                     this.DataLayer.LogException(ex);
                     throw ex;
