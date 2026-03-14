@@ -235,7 +235,7 @@ public class QueryPreprocessor
             // Fall: <measure:regex(gruppe)> (nutze Capture-Gruppe)
             var captureRegex = new Regex(captureRegexPattern);
             var captureMatch = captureRegex.Match(sourceMatch);
-
+    
             if (captureMatch.Success && captureMatch.Groups.Count > 1)
             {
                 namePart = captureMatch.Groups[1].Value; // Die erste Capture-Gruppe

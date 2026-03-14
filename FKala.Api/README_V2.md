@@ -12,6 +12,7 @@ F Kala is a high-performance time-series database system with a custom query lan
   - [/api/Query](#apiquery)
   - [/api/Mgmt](#apimgmt)
 - [Kala TQL Commands](#kala-tql-commands)
+  - [Query Preprocessor (Regex Templates)](#query-preprocessor-regex-templates)
   - [Var](#var)
   - [Load](#load)
   - [Loaj](#loaj)
@@ -104,6 +105,61 @@ Mgmt LoadMeasures
 ---
 
 ## Kala TQL Commands
+
+### Query Preprocessor (Regex Templates)
+
+The QueryPreprocessor allows you to use regex-based templates to dynamically expand queries. This is useful for querying multiple measurements with similar names without writing repetitive code.
+
+#### Template Styles
+
+**Style 1: Load with Regex**
+```kala
+Load r<measure:regex(pattern)>: regex:measurementPattern $FROM $TO $CACHE
+```
+- Expands to multiple `Load` commands, one for each measurement matching the regex
+- The `<measure:regex(pattern)>` captures a group from the measurement name to use in the result name
+
+**Style 2: Command with Regex**
+```kala
+Aggr regex:aPV.* Aligned_1Hour Avg
+```
+- Expands to apply the command to all previously defined datasets matching the regex
+
+**Style 3: Mgmt Subcommand with Regex**
+```kala
+Mgmt FsChk regex:kala.*
+```
+- Expands the subcommand to all measurements matching the regex
+
+#### Examples
+
+**Load Multiple PV Inputs:**
+```kala
+Var $FROM 2024-09-15T17:55:45
+Var $TO 2024-09-15T18:08:45
+Var $CACHE NoCache
+
+# This loads all measurements matching the pattern and creates rPV1, rPV2, etc.
+Load r<measure:^(.*PV.)[kW]$>: regex:.*PV.*[kW] $FROM $TO $CACHE
+
+# Expands to:
+# Load rPV1: Sofar/measure/PVInput1/0x586_Leistung_PV1[kW] $FROM $TO $CACHE
+# Load rPV2: Sofar/measure/PVInput1/0x589_Leistung_PV2[kW] $FROM $TO $CACHE
+```
+
+**Aggregate Multiple Datasets:**
+```kala
+# Apply aggregation to all datasets starting with 'rPV'
+Aggr regex:rPV.* Aligned_1Hour Avg
+```
+
+**Check Multiple Measurements:**
+```kala
+# Check all measurements starting with 'Sofar'
+Mgmt FsChk regex:Sofar.*
+```
+
+---
 
 ### Var
 
@@ -436,32 +492,124 @@ Publ "Filtered1,Filtered2" Table
 
 ### Insert
 
-Inserts processed data back into the database (commented in examples, may require activation).
+Inserts processed data back into the database. Useful for storing cleaned, filtered, or transformed data as new measurements.
 
 #### Pattern
 ```
-Insert <Target>: <Source> <measurement>
+Insert <Name>: <Source> <measurement>
 ```
 
+#### Parameters
+- `Insert` - The verb
+- `<Name>` - Name for the resulting dataset (typically matches source for passthrough)
+- `<Source>` - Name of the source dataset to insert
+- `<measurement>` - Target measurement path where data will be stored
+
 #### Example
+
+**Store Filtered Data:**
 ```kala
-#Insert Ins1: Filtered1 Sofar/measure/PVInput1/0x585_Current_PV1[A]CLEANED
+Var $FROM 2024-08-01T00:00:00Z
+Var $TO 2024-08-02T00:00:00Z
+Load rPV1A: Sofar/measure/PVInput1/0x585_Current_PV1[A] $FROM $TO NoCache
+Expr Filtered: "rPV1A.Value < 4 ? (object)rPV1A.Value : skip"
+Insert CleanedPV: Filtered Sofar/measure/PVInput1/0x585_Current_PV1[A]CLEANED
 ```
+
+**Notes:**
+- The operation yields a summary datapoint with count of inserted records
+- Useful for creating cleaned/processed data derivatives
+- Can be combined with `Expr` for filtering or transformation before storage
 
 ---
 
 ### Interpolate
 
-Interpolates missing values in datasets.
+Fills null values in datasets using interpolation strategies.
 
 #### Pattern
 ```
-Interpolate <Name>: <Source> <Mode>
+Interpolate <Name>: <Source> <Mode> [ConstantValue]
 ```
 
-#### Modes
-- `Linear` - Linear interpolation between known values
-- `Step` - Step interpolation (holds previous value)
+#### Parameters
+- `Interpolate` - The verb (also aliased as `InPo`)
+- `<Name>` - Name for the resulting dataset
+- `<Source>` - Name of the source dataset to interpolate
+- `<Mode>` - Interpolation mode:
+  - `forwards` - Forward fill (carries last known value forward)
+  - `backwards` - Backward fill (carries next known value backward)
+  - `constant` - Fill with a constant value
+- `[ConstantValue]` - Optional constant value for `constant` mode
+
+#### Examples
+
+**Forward Fill:**
+```kala
+Interpolate Filled: rData forwards
+```
+Fills null gaps with the last known value.
+
+**Backward Fill:**
+```kala
+Interpolate Filled: rData backwards
+```
+Fills null gaps with the next known value.
+
+**Constant Fill:**
+```kala
+Interpolate Filled: rData constant 0
+```
+Fills null gaps with a constant value (0 in this case).
+
+**Use Case:**
+Interpolation is useful before using `Expr` with multiple datasets where aligned windows are required, or before aggregation to avoid empty windows.
+
+---
+
+### MatView
+
+Creates a materialized view for persistent query results. The first execution materializes the full dataset, subsequent queries read from the materialized view.
+
+#### Pattern
+```
+MatView <Name>: <Source> <ViewName>
+```
+
+#### Parameters
+- `MatView` - The verb
+- `<Name>` - Name for the resulting dataset
+- `<Source>` - Name of the source dataset to materialize
+- `<ViewName>` - Name of the materialized view (measurement path where data is stored)
+
+#### How It Works
+
+1. **First Execution:**
+   - Loads all data from the source's time range (from `Constants.MatView_MinDate` to `Constants.MatView_MaxDate`)
+   - Executes the full query pipeline
+   - Inserts all resulting datapoints into a new measurement (`<ViewName>`)
+   - Saves the query definition to a materialized view file
+
+2. **Subsequent Executions:**
+   - Reads pre-computed data directly from the materialized view
+   - Much faster than re-executing the full query pipeline
+   - Time-filtered based on the original query's time range
+
+#### Example
+
+**Create Materialized View:**
+```kala
+Load rData: Sofar/measure/batteryInput1/SOC_Bat1 2024-01-01T00:00:00 2024-12-31T00:00:00 NoCache
+Aggr aData: rData Aligned_1Hour Avg
+MatView MatData: aData Sofar/measure/batteryInput1/SOC_Bat1_HOURLY_MV
+Publ MatData Table
+```
+
+**Notes:**
+- Materialized views are stored as regular measurements in the database
+- The query definition is preserved in a `.matview` file
+- Useful for expensive queries that are run frequently
+- Subsequent queries automatically use the materialized data
 
 ---
 
@@ -531,9 +679,18 @@ Publ "<DatasetName1,DataSetName2,...>" <OutputMode>
 ]
 ```
 
+#### Notes
+- Results are limited to 250,000 datapoints per dataset
+- In `Table` mode, missing values for a timestamp are filled with `null`
+- In `MultipleResultsets` mode, each dataset is returned as a separate array
+- Use `Table` mode when you want to combine multiple datasets into a single time-indexed result
+- Use `MultipleResultsets` mode when you want separate arrays for each dataset
+
 ---
 
 ## Management Commands
+
+Management commands are executed via the `/api/Mgmt` endpoint with POST method and `text/plain` content type.
 
 ### Mgmt LoadMeasures
 
@@ -556,13 +713,148 @@ Mgmt LoadMeasures
 ]
 ```
 
-### MgmtSortRawFiles
+### Mgmt SortAllRaw
 
-Marks or sorts-and-marks all raw files as sorted. Files newer than 2 days are left untouched.
+Sorts and marks all raw files as sorted. Files newer than 2 days are left untouched.
 
 #### Example
 ```bash
-Mgmt SortRawFiles
+Mgmt SortAllRaw
+```
+
+### Mgmt FsChk
+
+Checks measurements for errors and validates data integrity.
+
+#### Pattern
+```
+Mgmt FsChk <measurements>
+```
+
+#### Parameters
+- `measurements` - Comma-separated list of measurement names to check. If empty, all measurements are checked.
+
+#### Example
+```bash
+Mgmt FsChk "Sofar/measure/batteryInput1/SOC_Bat1,Sofar/measure/batteryInput1/SOH_Bat1"
+```
+
+#### Example Output
+```json
+[
+  { "status": "Ok", "measurement": "Sofar/measure/batteryInput1/SOC_Bat1", "progress": "(50% 1/2)" },
+  { "status": "error", "measurement": "Sofar/measure/batteryInput1/SOH_Bat1", "progress": "(100% 2/2)", "msg": "..." }
+]
+```
+
+### Mgmt Copy
+
+Copies data from one measurement to another.
+
+#### Pattern
+```
+Mgmt Copy <sourceMeasurement> <targetMeasurement>
+```
+
+#### Example
+```bash
+Mgmt Copy "Sofar/measure/batteryInput1/SOC_Bat1 Sofar/measure/batteryInput1/SOC_Bat1_BACKUP"
+```
+
+### Mgmt Rename
+
+Renames a measurement.
+
+#### Pattern
+```
+Mgmt Rename <sourceMeasurement> <targetMeasurement>
+```
+
+#### Example
+```bash
+Mgmt Rename "Sofar/measure/batteryInput1/SOC_Bat1_OLD Sofar/measure/batteryInput1/SOC_Bat1"
+```
+
+### Mgmt Blacklist
+
+Blacklists a measurement (excludes it from queries).
+
+#### Pattern
+```
+Mgmt Blacklist <measurement>
+```
+
+#### Example
+```bash
+Mgmt Blacklist "Sofar/measure/batteryInput1/SOC_Bat1"
+```
+
+### Mgmt UnBlacklist
+
+Removes a measurement from the blacklist.
+
+#### Pattern
+```
+Mgmt UnBlacklist <measurement>
+```
+
+#### Example
+```bash
+Mgmt UnBlacklist "Sofar/measure/batteryInput1/SOC_Bat1"
+```
+
+### Mgmt ImportInflux
+
+Imports data from InfluxDB Line Protocol format.
+
+#### Pattern
+```
+Mgmt ImportInflux <filePath>
+```
+
+#### Example
+```bash
+Mgmt ImportInflux "/path/to/influx_data.txt"
+```
+
+### Mgmt ImportMariaDbTstsfe
+
+Migrates data from a MariaDB tstsfe database.
+
+#### Pattern
+```
+Mgmt ImportMariaDbTstsfe <connectionString>
+```
+
+#### Example
+```bash
+Mgmt ImportMariaDbTstsfe "Server=localhost;Database=tstsfe;User=root;Password=secret;"
+```
+
+### Mgmt BenchmarkIo
+
+Runs I/O benchmark on the data directory.
+
+#### Example
+```bash
+Mgmt BenchmarkIo
+```
+
+#### Example Output
+```json
+[
+  { "reading buffer 0": "123 ms" },
+  { "writing buffer 0": "456 ms" }
+]
+```
+
+### Mgmt Statistics
+
+Gets statistics about the database.
+
+#### Example
+```bash
+Mgmt Statistics
 ```
 
 ---
