@@ -8,3 +8,45 @@ Accept: application/json
 Content-Type: text/plain
 
 Mgmt LoadMeasures
+
+### Get measure space usage (all measures)
+POST {{FKala.Api_HostAddress}}/api/StreamQuery
+Content-Type: text/plain
+
+Mgmt GETMEASURESPACE
+
+### Get measure space usage (specific measures)
+POST {{FKala.Api_HostAddress}}/api/StreamQuery
+Content-Type: text/plain
+
+Mgmt GETMEASURESPACE measure1 measure2
+
+### Get measure details (all measures)
+POST {{FKala.Api_HostAddress}}/api/StreamQuery
+Content-Type: text/plain
+
+Mgmt GETMEASUREDETAILS
+
+### Delete a measure (WARNING: irreversible!)
+POST {{FKala.Api_HostAddress}}/api/StreamQuery
+Content-Type: text/plain
+
+Mgmt DELETEMEASURE measureName
+
+### Truncate a measure (delete all data, keep structure)
+POST {{FKala.Api_HostAddress}}/api/StreamQuery
+Content-Type: text/plain
+
+Mgmt TRUNCATEMEASURE measureName
+
+### Blacklist a measure
+POST {{FKala.Api_HostAddress}}/api/StreamQuery
+Content-Type: text/plain
+
+Mgmt BLACKLIST measureName
+
+### Unblacklist a measure
+POST {{FKala.Api_HostAddress}}/api/StreamQuery
+Content-Type: text/plain
+
+Mgmt UNBLACKLIST measureName

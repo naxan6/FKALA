@@ -120,6 +120,36 @@ namespace FKala.Core.KalaQl
                 context.Result.StreamResult = context.DataLayer.GetStatistics()!;
                 this.hasExecuted = true;
             }
+            else if (MgmtAction == MgmtAction.GetMeasureSpace)
+            {
+                context.Result = new KalaResult();
+                var measurements = string.IsNullOrEmpty(Params) ? null : Params.Split(" ", StringSplitOptions.RemoveEmptyEntries);
+                context.Result.StreamResult = context.DataLayer.GetMeasureSpace(measurements)!;
+                this.hasExecuted = true;
+            }
+            else if (MgmtAction == MgmtAction.GetMeasureDetails)
+            {
+                context.Result = new KalaResult();
+                var measurements = string.IsNullOrEmpty(Params) ? null : Params.Split(" ", StringSplitOptions.RemoveEmptyEntries);
+                context.Result.StreamResult = context.DataLayer.GetMeasureDetails(measurements)!;
+                this.hasExecuted = true;
+            }
+            else if (MgmtAction == MgmtAction.DeleteMeasure)
+            {
+                Params = Params.Trim('"');
+                var measurement = Params.Split(" ", StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? Params;
+                context.Result = new KalaResult();
+                context.Result.StreamResult = context.DataLayer.DeleteMeasure(measurement, context)!;
+                this.hasExecuted = true;
+            }
+            else if (MgmtAction == MgmtAction.TruncateMeasure)
+            {
+                Params = Params.Trim('"');
+                var measurement = Params.Split(" ", StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? Params;
+                context.Result = new KalaResult();
+                context.Result.StreamResult = context.DataLayer.TruncateMeasure(measurement, context)!;
+                this.hasExecuted = true;
+            }
         }
 
         private static IEnumerable<Dictionary<string, object?>>? Bench(string baseDir)

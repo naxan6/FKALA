@@ -859,6 +859,115 @@ Mgmt Statistics
 
 ---
 
+### Mgmt GetMeasureSpace
+
+Shows space usage for all or specific measurements.
+
+#### Pattern
+```
+Mgmt GetMeasureSpace [measurements]
+```
+
+#### Parameters
+- `measurements` - Optional. Comma-separated list of measurement names. If not provided, all measurements are included.
+
+#### Example
+```bash
+Mgmt GetMeasureSpace
+Mgmt GetMeasureSpace "Sofar/measure/batteryInput1/SOC_Bat1,Sofar/measure/batteryInput1/SOH_Bat1"
+```
+
+#### Example Output
+```json
+[
+  {
+    "Measurement": "Sofar$measure$batteryInput1$SOC_Bat1",
+    "SizeBytes": 1048576,
+    "FileCount": 12,
+    "PointCount": 8760,
+    "From": "2024-01-01T00:00:00",
+    "To": "2024-12-31T23:00:00",
+    "Blacklisted": false
+  },
+  {
+    "Measurement": "Sofar$measure$batteryInput1$SOH_Bat1",
+    "SizeBytes": 524288,
+    "FileCount": 6,
+    "PointCount": 4380,
+    "From": "2024-01-01T00:00:00",
+    "To": "2024-12-31T23:00:00",
+    "Blacklisted": false
+  }
+]
+```
+
+### Mgmt GetMeasureDetails
+
+Shows detailed information about measurements including file-level details.
+
+#### Pattern
+```
+Mgmt GetMeasureDetails [measurements]
+```
+
+#### Parameters
+- `measurements` - Optional. Comma-separated list of measurement names. If not provided, all measurements are included.
+
+#### Example
+```bash
+Mgmt GetMeasureDetails
+```
+
+### Mgmt DeleteMeasure
+
+Deletes a measurement and all its data. **WARNING: This operation is irreversible!**
+
+#### Pattern
+```
+Mgmt DeleteMeasure <measurement>
+```
+
+#### Parameters
+- `measurement` - Name of the measurement to delete.
+
+#### Example
+```bash
+Mgmt DeleteMeasure "Sofar/measure/batteryInput1/SOC_Bat1"
+```
+
+#### Example Output
+```json
+[
+  { "status": "success", "message": "Measurement 'Sofar/measure/batteryInput1/SOC_Bat1' deleted successfully" }
+]
+```
+
+### Mgmt TruncateMeasure
+
+Truncates all data from a measurement but keeps the structure. Use this to clear data without removing the measurement entirely.
+
+#### Pattern
+```
+Mgmt TruncateMeasure <measurement>
+```
+
+#### Parameters
+- `measurement` - Name of the measurement to truncate.
+
+#### Example
+```bash
+Mgmt TruncateMeasure "Sofar/measure/batteryInput1/SOC_Bat1"
+```
+
+#### Example Output
+```json
+[
+  { "status": "success", "message": "Measurement 'Sofar/measure/batteryInput1/SOC_Bat1' truncated successfully" }
+]
+```
+
+---
+
 ## Grafana Integration
 
 ### Installation

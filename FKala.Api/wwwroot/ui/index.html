@@ -534,6 +534,163 @@
             }
         }
         
+        // Measure Management Functions
+        let measuresData = [];
+
+        async function fetchMeasureSpace() {
+            const urlInput = document.getElementById('url');
+            const query = 'Mgmt GETMEASURESPACE';
+            try {
+                const response = await fetch(urlInput.value, {
+                    method: "POST",
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: query
+                });
+                if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+                const data = await response.json();
+                measuresData = data;
+                renderMeasuresTable();
+            } catch (error) {
+                console.error('Failed to fetch measure space:', error);
+                alert('Failed to fetch measure space: ' + error.message);
+            }
+        }
+
+        function renderMeasuresTable() {
+            const tbody = document.getElementById('measures-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            measuresData.forEach(measure => {
+                const row = document.createElement('tr');
+                const isBlacklisted = measure.Blacklisted === true || measure.Blacklisted === 'true';
+                row.innerHTML = `
+                    <td><input type="checkbox" class="measure-checkbox" data-name="${measure.Measurement || measure.measurement}"></td>
+                    <td>${measure.Measurement || measure.measurement}</td>
+                    <td>${(measure.SizeBytes || measure.sizeBytes || 0).toLocaleString()}</td>
+                    <td>${((measure.SizeBytes || measure.sizeBytes || 0) / (1024 * 1024)).toFixed(2)}</td>
+                    <td>${measure.FileCount || measure.fileCount || 0}</td>
+                    <td>${measure.PointCount || measure.pointCount || 0}</td>
+                    <td>${measure.From || measure.from || '-'}</td>
+                    <td>${measure.To || measure.to || '-'}</td>
+                    <td>${isBlacklisted ? '✓' : ''}</td>
+                    <td>
+                        <button class="btn-delete" data-name="${measure.Measurement || measure.measurement}">Delete</button>
+                        <button class="btn-truncate" data-name="${measure.Measurement || measure.measurement}">Truncate</button>
+                        <button class="btn-blacklist" data-name="${measure.Measurement || measure.measurement}">${isBlacklisted ? 'Unblacklist' : 'Blacklist'}</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            // Add event listeners to buttons
+            tbody.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', () => deleteMeasure(btn.dataset.name));
+            });
+            tbody.querySelectorAll('.btn-truncate').forEach(btn => {
+                btn.addEventListener('click', () => truncateMeasure(btn.dataset.name));
+            });
+            tbody.querySelectorAll('.btn-blacklist').forEach(btn => {
+                btn.addEventListener('click', () => toggleBlacklist(btn.dataset.name, isBlacklisted));
+            });
+        }
+
+        async function deleteMeasure(measurement) {
+            if (!confirm(`Delete measurement "${measurement}"? This cannot be undone!`)) return;
+            await executeMgmtCommand(`Mgmt DELETEMEASURE ${measurement}`);
+            fetchMeasureSpace();
+        }
+
+        async function truncateMeasure(measurement) {
+            if (!confirm(`Truncate measurement "${measurement}"? All data will be deleted!`)) return;
+            await executeMgmtCommand(`Mgmt TRUNCATEMEASURE ${measurement}`);
+            fetchMeasureSpace();
+        }
+
+        async function toggleBlacklist(measurement, isBlacklisted) {
+            const cmd = isBlacklisted ? `Mgmt UNBLACKLIST ${measurement}` : `Mgmt BLACKLIST ${measurement}`;
+            await executeMgmtCommand(cmd);
+            fetchMeasureSpace();
+        }
+
+        async function executeMgmtCommand(query) {
+            const urlInput = document.getElementById('url');
+            try {
+                const response = await fetch(urlInput.value, {
+                    method: "POST",
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: query
+                });
+                if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+                // Consume the stream
+                const reader = response.body.getReader();
+                while (true) {
+                    const { done } = await reader.read();
+                    if (done) break;
+                }
+            } catch (error) {
+                console.error('Command failed:', error);
+                alert('Command failed: ' + error.message);
+            }
+        }
+
+        function setupMeasureManagement() {
+            // Refresh button
+            document.getElementById('btn-refresh-measures')?.addEventListener('click', fetchMeasureSpace);
+            
+            // Select all checkbox
+            document.getElementById('select-all-measures')?.addEventListener('change', (e) => {
+                const checkboxes = document.querySelectorAll('.measure-checkbox');
+                checkboxes.forEach(cb => cb.checked = e.target.checked);
+                updateBulkButtonsState();
+            });
+
+            // Individual checkbox change
+            document.getElementById('measures-table-body')?.addEventListener('change', (e) => {
+                if (e.target.classList.contains('measure-checkbox')) {
+                    updateBulkButtonsState();
+                }
+            });
+
+            // Bulk action buttons
+            document.getElementById('btn-delete-selected')?.addEventListener('click', () => {
+                const selected = getSelectedMeasures();
+                if (selected.length === 0) return;
+                if (confirm(`Delete ${selected.length} selected measurements? This cannot be undone!`)) {
+                    selected.forEach(name => deleteMeasure(name));
+                }
+            });
+
+            document.getElementById('btn-truncate-selected')?.addEventListener('click', () => {
+                const selected = getSelectedMeasures();
+                if (selected.length === 0) return;
+                if (confirm(`Truncate ${selected.length} selected measurements? All data will be deleted!`)) {
+                    selected.forEach(name => truncateMeasure(name));
+                }
+            });
+
+            document.getElementById('btn-blacklist-selected')?.addEventListener('click', () => {
+                const selected = getSelectedMeasures();
+                selected.forEach(name => toggleBlacklist(name, false));
+            });
+
+            document.getElementById('btn-unblacklist-selected')?.addEventListener('click', () => {
+                const selected = getSelectedMeasures();
+                selected.forEach(name => toggleBlacklist(name, true));
+            });
+        }
+
+        function getSelectedMeasures() {
+            const checkboxes = document.querySelectorAll('.measure-checkbox:checked');
+            return Array.from(checkboxes).map(cb => cb.dataset.name);
+        }
+
+        function updateBulkButtonsState() {
+            const selectedCount = document.querySelectorAll('.measure-checkbox:checked').length;
+            document.getElementById('btn-delete-selected').disabled = selectedCount === 0;
+            document.getElementById('btn-truncate-selected').disabled = selectedCount === 0;
+            document.getElementById('btn-blacklist-selected').disabled = selectedCount === 0;
+            document.getElementById('btn-unblacklist-selected').disabled = selectedCount === 0;
+        }
+
         window.onload = () => {
             const urlInput = document.getElementById('url'), intervalSelect = document.getElementById('refresh-interval');
             const themeToggleBtn = document.getElementById('theme-toggle'), queryTextarea = document.getElementById('query');
@@ -609,6 +766,41 @@
                     card.classList.toggle('hidden', !toggle.checked);
                 });
             });
+
+            // --- Tab Switching Logic ---
+            function handleTabSwitch() {
+                const params = new URLSearchParams(window.location.search);
+                const tab = params.get('tab');
+                const queryCard = document.getElementById('query-card');
+                const rawStreamCard = document.getElementById('raw-stream-card');
+                const tableDataCard = document.getElementById('table-data-card');
+                const measuresCard = document.getElementById('measures-card');
+                const navLinks = document.querySelectorAll('.nav a');
+
+                if (tab === 'measures') {
+                    // Show measures card, hide query/stream/table
+                    queryCard.classList.add('hidden');
+                    rawStreamCard.classList.add('hidden');
+                    tableDataCard.classList.add('hidden');
+                    measuresCard.classList.remove('hidden');
+                    navLinks.forEach(link => {
+                        link.classList.toggle('active', link.id === 'nav-measures');
+                    });
+                    // Load measure data
+                    fetchMeasureSpace();
+                } else {
+                    // Default: show query/stream/table, hide measures
+                    queryCard.classList.remove('hidden');
+                    measuresCard.classList.add('hidden');
+                    navLinks.forEach(link => {
+                        link.classList.toggle('active', link.getAttribute('href') === './index.html');
+                    });
+                }
+            }
+
+            // Initialize measure management and tab switching
+            setupMeasureManagement();
+            handleTabSwitch();
         };
     </script>
 </head>
@@ -617,6 +809,7 @@
         <header class="header">
             <nav class="nav">
                 <a href="./index.html" class="active">Stream Query</a>
+                <a href="./index.html?tab=measures" id="nav-measures">Measures</a>
                 <a href="../stat/index.html">Statistics</a>
             </nav>
             <div class="header-item" style="flex-grow: 1;">
@@ -693,6 +886,39 @@
                 <span class="title">Table Data</span>
             </h3>
             <div id="table-output-container" class="scrollable-div"></div>
+        </div>
+
+        <div id="measures-card" class="card resizable-card hidden" style="height: 400px;">
+            <h3>
+                <span class="title">Measure Management</span>
+                <span class="controls">
+                    <button id="btn-refresh-measures">Refresh</button>
+                    <button id="btn-delete-selected" disabled>Delete Selected</button>
+                    <button id="btn-truncate-selected" disabled>Truncate Selected</button>
+                    <button id="btn-blacklist-selected" disabled>Blacklist Selected</button>
+                    <button id="btn-unblacklist-selected" disabled>Unblacklist Selected</button>
+                </span>
+            </h3>
+            <div style="overflow: auto; border: 1px solid var(--border-color); padding: 10px; background-color: var(--input-bg-color);">
+                <table class="json-table" id="measures-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;"><input type="checkbox" id="select-all-measures"></th>
+                            <th>Measurement</th>
+                            <th>Size (bytes)</th>
+                            <th>Size (MB)</th>
+                            <th>Files</th>
+                            <th>Points</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Blacklisted</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="measures-table-body">
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </body>

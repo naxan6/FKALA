@@ -44,5 +44,9 @@ namespace FKala.Core.Interfaces
         void WriteMatViewFile(string viewName, List<string> lines);
         List<DataLayer_Readable_Caching_V1.MatView> LoadMatViews();
         void DeleteMeasurementAndMatViewDefinition(string measurementName);
+        IEnumerable<Dictionary<string, object>> GetMeasureSpace(string[]? measurements);
+        IEnumerable<Dictionary<string, object>> GetMeasureDetails(string[]? measurements);
+        IEnumerable<Dictionary<string, object>> DeleteMeasure(string measurement, KalaQlContext context);
+        IEnumerable<Dictionary<string, object>> TruncateMeasure(string measurement, KalaQlContext context);
     }
 }

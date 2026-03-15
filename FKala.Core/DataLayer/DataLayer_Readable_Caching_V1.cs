@@ -668,6 +668,209 @@ namespace FKala.Core
             // Optional: Loggen, falls das Verzeichnis nicht existiert
         }
 
+        public IEnumerable<Dictionary<string, object>> GetMeasureSpace(string[]? measurements)
+        {
+            IEnumerable<string> targetMeasurements = measurements != null ? measurements : LoadMeasurementList();
+            
+            foreach (var measurement in targetMeasurements)
+            {
+                var measurementPath = Path.Combine(DataDirectory, PathSanitizer.SanitizePath(measurement));
+                if (!Directory.Exists(measurementPath))
+                {
+                    yield return new Dictionary<string, object>
+                    {
+                        { "Measurement", measurement },
+                        { "SizeBytes", 0L },
+                        { "SizeMB", 0.0 },
+                        { "FileCount", 0 },                        
+                        { "From", null },
+                        { "To", null },
+                        { "Blacklisted", false }
+                    };
+                    continue;
+                }
+
+                var files = Directory.GetFiles(measurementPath, "*.dat", SearchOption.AllDirectories);
+                long totalBytes = 0;
+                DateTime? minDate = null;
+                DateTime? maxDate = null;                
+                
+                foreach (var file in files)
+                {
+                    var fi = new FileInfo(file);
+                    totalBytes += fi.Length;
+                    
+                    // Extract date from filename (YYYY-MM-DD pattern)
+                    var fn = Path.GetFileNameWithoutExtension(file);
+                    var datePart = fn.Substring(fn.Length - 10, 10);
+                    if (DateTime.TryParseExact(datePart, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var fileDate))
+                    {
+                        if (!minDate.HasValue || fileDate < minDate) minDate = fileDate;
+                        if (!maxDate.HasValue || fileDate > maxDate) maxDate = fileDate;
+                    }
+
+                }
+
+                var isBlacklisted = IsBlacklisted(measurement, true);
+                
+                yield return new Dictionary<string, object>
+                {
+                    { "Measurement", measurement },
+                    { "SizeMB", Math.Round(totalBytes / (1024.0 * 1024.0), 2) },
+                    { "FileCount", files.Length },
+                    { "From", minDate?.ToString("yyyy-MM-dd HH:mm:ss") },
+                    { "To", maxDate?.ToString("yyyy-MM-dd HH:mm:ss") },
+                    { "Blacklisted", isBlacklisted }
+                };
+            }
+        }
+
+        public IEnumerable<Dictionary<string, object>> GetMeasureDetails(string[]? measurements)
+        {
+            IEnumerable<string> targetMeasurements = measurements != null ? measurements : LoadMeasurementList();
+            
+            foreach (var measurement in targetMeasurements)
+            {
+                var measurementPath = Path.Combine(DataDirectory, PathSanitizer.SanitizePath(measurement));
+                if (!Directory.Exists(measurementPath))
+                {
+                    yield return new Dictionary<string, object>
+                    {
+                        { "Measurement", measurement },
+                        { "Exists", false },
+                        { "Error", "Directory not found" }
+                    };
+                    continue;
+                }
+
+                var files = Directory.GetFiles(measurementPath, "*.dat", SearchOption.AllDirectories);
+                long totalBytes = 0;
+                DateTime? oldestFile = null;
+                DateTime? newestFile = null;
+                
+                foreach (var file in files)
+                {
+                    var fi = new FileInfo(file);
+                    totalBytes += fi.Length;
+                    if (!oldestFile.HasValue || fi.CreationTime < oldestFile)
+                        oldestFile = fi.CreationTime;
+                    if (!newestFile.HasValue || fi.CreationTime > newestFile)
+                        newestFile = fi.CreationTime;
+                }
+
+                yield return new Dictionary<string, object>
+                {
+                    { "Measurement", measurement },
+                    { "Exists", true },
+                    { "SizeBytes", totalBytes },
+                    { "SizeMB", Math.Round(totalBytes / (1024.0 * 1024.0), 2) },
+                    { "FileCount", files.Length },
+                    { "OldestFileDate", oldestFile?.ToString("yyyy-MM-dd HH:mm:ss") ?? "N/A" },
+                    { "NewestFileDate", newestFile?.ToString("yyyy-MM-dd HH:mm:ss") ?? "N/A" },
+                    { "IsBlacklisted", IsBlacklisted(measurement, true) }
+                };
+            }
+        }
+
+        public IEnumerable<Dictionary<string, object>> DeleteMeasure(string measurement, KalaQlContext context)
+        {
+            measurement = PathSanitizer.SanitizePath(measurement);
+            var measurementPath = Path.Combine(DataDirectory, measurement);
+            
+            yield return new Dictionary<string, object> { { "msg", $"Starting deletion of measurement '{measurement}'" } };
+            
+            if (!Directory.Exists(measurementPath))
+            {
+                yield return new Dictionary<string, object> { { "error", $"Measurement '{measurement}' does not exist" } };
+                yield break;
+            }
+
+            var results = new List<Dictionary<string, object>>();
+            try
+            {
+                // Delete from data directory
+                Directory.Delete(measurementPath, true);
+                results.Add(new Dictionary<string, object> { { "msg", $"Deleted data directory '{measurementPath}'" } });
+
+                // Also delete from blacklist if it exists there
+                var blacklistPath = Path.Combine(BlacklistDirectory, measurement);
+                if (Directory.Exists(blacklistPath))
+                {
+                    Directory.Delete(blacklistPath, true);
+                    results.Add(new Dictionary<string, object> { { "msg", $"Deleted blacklist directory '{blacklistPath}'" } });
+                }
+
+                // Remove from blacklist cache
+                MeasurementBlacklist.TryRemove(measurement, out _);
+
+                results.Add(new Dictionary<string, object> { { "msg", $"Successfully deleted measurement '{measurement}'" } });
+            }
+            catch (Exception ex)
+            {
+                results.Add(new Dictionary<string, object> { { "error", $"Failed to delete measurement: {ex.Message}" } });
+                LogException(ex, $"Deleting measurement {measurement}");
+            }
+
+            foreach (var result in results)
+            {
+                yield return result;
+            }
+        }
+
+        public IEnumerable<Dictionary<string, object>> TruncateMeasure(string measurement, KalaQlContext context)
+        {
+            measurement = PathSanitizer.SanitizePath(measurement);
+            var measurementPath = Path.Combine(DataDirectory, measurement);
+            
+            yield return new Dictionary<string, object> { { "msg", $"Starting truncation of measurement '{measurement}'" } };
+            
+            if (!Directory.Exists(measurementPath))
+            {
+                yield return new Dictionary<string, object> { { "error", $"Measurement '{measurement}' does not exist" } };
+                yield break;
+            }
+
+            var results = new List<Dictionary<string, object>>();
+            try
+            {
+                // Flush any pending writes
+                BufferedWriterSvc.ForceFlushWriters();
+
+                // Delete all .dat files in the measurement directory
+                var files = Directory.GetFiles(measurementPath, "*.dat", SearchOption.AllDirectories);
+                int deletedCount = 0;
+                
+                foreach (var file in files)
+                {
+                    try
+                    {
+                        File.Delete(file);
+                        deletedCount++;
+                    }
+                    catch (Exception ex)
+                    {
+                        results.Add(new Dictionary<string, object> { { "warning", $"Failed to delete file '{file}': {ex.Message}" } });
+                        LogException(ex, $"Truncating file {file}");
+                    }
+                }
+
+                // Remove from blacklist cache if present
+                MeasurementBlacklist.TryRemove(measurement, out _);
+
+                results.Add(new Dictionary<string, object> { { "msg", $"Truncated {deletedCount} files from measurement '{measurement}'" } });
+            }
+            catch (Exception ex)
+            {
+                results.Add(new Dictionary<string, object> { { "error", $"Failed to truncate measurement: {ex.Message}" } });
+                LogException(ex, $"Truncating measurement {measurement}");
+            }
+
+            foreach (var result in results)
+            {
+                yield return result;
+            }
+        }
+
         public class MatView
         {
             public string Query { get; set; } = string.Empty; // Standardwert
