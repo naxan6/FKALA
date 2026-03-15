@@ -19,6 +19,7 @@ F Kala is a high-performance time-series database system with a custom query lan
   - [Aggr](#aggr)
   - [AlTz](#altz)
   - [Expr](#expr)
+  - [Shift](#shift)
   - [Insert](#insert)
   - [Interpolate](#interpolate)
   - [MatView](#matview)
@@ -382,6 +383,85 @@ AlTz "America/New_York"
 Aggr Daily: rData Aligned_1Day Avg
 ```
 Aligns daily windows to Eastern Time (EST/EDT).
+
+---
+
+### Shift
+
+Shifts all timestamps in a dataset by a specified duration offset. Useful for simulations, aligning datasets with different time references, or time-based what-if scenarios.
+
+#### Pattern
+```
+Shift <Name>: <Source> <Offset>
+```
+
+#### Parameters
+- `Shift` - The verb
+- `<Name>` - Name for the resulting dataset
+- `<Source>` - Name of the source dataset to shift
+- `<Offset>` - Duration offset to apply to all timestamps:
+  - Format: `[+|-][Nd][Nh][Nm]`
+  - `d` - Days
+  - `h` - Hours
+  - `m` - Minutes
+  - Sign (`+` or `-`) indicates direction of shift
+
+#### Supported Duration Formats
+
+| Format | Description |
+|--------|-------------|
+| `+2h` | Shift forward by 2 hours |
+| `-30m` | Shift backward by 30 minutes |
+| `+1d2h30m` | Shift forward by 1 day, 2 hours, 30 minutes |
+| `-1d` | Shift backward by 1 day |
+| `+1h30m` | Shift forward by 1 hour 30 minutes |
+
+#### Examples
+
+**Shift Forward by 2 Hours:**
+```kala
+Load rData: Sofar/measure/batteryInput1/SOC_Bat1 2024-01-01T00:00:00 2024-01-02T00:00:00 NoCache
+Shift ShiftedData: rData +2h
+Publ ShiftedData Table
+```
+Shifts all timestamps 2 hours into the future.
+
+**Shift Backward by 30 Minutes:**
+```kala
+Load rData: Sofar/measure/batteryInput1/SOC_Bat1 2024-01-01T00:00:00 2024-01-02T00:00:00 NoCache
+Shift ShiftedData: rData -30m
+Publ ShiftedData Table
+```
+Shifts all timestamps 30 minutes into the past.
+
+**Simulation Scenario:**
+```kala
+# What if the solar production was 3 hours earlier?
+Load rPV: Sofar/measure/PVInput1/Power 2024-06-01T00:00:00 2024-06-02T00:00:00 NoCache
+Shift PVShifted: rPV -3h
+Publ PVShifted Table
+```
+Simulates an earlier solar production scenario by shifting timestamps backward.
+
+**Combined with Aggregation:**
+```kala
+Load rData: Sofar/measure/batteryInput1/SOC_Bat1 2024-01-01T00:00:00 2024-01-02T00:00:00 NoCache
+Shift Shifted: rData +1d
+Aggr Daily: Shifted Aligned_1Day Avg
+Publ Daily Table
+```
+Shifts data by 1 day, then aggregates into daily windows.
+
+**Pipe Syntax:**
+```kala
+Load rData: Sofar/measure/batteryInput1/SOC_Bat1 2024-01-01T00:00:00 2024-01-02T00:00:00 NoCache | Shift Shifted: rData +2h | Publ Shifted Table
+```
+
+#### Notes
+- All datapoint properties (Value, ValueText, Source) are preserved
+- Only StartTime and EndTime are modified
+- Useful for simulation scenarios and time-based analysis
+- Can be combined with other operations like Aggr, Expr, etc.
 
 ---
 
@@ -1000,5 +1080,5 @@ C:\git\FKALA> docker build . --progress=plain --no-cache
 - [x] Mark files as sorted - *Done*
 - [ ] Merge measures (maybe with a hard cut at some point in time)
 - [x] Support text values (maybe even long?) - *Done*
-- [ ] Function for shifting windows
+- [x] Function for shifting windows - *Done (Shift operation)*
 - [ ] Worker for cache-refresh schedule
