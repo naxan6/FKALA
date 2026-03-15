@@ -648,6 +648,7 @@
                     <td>${measure.To || measure.to || '-'}</td>
                     <td>${isBlacklisted ? '✓' : ''}</td>
                     <td>
+                        <button class="btn-select" data-name="${measure.Measurement || measure.measurement}">Select</button>
                         <button class="btn-delete" data-name="${measure.Measurement || measure.measurement}">Delete</button>
                         <button class="btn-truncate" data-name="${measure.Measurement || measure.measurement}">Truncate</button>
                         <button class="btn-blacklist" data-name="${measure.Measurement || measure.measurement}" data-blacklisted="${isBlacklisted}">${isBlacklisted ? 'Unblacklist' : 'Blacklist'}</button>
@@ -656,6 +657,9 @@
                 tbody.appendChild(row);
             });
             // Add event listeners to buttons
+            tbody.querySelectorAll('.btn-select').forEach(btn => {
+                btn.addEventListener('click', () => selectMeasure(btn.dataset.name));
+            });
             tbody.querySelectorAll('.btn-delete').forEach(btn => {
                 btn.addEventListener('click', () => deleteMeasure(btn.dataset.name));
             });
@@ -683,6 +687,38 @@
             const cmd = isBlacklisted ? `Mgmt UNBLACKLIST ${measurement}` : `Mgmt BLACKLIST ${measurement}`;
             await executeMgmtCommand(cmd);
             fetchMeasureSpace();
+        }
+
+        function selectMeasure(measurement) {
+            // Build query for last 10 days
+            const now = new Date();
+            const tenDaysAgo = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000);
+            const fromStr = 'now-10d';
+            const toStr = 'now';
+            
+            // Build the query
+            const query = `Load data: ${measurement} ${fromStr} ${toStr} NoCache\nPubl data Table`;
+            
+            // Set the query in the textarea
+            document.getElementById('query').value = query;
+            
+            // Switch to the main Stream Query tab (remove ?tab=measures from URL)
+            const newUrl = window.location.pathname + '?tab=streamquery';
+            window.history.pushState({}, '', newUrl);
+            
+            // Hide measures card, show query/stream/table cards
+            document.getElementById('measures-card').classList.add('hidden');
+            document.getElementById('query-card').classList.remove('hidden');
+            document.getElementById('raw-stream-card').classList.remove('hidden');
+            document.getElementById('table-data-card').classList.remove('hidden');
+            
+            // Update nav links
+            document.querySelectorAll('.nav a').forEach(link => {
+                link.classList.toggle('active', link.getAttribute('href') === './index.html');
+            });
+            
+            // Auto-send the query
+            handleSendClick(true);
         }
 
         async function executeMgmtCommand(query) {
@@ -896,8 +932,10 @@
                     // Load measure data
                     fetchMeasureSpace();
                 } else {
-                    // Default: show query/stream/table, hide measures
+                    // Default (streamquery or no tab): show query/stream/table, hide measures
                     queryCard.classList.remove('hidden');
+                    rawStreamCard.classList.remove('hidden');
+                    tableDataCard.classList.remove('hidden');
                     measuresCard.classList.add('hidden');
                     navLinks.forEach(link => {
                         link.classList.toggle('active', link.getAttribute('href') === './index.html');
