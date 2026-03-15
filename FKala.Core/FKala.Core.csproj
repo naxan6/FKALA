@@ -8,6 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>FKala.Unittests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="DynamicExpresso.Core" Version="2.16.1" />
     <PackageReference Include="Exceptionless.DateTimeExtensions" Version="4.0.1" />
     <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.8" />

@@ -772,4 +772,56 @@ public static class ParserHelper
             }
         }
     }
+
+    /// <summary>
+    /// Parser für ShiftTime-Operationen
+    /// </summary>
+    public class ShiftTimeParser : KalaQlParserBase
+    {
+        /// <summary>
+        /// Prüft, ob dieser Parser das angegebene Verb parsen kann
+        /// </summary>
+        /// <param name="verb">Das zu prüfende Verb</param>
+        /// <returns>True, wenn dieser Parser das Verb parsen kann, sonst False</returns>
+        public override bool CanParse(string verb) => verb == "Shift";
+
+        /// <summary>
+        /// Parst eine Zeile und erstellt eine Operation
+        /// </summary>
+        /// <param name="line">Die zu parsende Zeile</param>
+        /// <param name="fields">Die bereits aufgeteilten Felder der Zeile</param>
+        /// <returns>Die erstellte Operation</returns>
+        public override Op_Base Parse(string line, List<string> fields, List<IKalaQlOperation> previousOps)
+        {
+            if (fields.Count < 4)
+            {
+                throw new Exception($"4 parameters needed. Example: Shift NAME: INPUT +2h. But got: {line}");
+            }
+
+            string sourceName = ParseSourceName(fields[2], previousOps);
+            TimeSpan offset = DurationParser.Parse(fields[3]);
+
+            return new Op_ShiftTime(line, fields[1].Trim(':'), sourceName, offset, fields[3]);
+        }
+
+        /// <summary>
+        /// Generiert eine Zeile aus den angegebenen Parametern
+        /// </summary>
+        /// <param name="parameters">Die Parameter für die Zeile</param>
+        /// <returns>Die generierte Zeile</returns>
+        public override string GenerateLine(object parameters)
+        {
+            return GenerateLine((ShiftTimeParams)parameters);
+        }
+
+        /// <summary>
+        /// Generiert eine Zeile aus den angegebenen Parametern
+        /// </summary>
+        /// <param name="parameters">Die Parameter für die Zeile</param>
+        /// <returns>Die generierte Zeile</returns>
+        public static string GenerateLine(ShiftTimeParams parameters)
+        {
+            return $"Shift {parameters.Name}: {parameters.Input} {DurationParser.ToDurationString(parameters.Offset)}";
+        }
+    }
 }
