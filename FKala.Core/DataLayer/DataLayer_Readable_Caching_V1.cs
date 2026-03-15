@@ -518,6 +518,12 @@ namespace FKala.Core
             return measurements.Select(d => Path.GetFileName(d)).OrderBy(e => e).ToList();
         }
 
+        public List<string> LoadBlacklistedMeasurements()
+        {
+            var measurements = Directory.GetDirectories(BlacklistDirectory);
+            return measurements.Select(d => Path.GetFileName(d)).OrderBy(e => e).ToList();
+        }
+
         public void Dispose()
         {
             Dispose(true);
@@ -670,11 +676,31 @@ namespace FKala.Core
 
         public IEnumerable<Dictionary<string, object>> GetMeasureSpace(string[]? measurements)
         {
-            IEnumerable<string> targetMeasurements = measurements != null ? measurements : LoadMeasurementList();
+            IEnumerable<string> targetMeasurements;
+            
+            if (measurements != null)
+            {
+                targetMeasurements = measurements;
+            }
+            else
+            {
+                // Load measurements from both data and blacklist directories
+                var dataMeasurements = LoadMeasurementList();
+                var blacklistMeasurements = LoadBlacklistedMeasurements();
+                targetMeasurements = dataMeasurements.Concat(blacklistMeasurements).Distinct();
+            }
             
             foreach (var measurement in targetMeasurements)
             {
                 var measurementPath = Path.Combine(DataDirectory, PathSanitizer.SanitizePath(measurement));
+                var isBlacklisted = IsBlacklisted(measurement, true);
+                
+                // If blacklisted, check the blacklist directory
+                if (isBlacklisted)
+                {
+                    measurementPath = Path.Combine(BlacklistDirectory, PathSanitizer.SanitizePath(measurement));
+                }
+                
                 if (!Directory.Exists(measurementPath))
                 {
                     yield return new Dictionary<string, object>
@@ -682,10 +708,10 @@ namespace FKala.Core
                         { "Measurement", measurement },
                         { "SizeBytes", 0L },
                         { "SizeMB", 0.0 },
-                        { "FileCount", 0 },                        
+                        { "FileCount", 0 },
                         { "From", null },
                         { "To", null },
-                        { "Blacklisted", false }
+                        { "Blacklisted", isBlacklisted }
                     };
                     continue;
                 }
@@ -693,7 +719,7 @@ namespace FKala.Core
                 var files = Directory.GetFiles(measurementPath, "*.dat", SearchOption.AllDirectories);
                 long totalBytes = 0;
                 DateTime? minDate = null;
-                DateTime? maxDate = null;                
+                DateTime? maxDate = null;
                 
                 foreach (var file in files)
                 {
@@ -710,12 +736,11 @@ namespace FKala.Core
                     }
 
                 }
-
-                var isBlacklisted = IsBlacklisted(measurement, true);
                 
                 yield return new Dictionary<string, object>
                 {
                     { "Measurement", measurement },
+                    { "SizeBytes", totalBytes },
                     { "SizeMB", Math.Round(totalBytes / (1024.0 * 1024.0), 2) },
                     { "FileCount", files.Length },
                     { "From", minDate?.ToString("yyyy-MM-dd HH:mm:ss") },

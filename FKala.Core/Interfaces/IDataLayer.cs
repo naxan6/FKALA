@@ -21,6 +21,7 @@ namespace FKala.Core.Interfaces
         void Insert(string kalaLinedata, string? source = null);
         List<int> LoadAvailableYears(string measurement);
         List<string> LoadMeasurementList();
+        List<string> LoadBlacklistedMeasurements();
         IEnumerable<DataPoint?> LoadNewestDatapoint(string measurement);
         BufferedWriterService BufferedWriterSvc { get; }
 
