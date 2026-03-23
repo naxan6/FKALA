@@ -153,6 +153,15 @@
         .status-ok { background-color: var(--success-color); } /* Assuming --success-color is defined elsewhere or a fallback */
         .status-error { background-color: var(--error-color); } /* Assuming --error-color is defined elsewhere or a fallback */
         .status-pending { background-color: #ffc107; }
+        
+        .sort-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .sort-link:hover {
+            text-decoration: underline;
+        }
 
         /* Dropdown styles */
         .dropdown { position: relative; display: inline-block; }
@@ -534,6 +543,297 @@
             }
         }
         
+        // Measure Management Functions
+        let measuresData = [];
+        let currentSortColumn = 'sizeMB';
+        let currentSortOrder = 'desc';
+
+        function applyFiltersAndSort(data) {
+            // Get filter values
+            const nameFilter = document.getElementById('filter-measurement')?.value?.toLowerCase() || '';
+            const blacklistedFilter = document.getElementById('filter-blacklisted')?.value || 'all';
+            
+            // Filter data
+            let filtered = data.filter(measure => {
+                const name = (measure.Measurement || measure.measurement || '').toLowerCase();
+                const isBlacklisted = measure.Blacklisted === true || measure.Blacklisted === 'true';
+                
+                // Name filter
+                if (nameFilter && !name.includes(nameFilter)) return false;
+                
+                // Blacklisted filter
+                if (blacklistedFilter === 'yes' && !isBlacklisted) return false;
+                if (blacklistedFilter === 'no' && isBlacklisted) return false;
+                
+                return true;
+            });
+            
+            // Sort data
+            filtered.sort((a, b) => {
+                let aVal, bVal;
+                switch (currentSortColumn) {
+                    case 'measurement':
+                        aVal = (a.Measurement || a.measurement || '').toLowerCase();
+                        bVal = (b.Measurement || b.measurement || '').toLowerCase();
+                        break;
+                    case 'sizeMB':
+                        aVal = (a.SizeBytes || a.sizeBytes || 0) / (1024 * 1024);
+                        bVal = (b.SizeBytes || b.sizeBytes || 0) / (1024 * 1024);
+                        break;
+                    case 'fileCount':
+                        aVal = a.FileCount || a.fileCount || 0;
+                        bVal = b.FileCount || b.fileCount || 0;
+                        break;
+                    case 'from':
+                        aVal = a.From || a.from || '';
+                        bVal = b.From || b.from || '';
+                        break;
+                    case 'to':
+                        aVal = a.To || a.to || '';
+                        bVal = b.To || b.to || '';
+                        break;
+                    case 'blacklisted':
+                        aVal = a.Blacklisted === true || a.Blacklisted === 'true';
+                        bVal = b.Blacklisted === true || b.Blacklisted === 'true';
+                        break;
+                    default:
+                        aVal = 0;
+                        bVal = 0;
+                }
+                
+                if (aVal < bVal) return currentSortOrder === 'asc' ? -1 : 1;
+                if (aVal > bVal) return currentSortOrder === 'asc' ? 1 : -1;
+                return 0;
+            });
+            
+            return filtered;
+        }
+
+        async function fetchMeasureSpace() {
+            const urlInput = document.getElementById('url');
+            const query = 'Mgmt GETMEASURESPACE';
+            try {
+                const response = await fetch(urlInput.value, {
+                    method: "POST",
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: query
+                });
+                if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+                const data = await response.json();
+                measuresData = data;
+                renderMeasuresTable();
+            } catch (error) {
+                console.error('Failed to fetch measure space:', error);
+                alert('Failed to fetch measure space: ' + error.message);
+            }
+        }
+
+        function renderMeasuresTable() {
+            const tbody = document.getElementById('measures-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            
+            // Apply filters and sorting
+            const filteredData = applyFiltersAndSort(measuresData);
+            
+            filteredData.forEach(measure => {
+                const row = document.createElement('tr');
+                const isBlacklisted = measure.Blacklisted === true || measure.Blacklisted === 'true';
+                row.innerHTML = `
+                    <td><input type="checkbox" class="measure-checkbox" data-name="${measure.Measurement || measure.measurement}"></td>
+                    <td>${measure.Measurement || measure.measurement}</td>
+                    <td>${((measure.SizeBytes || measure.sizeBytes || 0) / (1024 * 1024)).toFixed(2)}</td>
+                    <td>${measure.FileCount || measure.fileCount || 0}</td>
+                    <td>${measure.From || measure.from || '-'}</td>
+                    <td>${measure.To || measure.to || '-'}</td>
+                    <td>${isBlacklisted ? '✓' : ''}</td>
+                    <td>
+                        <button class="btn-select" data-name="${measure.Measurement || measure.measurement}">Select</button>
+                        <button class="btn-delete" data-name="${measure.Measurement || measure.measurement}">Delete</button>
+                        <button class="btn-truncate" data-name="${measure.Measurement || measure.measurement}">Truncate</button>
+                        <button class="btn-blacklist" data-name="${measure.Measurement || measure.measurement}" data-blacklisted="${isBlacklisted}">${isBlacklisted ? 'Unblacklist' : 'Blacklist'}</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            // Add event listeners to buttons
+            tbody.querySelectorAll('.btn-select').forEach(btn => {
+                btn.addEventListener('click', () => selectMeasure(btn.dataset.name));
+            });
+            tbody.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', () => deleteMeasure(btn.dataset.name));
+            });
+            tbody.querySelectorAll('.btn-truncate').forEach(btn => {
+                btn.addEventListener('click', () => truncateMeasure(btn.dataset.name));
+            });
+            tbody.querySelectorAll('.btn-blacklist').forEach(btn => {
+                btn.addEventListener('click', () => toggleBlacklist(btn.dataset.name, btn.dataset.blacklisted === 'true'));
+            });
+        }
+
+        async function deleteMeasure(measurement) {
+            if (!confirm(`Delete measurement "${measurement}"? This cannot be undone!`)) return;
+            await executeMgmtCommand(`Mgmt DELETEMEASURE ${measurement}`);
+            fetchMeasureSpace();
+        }
+
+        async function truncateMeasure(measurement) {
+            if (!confirm(`Truncate measurement "${measurement}"? All data will be deleted!`)) return;
+            await executeMgmtCommand(`Mgmt TRUNCATEMEASURE ${measurement}`);
+            fetchMeasureSpace();
+        }
+
+        async function toggleBlacklist(measurement, isBlacklisted) {
+            const cmd = isBlacklisted ? `Mgmt UNBLACKLIST ${measurement}` : `Mgmt BLACKLIST ${measurement}`;
+            await executeMgmtCommand(cmd);
+            fetchMeasureSpace();
+        }
+
+        function selectMeasure(measurement) {
+            // Build query for last 10 days
+            const now = new Date();
+            const tenDaysAgo = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000);
+            const fromStr = 'now-10d';
+            const toStr = 'now';
+            
+            // Build the query
+            const query = `Load data: ${measurement} ${fromStr} ${toStr} NoCache\nPubl data Table`;
+            
+            // Set the query in the textarea
+            document.getElementById('query').value = query;
+            
+            // Switch to the main Stream Query tab (remove ?tab=measures from URL)
+            const newUrl = window.location.pathname + '?tab=streamquery';
+            window.history.pushState({}, '', newUrl);
+            
+            // Hide measures card, show query/stream/table cards
+            document.getElementById('measures-card').classList.add('hidden');
+            document.getElementById('query-card').classList.remove('hidden');
+            document.getElementById('raw-stream-card').classList.remove('hidden');
+            document.getElementById('table-data-card').classList.remove('hidden');
+            
+            // Update nav links
+            document.querySelectorAll('.nav a').forEach(link => {
+                link.classList.toggle('active', link.getAttribute('href') === './index.html');
+            });
+            
+            // Auto-send the query
+            handleSendClick(true);
+        }
+
+        async function executeMgmtCommand(query) {
+            const urlInput = document.getElementById('url');
+            try {
+                const response = await fetch(urlInput.value, {
+                    method: "POST",
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: query
+                });
+                if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+                // Consume the stream
+                const reader = response.body.getReader();
+                while (true) {
+                    const { done } = await reader.read();
+                    if (done) break;
+                }
+            } catch (error) {
+                console.error('Command failed:', error);
+                alert('Command failed: ' + error.message);
+            }
+        }
+
+        function setupMeasureManagement() {
+            // Refresh button
+            document.getElementById('btn-refresh-measures')?.addEventListener('click', fetchMeasureSpace);
+            
+            // Filter inputs
+            document.getElementById('filter-measurement')?.addEventListener('input', renderMeasuresTable);
+            document.getElementById('filter-blacklisted')?.addEventListener('change', renderMeasuresTable);
+            
+            // Sort inputs
+            document.getElementById('sort-column')?.addEventListener('change', (e) => {
+                currentSortColumn = e.target.value;
+                renderMeasuresTable();
+            });
+            document.getElementById('sort-order')?.addEventListener('change', (e) => {
+                currentSortOrder = e.target.value;
+                renderMeasuresTable();
+            });
+            
+            // Sort links in table header
+            document.querySelectorAll('.sort-link')?.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const column = e.target.dataset.column;
+                    if (currentSortColumn === column) {
+                        currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        currentSortColumn = column;
+                        currentSortOrder = 'desc';
+                    }
+                    document.getElementById('sort-column').value = column;
+                    document.getElementById('sort-order').value = currentSortOrder;
+                    renderMeasuresTable();
+                });
+                link.style.cursor = 'pointer';
+                link.style.textDecoration = 'underline';
+            });
+            
+            // Select all checkbox
+            document.getElementById('select-all-measures')?.addEventListener('change', (e) => {
+                const checkboxes = document.querySelectorAll('.measure-checkbox');
+                checkboxes.forEach(cb => cb.checked = e.target.checked);
+                updateBulkButtonsState();
+            });
+
+            // Individual checkbox change
+            document.getElementById('measures-table-body')?.addEventListener('change', (e) => {
+                if (e.target.classList.contains('measure-checkbox')) {
+                    updateBulkButtonsState();
+                }
+            });
+
+            // Bulk action buttons
+            document.getElementById('btn-delete-selected')?.addEventListener('click', () => {
+                const selected = getSelectedMeasures();
+                if (selected.length === 0) return;
+                if (confirm(`Delete ${selected.length} selected measurements? This cannot be undone!`)) {
+                    selected.forEach(name => deleteMeasure(name));
+                }
+            });
+
+            document.getElementById('btn-truncate-selected')?.addEventListener('click', () => {
+                const selected = getSelectedMeasures();
+                if (selected.length === 0) return;
+                if (confirm(`Truncate ${selected.length} selected measurements? All data will be deleted!`)) {
+                    selected.forEach(name => truncateMeasure(name));
+                }
+            });
+
+            document.getElementById('btn-blacklist-selected')?.addEventListener('click', () => {
+                const selected = getSelectedMeasures();
+                selected.forEach(name => toggleBlacklist(name, false));
+            });
+
+            document.getElementById('btn-unblacklist-selected')?.addEventListener('click', () => {
+                const selected = getSelectedMeasures();
+                selected.forEach(name => toggleBlacklist(name, true));
+            });
+        }
+
+        function getSelectedMeasures() {
+            const checkboxes = document.querySelectorAll('.measure-checkbox:checked');
+            return Array.from(checkboxes).map(cb => cb.dataset.name);
+        }
+
+        function updateBulkButtonsState() {
+            const selectedCount = document.querySelectorAll('.measure-checkbox:checked').length;
+            document.getElementById('btn-delete-selected').disabled = selectedCount === 0;
+            document.getElementById('btn-truncate-selected').disabled = selectedCount === 0;
+            document.getElementById('btn-blacklist-selected').disabled = selectedCount === 0;
+            document.getElementById('btn-unblacklist-selected').disabled = selectedCount === 0;
+        }
+
         window.onload = () => {
             const urlInput = document.getElementById('url'), intervalSelect = document.getElementById('refresh-interval');
             const themeToggleBtn = document.getElementById('theme-toggle'), queryTextarea = document.getElementById('query');
@@ -609,6 +909,43 @@
                     card.classList.toggle('hidden', !toggle.checked);
                 });
             });
+
+            // --- Tab Switching Logic ---
+            function handleTabSwitch() {
+                const params = new URLSearchParams(window.location.search);
+                const tab = params.get('tab');
+                const queryCard = document.getElementById('query-card');
+                const rawStreamCard = document.getElementById('raw-stream-card');
+                const tableDataCard = document.getElementById('table-data-card');
+                const measuresCard = document.getElementById('measures-card');
+                const navLinks = document.querySelectorAll('.nav a');
+
+                if (tab === 'measures') {
+                    // Show measures card, hide query/stream/table
+                    queryCard.classList.add('hidden');
+                    rawStreamCard.classList.add('hidden');
+                    tableDataCard.classList.add('hidden');
+                    measuresCard.classList.remove('hidden');
+                    navLinks.forEach(link => {
+                        link.classList.toggle('active', link.id === 'nav-measures');
+                    });
+                    // Load measure data
+                    fetchMeasureSpace();
+                } else {
+                    // Default (streamquery or no tab): show query/stream/table, hide measures
+                    queryCard.classList.remove('hidden');
+                    rawStreamCard.classList.remove('hidden');
+                    tableDataCard.classList.remove('hidden');
+                    measuresCard.classList.add('hidden');
+                    navLinks.forEach(link => {
+                        link.classList.toggle('active', link.getAttribute('href') === './index.html');
+                    });
+                }
+            }
+
+            // Initialize measure management and tab switching
+            setupMeasureManagement();
+            handleTabSwitch();
         };
     </script>
 </head>
@@ -617,6 +954,7 @@
         <header class="header">
             <nav class="nav">
                 <a href="./index.html" class="active">Stream Query</a>
+                <a href="./index.html?tab=measures" id="nav-measures">Measures</a>
                 <a href="../stat/index.html">Statistics</a>
             </nav>
             <div class="header-item" style="flex-grow: 1;">
@@ -693,6 +1031,69 @@
                 <span class="title">Table Data</span>
             </h3>
             <div id="table-output-container" class="scrollable-div"></div>
+        </div>
+
+        <div id="measures-card" class="card resizable-card hidden" style="height: 400px;">
+            <h3>
+                <span class="title">Measure Management</span>
+                <span class="controls">
+                    <button id="btn-refresh-measures">Refresh</button>
+                    <button id="btn-delete-selected" disabled>Delete Selected</button>
+                    <button id="btn-truncate-selected" disabled>Truncate Selected</button>
+                    <button id="btn-blacklist-selected" disabled>Blacklist Selected</button>
+                    <button id="btn-unblacklist-selected" disabled>Unblacklist Selected</button>
+                </span>
+            </h3>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                <div>
+                    <label for="filter-measurement">Filter:</label>
+                    <input id="filter-measurement" type="text" placeholder="Measurement name..." style="width: 200px;">
+                </div>
+                <div>
+                    <label>Blacklisted:</label>
+                    <select id="filter-blacklisted" style="width: 120px;">
+                        <option value="all">All</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                    </select>
+                </div>
+                <div style="flex-grow: 1;"></div>
+                <div>
+                    <label>Sort by:</label>
+                    <select id="sort-column" style="width: 120px;">
+                        <option value="measurement">Name</option>
+                        <option value="sizeMB" selected>Size (MB)</option>
+                        <option value="fileCount">Files</option>
+                        <option value="from">From</option>
+                        <option value="to">To</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Order:</label>
+                    <select id="sort-order" style="width: 100px;">
+                        <option value="desc">Desc</option>
+                        <option value="asc">Asc</option>
+                    </select>
+                </div>
+            </div>
+            <div style="overflow: auto; border: 1px solid var(--border-color); padding: 10px; background-color: var(--input-bg-color);">
+                <table class="json-table" id="measures-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;"><input type="checkbox" id="select-all-measures"></th>
+                            <th><a href="#" class="sort-link" data-column="measurement">Measurement</a></th>
+                            <th><a href="#" class="sort-link" data-column="sizeMB">Size (MB)</a></th>
+                            <th><a href="#" class="sort-link" data-column="fileCount">Files</a></th>
+                            <th><a href="#" class="sort-link" data-column="from">From</a></th>
+                            <th><a href="#" class="sort-link" data-column="to">To</a></th>
+                            <th><a href="#" class="sort-link" data-column="blacklisted">Blacklisted</a></th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="measures-table-body">
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </body>

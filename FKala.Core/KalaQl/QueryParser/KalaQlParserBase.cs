@@ -464,6 +464,22 @@ namespace FKala.Core.KalaQl.QueryParser
             {
                 return MgmtAction.Statistics;
             }
+            else if (v.ToUpper() == "GETMEASURESPACE")
+            {
+                return MgmtAction.GetMeasureSpace;
+            }
+            else if (v.ToUpper() == "GETMEASUREDETAILS")
+            {
+                return MgmtAction.GetMeasureDetails;
+            }
+            else if (v.ToUpper() == "DELETEMEASURE")
+            {
+                return MgmtAction.DeleteMeasure;
+            }
+            else if (v.ToUpper() == "TRUNCATEMEASURE")
+            {
+                return MgmtAction.TruncateMeasure;
+            }
 
             throw new ArgumentException($"MgmtAction {v} is invalid");
         }

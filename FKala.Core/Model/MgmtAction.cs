@@ -12,6 +12,10 @@
         BenchmarkIo,
         UnBlacklist,
         Blacklist,
-        Statistics
+        Statistics,
+        GetMeasureSpace,
+        DeleteMeasure,
+        TruncateMeasure,
+        GetMeasureDetails
     }
 }

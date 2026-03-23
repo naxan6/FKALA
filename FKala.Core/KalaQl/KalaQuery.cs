@@ -37,6 +37,7 @@ namespace FKala.Core.KalaQl
             _parserRegistry.RegisterParser(new ExpressoParser());
             _parserRegistry.RegisterParser(new PublishParser());
             _parserRegistry.RegisterParser(new MgmtParser());
+            _parserRegistry.RegisterParser(new ShiftTimeParser());
         }
 
         public static KalaQuery Start(bool streaming = false)

@@ -409,4 +409,38 @@ namespace FKala.Core.KalaQl.QueryParser
             Parameters = parameters;
         }
     }
+
+    /// <summary>
+    /// Parameter für ShiftTime-Operationen
+    /// </summary>
+    public class ShiftTimeParams
+    {
+        /// <summary>
+        /// Der Name der Operation
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// Der Name der Eingabe
+        /// </summary>
+        public string Input { get; set; }
+
+        /// <summary>
+        /// Die Zeitverschiebung
+        /// </summary>
+        public TimeSpan Offset { get; set; }
+
+        /// <summary>
+        /// Erstellt eine neue Instanz der ShiftTimeParams-Klasse
+        /// </summary>
+        /// <param name="name">Der Name der Operation</param>
+        /// <param name="input">Der Name der Eingabe</param>
+        /// <param name="offset">Die Zeitverschiebung</param>
+        public ShiftTimeParams(string name, string input, TimeSpan offset)
+        {
+            Name = name;
+            Input = input;
+            Offset = offset;
+        }
+    }
 }

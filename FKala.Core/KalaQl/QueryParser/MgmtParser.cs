@@ -84,6 +84,14 @@ namespace FKala.Core.KalaQl.QueryParser
                     return "UNBLACKLIST";
                 case MgmtAction.Statistics:
                     return "STATISTICS";
+                case MgmtAction.GetMeasureSpace:
+                    return "GETMEASURESPACE";
+                case MgmtAction.GetMeasureDetails:
+                    return "GETMEASUREDETAILS";
+                case MgmtAction.DeleteMeasure:
+                    return "DELETEMEASURE";
+                case MgmtAction.TruncateMeasure:
+                    return "TRUNCATEMEASURE";
                 default:
                     throw new Exception($"Unbekannte MgmtAction: {action}");
             }

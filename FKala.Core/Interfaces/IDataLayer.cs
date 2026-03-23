@@ -21,6 +21,7 @@ namespace FKala.Core.Interfaces
         void Insert(string kalaLinedata, string? source = null);
         List<int> LoadAvailableYears(string measurement);
         List<string> LoadMeasurementList();
+        List<string> LoadBlacklistedMeasurements();
         IEnumerable<DataPoint?> LoadNewestDatapoint(string measurement);
         BufferedWriterService BufferedWriterSvc { get; }
 
@@ -44,5 +45,9 @@ namespace FKala.Core.Interfaces
         void WriteMatViewFile(string viewName, List<string> lines);
         List<DataLayer_Readable_Caching_V1.MatView> LoadMatViews();
         void DeleteMeasurementAndMatViewDefinition(string measurementName);
+        IEnumerable<Dictionary<string, object>> GetMeasureSpace(string[]? measurements);
+        IEnumerable<Dictionary<string, object>> GetMeasureDetails(string[]? measurements);
+        IEnumerable<Dictionary<string, object>> DeleteMeasure(string measurement, KalaQlContext context);
+        IEnumerable<Dictionary<string, object>> TruncateMeasure(string measurement, KalaQlContext context);
     }
 }
