@@ -57,7 +57,6 @@ namespace FKala.Core.KalaQl
         private IEnumerable<DataPoint> InternalExecute(KalaQlContext context, ResultPromise input)
         {
             var enumerable = input.ResultsetFactory();
-            var dataPointsEnumerator = enumerable.GetEnumerator();
 
             int count = 0;
             foreach (var dp in enumerable)

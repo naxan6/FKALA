@@ -105,7 +105,7 @@ namespace FKala.Core.DataLayer.Infrastructure
                         }
                         catch (Exception)
                         {
-                            Console.WriteLine("Error at BufferedWriter with path <{filePath}>");
+                            Console.WriteLine($"Error at BufferedWriter with path <{filePath}>");
                             throw;
                         }
                     }

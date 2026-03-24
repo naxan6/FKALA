@@ -99,9 +99,9 @@ namespace FKala.Api.Controller
                 Exception? ie = ex.InnerException;
                 while (ie != null)
                 {
-                    exres.Add("iex " + ex.Message);
-                    exres.Add("iexstack: " + $"{ex.StackTrace}");
-                    ie = ex.InnerException;
+                    exres.Add("iex " + ie.Message);
+                    exres.Add("iexstack: " + $"{ie.StackTrace}");
+                    ie = ie.InnerException;
                 }
 
                 return Ok(ModelState);

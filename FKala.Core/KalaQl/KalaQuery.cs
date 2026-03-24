@@ -94,7 +94,7 @@ namespace FKala.Core.KalaQl
 
         public KalaQuery FromQuery(string queryText, IDataLayer dataLayer = null!)
         {
-            queryText = Regex.Unescape(queryText);
+            queryText = queryText.Replace("\\n", "\n");
 
             if (dataLayer != null)
             {

@@ -16,6 +16,7 @@ namespace FKala.Api.Controller
 
         [HttpPut]
         [Consumes("text/plain")]
+        [RequestSizeLimit(10_000_000)]
         public IActionResult Insert([FromBody] string input)
         {
             if (string.IsNullOrEmpty(input))

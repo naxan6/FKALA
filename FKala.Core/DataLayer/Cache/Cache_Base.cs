@@ -67,25 +67,22 @@ namespace FKala.Core.DataLayer.Cache
 
         private void WriteCacheFile(string cacheFilePath, IEnumerable<DataPoint> rs, bool append)
         {
-            if (rs.Any())
+            var timeFormat = GetTimeFormat();
+            var writerSvc = DataLayer.BufferedWriterSvc;
+            writerSvc.CreateWriteDispose(cacheFilePath, append, (writer) =>
             {
-                var timeFormat = GetTimeFormat();
-                var writerSvc = DataLayer.BufferedWriterSvc;
-                writerSvc.CreateWriteDispose(cacheFilePath, append, (writer) =>
+                foreach (var dp in rs)
                 {
-                    foreach (var dp in rs)
+                    if (dp.Value != null)
                     {
-                        if (dp.Value != null)
-                        {
 
-                            writer.Append(dp.StartTime.ToString(timeFormat));
-                            writer.Append(" ");
-                            writer.Append(dp.Value.Value.ToString(CultureInfo.InvariantCulture));
-                            writer.AppendNewline();
-                        };
-                    }
-                });
-            }
+                        writer.Append(dp.StartTime.ToString(timeFormat));
+                        writer.Append(" ");
+                        writer.Append(dp.Value.Value.ToString(CultureInfo.InvariantCulture));
+                        writer.AppendNewline();
+                    };
+                }
+            });
         }
 
         public IEnumerable<DataPoint> LoadCache(DateTime startTime, DateTime endTime, int year, string yearFilePath, int readBuffer)

@@ -17,7 +17,13 @@ namespace FKala.Api.InputFormatter
 
         public override async Task<InputFormatterResult> ReadRequestBodyAsync(InputFormatterContext context, Encoding encoding)
         {
-            using var reader = new StreamReader(context.HttpContext.Request.Body, encoding);
+            var request = context.HttpContext.Request;
+            if (request.ContentLength > 10_000_000) // 10 MB limit
+            {
+                return await InputFormatterResult.FailureAsync();
+            }
+
+            using var reader = new StreamReader(request.Body, encoding);
             var plainText = await reader.ReadToEndAsync();
 
             return await InputFormatterResult.SuccessAsync(plainText);

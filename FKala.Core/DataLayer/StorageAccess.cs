@@ -47,6 +47,8 @@ namespace FKala.Core.DataLayers
 
         private LockManager LockManager;
 
+        private static readonly LockManager SharedLockManager = new LockManager();
+
         private StorageAccess(IDataLayer dataLayer, KalaQlContext context)
         {
             this.DataLayer = dataLayer;
@@ -56,7 +58,7 @@ namespace FKala.Core.DataLayers
             optionFindFilesRecursive.BufferSize = dataLayer.ReadBuffer;
             ReadBuffer = dataLayer.ReadBuffer;
             WriteBuffer = dataLayer.WriteBuffer;
-            LockManager = new LockManager();
+            LockManager = SharedLockManager;
         }
 
         public static StorageAccess ForReadMultiFile(string measurementPath, string measurementPathPart, DateTime startTime, DateTime endTime, KalaQl.KalaQlContext context)
@@ -274,6 +276,69 @@ namespace FKala.Core.DataLayers
             catch (Exception ex)
             {
                 Console.WriteLine($"failed renaming {currentPath} to unsorted. maybe already marked unsorted by parallel stream, or unsorted file {ex}");
+            }
+        }
+
+        /// <summary>
+        /// Recovers from incomplete sort-on-read operations after a crash.
+        /// Handles orphaned .sorted and .bak files left behind.
+        /// </summary>
+        public static void RecoverOrphanedSortFiles(string dataDirectory)
+        {
+            if (!Directory.Exists(dataDirectory)) return;
+
+            // Recover .bak files: if original is missing, rename .bak back
+            foreach (var bakFile in Directory.GetFiles(dataDirectory, "*.bak_*", SearchOption.AllDirectories))
+            {
+                var originalPath = bakFile.Substring(0, bakFile.IndexOf(".bak_"));
+                if (!File.Exists(originalPath))
+                {
+                    try
+                    {
+                        File.Move(bakFile, originalPath);
+                        Console.WriteLine($"Recovery: restored {bakFile} → {originalPath}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Recovery: failed to restore {bakFile}: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        File.Delete(bakFile);
+                        Console.WriteLine($"Recovery: deleted orphaned {bakFile}");
+                    }
+                    catch { }
+                }
+            }
+
+            // Recover .sorted files: if original is missing, rename .sorted to original
+            foreach (var sortedFile in Directory.GetFiles(dataDirectory, "*.sorted", SearchOption.AllDirectories))
+            {
+                var originalPath = sortedFile.Substring(0, sortedFile.Length - ".sorted".Length);
+                if (!File.Exists(originalPath))
+                {
+                    try
+                    {
+                        File.Move(sortedFile, originalPath);
+                        Console.WriteLine($"Recovery: promoted {sortedFile} → {originalPath}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Recovery: failed to promote {sortedFile}: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        File.Delete(sortedFile);
+                        Console.WriteLine($"Recovery: deleted orphaned {sortedFile}");
+                    }
+                    catch { }
+                }
             }
         }
 

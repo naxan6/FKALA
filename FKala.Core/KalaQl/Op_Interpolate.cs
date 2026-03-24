@@ -56,7 +56,6 @@ namespace FKala.Core.KalaQl
         private IEnumerable<DataPoint> InternalExecute(KalaQlContext context, ResultPromise input)
         {
             var enumerable = input.ResultsetFactory();
-            var dataPointsEnumerator = enumerable.GetEnumerator();
 
             if (Mode == InterpolationMode.forwards)
             {

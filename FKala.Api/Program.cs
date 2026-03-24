@@ -2,13 +2,12 @@ using FKala.Api.Controller;
 using FKala.Api.InputFormatter;
 using FKala.Api.Settings;
 using FKala.Api.Worker;
-using FKala.Api.Jobs; // Hinzugefügt
+using FKala.Api.Jobs;
 using FKala.Core;
 using FKala.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Quartz;
 using Quartz.AspNetCore;
-using System.Runtime;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +18,17 @@ builder.Services.AddControllers(
     ).AddJsonOptions((options) =>
     {
         //options.JsonSerializerOptions.DefaultBufferSize = 4096;
+    })
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        var builtInFactory = options.InvalidModelStateResponseFactory;
+
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var logger = context.HttpContext.RequestServices
+                                .GetRequiredService<ILogger<Program>>();
+            return builtInFactory(context);
+        };
     });
 
 //.AddNewtonsoftJson(options =>
@@ -61,11 +71,16 @@ builder.Services.AddQuartzServer(options =>
 });
 
 builder.Logging.AddConsole();
+builder.Services.AddHealthChecks();
 
-var storagePath = builder.Configuration["DataStorage"] ?? "C:\\fkala";
+var storagePath = builder.Configuration["DataStorage"] ?? (OperatingSystem.IsWindows() ? "C:\\fkala" : "/kaladata");
 
-var readBuffer = !string.IsNullOrEmpty(builder.Configuration["ReadBuffer"]) ? int.Parse(builder.Configuration["ReadBuffer"] ?? "none") : 16384;
-var writeBuffer = !string.IsNullOrEmpty(builder.Configuration["WriteBuffer"]) ? int.Parse(builder.Configuration["WriteBuffer"]?? "none") : 32768;
+int readBuffer = 16384;
+int writeBuffer = 32768;
+if (int.TryParse(builder.Configuration["ReadBuffer"], out var parsedReadBuffer))
+    readBuffer = parsedReadBuffer;
+if (int.TryParse(builder.Configuration["WriteBuffer"], out var parsedWriteBuffer))
+    writeBuffer = parsedWriteBuffer;
 
 var dl = new DataLayer_Readable_Caching_V1(storagePath, readBuffer, writeBuffer);
 builder.Services.AddSingleton<IDataLayer>(dl);
@@ -83,37 +98,20 @@ builder.Services.AddCors(o => o.AddPolicy("AllowAll", builder =>
 }));
 
 
-builder.Services.AddControllers()
-    .ConfigureApiBehaviorOptions(options =>
-    {
-        // To preserve the default behaviour, capture the original delegate to call later.
-        var builtInFactory = options.InvalidModelStateResponseFactory;
-
-        options.InvalidModelStateResponseFactory = context =>
-        {
-            var logger = context.HttpContext.RequestServices
-                                .GetRequiredService<ILogger<Program>>();
-
-            // Perform logging here.
-            // ...
-
-            // Invoke the default behaviour, which produces a ValidationProblemDetails
-            // response.
-            // To produce a custom response, return a different implementation of 
-            // IActionResult instead.
-            return builtInFactory(context);
-        };
-    });
-
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-app.UseSwagger();
-app.UseSwaggerUI();
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 app.UseFileServer();
 
-app.UseDeveloperExceptionPage();
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
 app.UseRouting();
 app.UseCors("AllowAll");
 
@@ -121,6 +119,7 @@ app.UseCors("AllowAll");
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllers();
+    endpoints.MapHealthChecks("/health");
 });
 #pragma warning restore ASP0014 // Suggest using top level route registrations
 //app.UseHttpsRedirection();
@@ -129,17 +128,6 @@ IHostApplicationLifetime lifetime = app.Lifetime;
 lifetime.ApplicationStopping.Register(() =>
 {
     dl.Shutdown();
-});
-
-// Run GC regularly
-Task task = Task.Run(async () =>
-{
-    while (true)
-    {
-        await Task.Delay(TimeSpan.FromSeconds(10));
-        GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
-        GC.Collect();
-    }
 });
 
 app.Run();

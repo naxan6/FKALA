@@ -31,7 +31,7 @@ namespace FKala.Api.Controller
 
         // GET api/string
         [HttpGet]
-        public IAsyncEnumerable<Dictionary<string, object>> QueryGet([FromQuery] string input)
+        public IAsyncEnumerable<Dictionary<string, object>> QueryGet([FromQuery] string input, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(input))
             {
@@ -48,7 +48,7 @@ namespace FKala.Api.Controller
         [HttpPost]
         [Consumes("text/plain")]
         //[SwaggerRequestBody("Weather forecast data", Required = true)]
-        public async IAsyncEnumerable<Dictionary<string, object>>  QueryPost([FromBody] string input)
+        public async IAsyncEnumerable<Dictionary<string, object>>  QueryPost([FromBody] string input, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(input))
             {
@@ -59,7 +59,7 @@ namespace FKala.Api.Controller
             var inputmultiline = ProcessString(input);
 
             DateTime previous = DateTime.Now;
-            await foreach (var retRowDict in DoQuery(inputmultiline))
+            await foreach (var retRowDict in DoQuery(inputmultiline).WithCancellation(cancellationToken))
             {
                 // hack for streaming all 250ms too see progress with sparse data and long runtimes (additionally to "if buffer is full" as in standard asp.net core)
                 if (previous.AddMilliseconds(250) < DateTime.Now)

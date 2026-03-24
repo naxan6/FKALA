@@ -1,3 +1,4 @@
+using FKala.Core.DataLayer.Infrastructure;
 using FKala.Core.Interfaces;
 using FKala.Core.Model;
 using System;
@@ -55,6 +56,7 @@ namespace FKala.Core.KalaQl
                 var shifted = dp.Clone();
                 shifted.StartTime = shifted.StartTime + Offset;
                 shifted.EndTime = shifted.EndTime + Offset;
+                Pools.DataPoint.Return(dp);
                 yield return shifted;
             }
         }

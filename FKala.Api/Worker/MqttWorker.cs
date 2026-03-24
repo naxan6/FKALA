@@ -16,10 +16,12 @@ public class MqttWorker : IHostedService, IDisposable
     private IMqttClientOptions? mqttOptions;
     private readonly MqttSettings settings;
     private readonly IDataLayer? fkalaDataLayer;
+    private readonly ILogger<MqttWorker> _logger;
 
-    public MqttWorker(IOptions<MqttSettings> settings, IDataLayer fkalaDataLayer)
+    public MqttWorker(IOptions<MqttSettings> settings, IDataLayer fkalaDataLayer, ILogger<MqttWorker> logger)
     {
         this.settings = settings.Value;
+        this._logger = logger;
         if (string.IsNullOrWhiteSpace(this.settings.Url))
         {
             return;
@@ -29,7 +31,7 @@ public class MqttWorker : IHostedService, IDisposable
         mqttClient = factory.CreateMqttClient();
 
         mqttOptions = new MqttClientOptionsBuilder()
-            .WithClientId("Fkala")
+            .WithClientId($"Fkala-{Environment.MachineName}")
             .WithTcpServer(this.settings.Url, this.settings.Port)
             .WithCleanSession()
             .Build();
@@ -46,12 +48,12 @@ public class MqttWorker : IHostedService, IDisposable
 
         try
         {
-            Console.WriteLine("Connecting to MQTT broker...");
+            _logger.LogInformation("Connecting to MQTT broker...");
 
             // Event-Handler für eingehende Nachrichten
             mqttClient.UseConnectedHandler(async e =>
             {
-                Console.WriteLine("Connected to MQTT broker successfully.");
+                _logger.LogInformation("Connected to MQTT broker successfully.");
 
                 // Alle Topics aus der Liste abonnieren
                 foreach (var topic in this.settings.Topics)
@@ -60,21 +62,28 @@ public class MqttWorker : IHostedService, IDisposable
                         .WithTopicFilter(topic)
                         .Build());
 
-                    Console.WriteLine($"Subscribed to topic '{topic}'");
+                    _logger.LogInformation("Subscribed to topic '{Topic}'", topic);
                 }
             });
 
-            mqttClient.UseDisconnectedHandler(e =>
+            mqttClient.UseDisconnectedHandler(async e =>
             {
-                Console.WriteLine("Disconnected from MQTT broker.");
-                System.Threading.Thread.Sleep(1000);
-                Console.WriteLine("Trying to reconnect");
-                mqttClient.ReconnectAsync(cancellationToken);
+                _logger.LogWarning("Disconnected from MQTT broker. Reconnecting...");
+                await Task.Delay(5000, cancellationToken);
+                try
+                {
+                    await mqttClient.ReconnectAsync(cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to reconnect to MQTT broker");
+                }
             });
 
             mqttClient.UseApplicationMessageReceivedHandler(e =>
             {
                 var topic = e.ApplicationMessage.Topic;
+                if (e.ApplicationMessage.Payload == null) return;
                 var payload = Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
 
                 // Nachrichten von Topics auf der Blacklist ignorieren
@@ -82,7 +91,6 @@ public class MqttWorker : IHostedService, IDisposable
                 {
                     var fkalaData = $"{topic.Replace(' ', '_')} {DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")} {payload}";
                     this.fkalaDataLayer!.Insert(fkalaData);
-                    // Console.WriteLine($"Received message from topic '{topic}': {payload}");
                 }
                     
             });
@@ -91,13 +99,13 @@ public class MqttWorker : IHostedService, IDisposable
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error connecting mqtt {this.settings.Url}:{this.settings.Port} - {ex.ToString()}");
+            _logger.LogError(ex, "Error connecting mqtt {Url}:{Port}", this.settings.Url, this.settings.Port);
         }
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
-        Console.WriteLine("Disconnecting from MQTT broker...");
+        _logger.LogInformation("Disconnecting from MQTT broker...");
 
         if (mqttClient != null) 
         {

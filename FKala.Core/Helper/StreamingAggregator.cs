@@ -146,10 +146,12 @@ namespace FKala.Core.Logic
                     aggregatedValue = toIntegrate;
                     break;
                 case AggregateFunction.Min:
-                    aggregatedValue = aggregatedValue != null && toIntegrate != null ? decimal.Min(aggregatedValue.Value, toIntegrate.Value) : toIntegrate;
+                    if (toIntegrate != null)
+                        aggregatedValue = aggregatedValue != null ? decimal.Min(aggregatedValue.Value, toIntegrate.Value) : toIntegrate;
                     break;
                 case AggregateFunction.Max:
-                    aggregatedValue = aggregatedValue != null && toIntegrate != null ? decimal.Max(aggregatedValue.Value, toIntegrate.Value) : toIntegrate;
+                    if (toIntegrate != null)
+                        aggregatedValue = aggregatedValue != null ? decimal.Max(aggregatedValue.Value, toIntegrate.Value) : toIntegrate;
                     break;
                 case AggregateFunction.Count:
                     aggregatedValue = aggregatedValue != null ? aggregatedValue.Value + 1 : 1;

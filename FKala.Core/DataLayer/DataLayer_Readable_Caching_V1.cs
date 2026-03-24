@@ -26,13 +26,13 @@ namespace FKala.Core
     public class DataLayer_Readable_Caching_V1 : IDataLayer, IDisposable
     {
         private readonly int FilenameDatePatternLength = "yyyy.MM.dd.dat".Length;
-        public int ReadBuffer { get; } = 131072;
-        public int WriteBuffer { get; } = 131072;
+        public int ReadBuffer { get; private set; } = 131072;
+        public int WriteBuffer { get; private set; } = 131072;
 
         public string DataDirectory { get; init; }
         public string BlacklistDirectory { get; init; }
         public CachingLayer CachingLayer { get; init; }
-        public BufferedWriterService BufferedWriterSvc { get; init; }
+        public BufferedWriterService BufferedWriterSvc { get; private set; }
         public bool ShuttingDown { get; private set; }
 
         private readonly ConcurrentQueue<string> _insertQueue = new ConcurrentQueue<string>();
@@ -50,8 +50,15 @@ namespace FKala.Core
         private readonly ConcurrentQueue<DateTime> _processedItemsTimestamps = new ConcurrentQueue<DateTime>();
         private readonly ConcurrentQueue<string> _lastExceptions = new ConcurrentQueue<string>();
 
-        public DataLayer_Readable_Caching_V1(string storagePath)
+        public DataLayer_Readable_Caching_V1(string storagePath) : this(storagePath, 131072, 131072)
         {
+        }
+
+        public DataLayer_Readable_Caching_V1(string storagePath, int readBuffer, int writeBuffer)
+        {
+            this.ReadBuffer = readBuffer;
+            this.WriteBuffer = writeBuffer;
+
             storagePath = storagePath.Replace('\\', Path.DirectorySeparatorChar)
                                        .Replace('/', Path.DirectorySeparatorChar);
 
@@ -59,17 +66,11 @@ namespace FKala.Core
             this.BlacklistDirectory = Path.Combine(storagePath, "blacklist");
             Directory.CreateDirectory(this.DataDirectory);
             Directory.CreateDirectory(this.BlacklistDirectory);
+            StorageAccess.RecoverOrphanedSortFiles(this.DataDirectory);
             CachingLayer = new CachingLayer(this, storagePath);
-            BufferedWriterSvc = new BufferedWriterService(WriteBuffer, this);
+            BufferedWriterSvc = new BufferedWriterService(writeBuffer, this);
             LoadMeasureBlacklist();
             _queueProcessorTask = Task.Run(ProcessInsertQueueAsync);
-        }
-
-
-        public DataLayer_Readable_Caching_V1(string storagePath, int readBuffer, int writeBuffer) : this(storagePath)
-        {
-            this.WriteBuffer = writeBuffer;
-            this.ReadBuffer = readBuffer;
         }
 
         public IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly, KalaQlContext context, bool dontInvalidateCache_ForUseWhileCacheRebuild)
@@ -367,6 +368,7 @@ namespace FKala.Core
             {
                 newBl.AddOrUpdate(Path.GetFileName(blDir), true, (string dir, bool old) => true);
             }
+            this.MeasurementBlacklist = newBl;
         }
 
         public bool IsBlacklisted(string measurement, bool checkOnDisk = true)
@@ -493,6 +495,15 @@ namespace FKala.Core
             return filePath;
         }
 
+        private void InvalidateCreatedDirectoriesCache(string measurementPath)
+        {
+            var keysToRemove = CreatedDirectories.Keys.Where(k => k.StartsWith(measurementPath, StringComparison.OrdinalIgnoreCase)).ToList();
+            foreach (var key in keysToRemove)
+            {
+                CreatedDirectories.TryRemove(key, out _);
+            }
+        }
+
         private static void ParseRawData(string rawData, out string measurement, out ReadOnlySpan<char> datetime, out string datetimeHHmmssfffffff, out string valueString)
         {
             // Parse the raw data
@@ -546,7 +557,6 @@ namespace FKala.Core
 
         public void Flush(string filePath)
         {
-            ProcessRemainingQueueItems();
             this.BufferedWriterSvc.ForceFlushWriter(filePath);
         }
 
@@ -658,8 +668,7 @@ namespace FKala.Core
                 try
                 {
                     Directory.Delete(measurementPath, true); // Rekursives Löschen
-                    // Optional: Logging
-                    // this.CachingLayer.InvalidateMeasurementCache(measurementName); // Falls Caching betroffen ist
+                    InvalidateCreatedDirectoriesCache(measurementPath);
                 }
                 catch (IOException ex)
                 {
@@ -881,6 +890,7 @@ namespace FKala.Core
 
                 // Remove from blacklist cache if present
                 MeasurementBlacklist.TryRemove(measurement, out _);
+                InvalidateCreatedDirectoriesCache(measurementPath);
 
                 results.Add(new Dictionary<string, object> { { "msg", $"Truncated {deletedCount} files from measurement '{measurement}'" } });
             }

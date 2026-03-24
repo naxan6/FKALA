@@ -50,16 +50,12 @@ namespace FKala.Core.DataLayer.Cache
 
                 if (!File.Exists(cacheFilePath) || cacheResolution.ForceRebuild)
                 {
-
-                    bool cacheAlreadyInWork = _lockManager.IsLocked(cacheFilePath); // dont refresh if cache is already in work
+                    using (var lockHandle = _lockManager.AcquireLock(cacheFilePath))
                     {
-                        using (var lockHandle = _lockManager.AcquireLock(cacheFilePath))
+                        if (!File.Exists(cacheFilePath) || cacheResolution.ForceRebuild)
                         {
-                            if (!cacheAlreadyInWork)
-                            {
-                                Console.WriteLine($"Building Cache: {cache.CacheSubdir}/{Path.GetFileName(cacheFilePath)} {cacheResolution}");
-                                cache.GenerateWholeYearCache(measurement, year, cacheFilePath, cacheResolution.AggregateFunction, cacheResolution.ForceRebuild);
-                            }
+                            Console.WriteLine($"Building Cache: {cache.CacheSubdir}/{Path.GetFileName(cacheFilePath)} {cacheResolution}");
+                            cache.GenerateWholeYearCache(measurement, year, cacheFilePath, cacheResolution.AggregateFunction, cacheResolution.ForceRebuild);
                         }
                     }
                 }
@@ -67,16 +63,10 @@ namespace FKala.Core.DataLayer.Cache
                 {
                     if (cacheResolution.IncrementalRefresh && year == years.Max())
                     {
-                        bool cacheAlreadyInWork = _lockManager.IsLocked(cacheFilePath); // dont refresh if cache is already in work
+                        using (var lockHandle = _lockManager.AcquireLock(cacheFilePath))
                         {
-                            using (var lockHandle = _lockManager.AcquireLock(cacheFilePath))
-                            {
-                                if (!cacheAlreadyInWork)
-                                {
-                                    Console.WriteLine($"Incremental Update requested: {cache.CacheSubdir}/{Path.GetFileName(cacheFilePath)}");
-                                    IncrementalUpdateCache(measurement, cacheResolution, cacheFilePath, context);
-                                }
-                            }
+                            Console.WriteLine($"Incremental Update requested: {cache.CacheSubdir}/{Path.GetFileName(cacheFilePath)}");
+                            IncrementalUpdateCache(measurement, cacheResolution, cacheFilePath, context);
                         }
                     }
                 }

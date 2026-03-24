@@ -108,7 +108,7 @@ public class QueryPreprocessor
             string parameters = string.Join(" ", parts.Skip(3));
             regexPattern = inputTemplate.Substring("regex:".Length);
 
-            var regex = new Regex("^" + regexPattern + "$");
+            var regex = new Regex("^" + regexPattern + "$", RegexOptions.None, TimeSpan.FromSeconds(2));
             var matches = sourceList.Where(s => regex.IsMatch(s)).ToList();
 
             if (matches.Count == 0)
@@ -139,7 +139,7 @@ public class QueryPreprocessor
             string parameters = string.Join(" ", parts.Skip(2));
             regexPattern = inputTemplate.Substring("regex:".Length);
 
-            var regex = new Regex("^" + regexPattern + "$");
+            var regex = new Regex("^" + regexPattern + "$", RegexOptions.None, TimeSpan.FromSeconds(2));
             var matches = sourceList.Where(s => regex.IsMatch(s)).ToList();
 
             if (matches.Count == 0)
@@ -163,7 +163,7 @@ public class QueryPreprocessor
             string parameters = string.Join(" ", parts.Skip(3));
             regexPattern = inputTemplate.Substring("regex:".Length);
 
-            var regex = new Regex("^" + regexPattern + "$");
+            var regex = new Regex("^" + regexPattern + "$", RegexOptions.None, TimeSpan.FromSeconds(2));
             var matches = sourceList.Where(s => regex.IsMatch(s)).ToList();
 
             if (matches.Count == 0)
@@ -233,7 +233,7 @@ public class QueryPreprocessor
         else
         {
             // Fall: <measure:regex(gruppe)> (nutze Capture-Gruppe)
-            var captureRegex = new Regex(captureRegexPattern);
+            var captureRegex = new Regex(captureRegexPattern, RegexOptions.None, TimeSpan.FromSeconds(2));
             var captureMatch = captureRegex.Match(sourceMatch);
     
             if (captureMatch.Success && captureMatch.Groups.Count > 1)

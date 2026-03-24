@@ -55,12 +55,15 @@ namespace FKala.Core.DataLayer.Infrastructure
 
         public void Dispose()
         {
-            if (!disposed)
+            lock (LOCK)
             {
-                disposed = true;
-                Flush();
-                _streamWriter?.Dispose();
-                _fileStream?.Dispose();
+                if (!disposed)
+                {
+                    disposed = true;
+                    try { _streamWriter?.Flush(); } catch { }
+                    _streamWriter?.Dispose();
+                    _fileStream?.Dispose();
+                }
             }
         }
 

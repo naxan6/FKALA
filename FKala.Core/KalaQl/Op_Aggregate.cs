@@ -161,18 +161,30 @@ namespace FKala.Core.KalaQl
                 Pools.DataPoint.Return(currentInputDatePoint);
             }
             // add final interval
-            var finalContentDataPoint = (isText.HasValue ? isText.Value : false) ? slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValueText()) : slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValue());
-            if (EmptyWindows || finalContentDataPoint.Value != null || finalContentDataPoint.ValueText != null) yield return finalContentDataPoint;
-
-            if (EmptyWindows)
+            if (seenPoints > 0 || EmptyWindows)
             {
-                while (slidingWindow.EndTime < input.Query_EndTime)
+                if (seenPoints > 0)
                 {
-                    slidingWindow.Next();
-                    // Müsste ein BUG gewesen sein??? currentAggregator.Reset(currentAggregator.LastAggregatedValue);
-                    currentAggregator.Reset(null);
-                    var closingDataPoint = (isText.HasValue ? isText.Value : false) ? slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValueText()) : slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValue());
-                    if (EmptyWindows || closingDataPoint.Value != null || closingDataPoint.ValueText != null) yield return closingDataPoint;
+                    var finalContentDataPoint = (isText.HasValue ? isText.Value : false) ? slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValueText()) : slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValue());
+                    if (EmptyWindows || finalContentDataPoint.Value != null || finalContentDataPoint.ValueText != null) yield return finalContentDataPoint;
+                }
+
+                if (EmptyWindows)
+                {
+                    if (seenPoints == 0)
+                    {
+                        // Emit the initial window for empty data sets
+                        currentAggregator.Reset(null);
+                        var initialDataPoint = (isText.HasValue ? isText.Value : false) ? slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValueText()) : slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValue());
+                        yield return initialDataPoint;
+                    }
+                    while (slidingWindow.EndTime < input.Query_EndTime)
+                    {
+                        slidingWindow.Next();
+                        currentAggregator.Reset(null);
+                        var closingDataPoint = (isText.HasValue ? isText.Value : false) ? slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValueText()) : slidingWindow.GetDataPoint(currentAggregator!.GetAggregatedValue());
+                        if (EmptyWindows || closingDataPoint.Value != null || closingDataPoint.ValueText != null) yield return closingDataPoint;
+                    }
                 }
             }
         }
