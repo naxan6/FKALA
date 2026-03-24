@@ -319,7 +319,7 @@ User-Regex-Patterns aus `regex:`-Direktiven werden ohne Timeout kompiliert. Patt
 - **Op_Expresso:** `previousInput`-DataPoints werden nie in den Pool zurückgegeben. Kommentierter Code (`//TODO`) bestätigt das bekannte Problem.
 - **Op_ShiftTime:** Klont DataPoints, gibt Originale nicht zurück.
 - **Op_Interpolate:** Input-DataPoints werden nie zurückgegeben.
-- **DatasetsCombiner2:** Gibt DataPoints in den Pool zurück, die noch vom Consumer referenziert werden — Use-After-Free.
+- **DatasetsCombiner2:** ~~Gibt DataPoints in den Pool zurück, die noch vom Consumer referenziert werden~~ — Kein Bug. Die `yield return`-basierte Pipeline ist single-threaded: der Consumer verarbeitet die Grouping synchron fertig, bevor `Return()` in der nächsten Iteration aufgerufen wird.
 
 ---
 
