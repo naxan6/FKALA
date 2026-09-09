@@ -1,0 +1,16 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: fkala
+  description: "FKALA Repository"
+  links:
+    - url: https://github.com/naxan6/FKALA
+      title: GitHub Repository
+      icon: github
+  annotations:
+    github.com/project-slug: naxan6/FKALA
+    # backstage.io/techdocs-ref: dir:. # Einkommentieren, falls TechDocs im Repo genutzt wird
+spec:
+  type: service
+  lifecycle: production
+  owner: nx6
