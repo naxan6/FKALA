@@ -1,5 +1,5 @@
 apiVersion: backstage.io/v1alpha1
-kind: Component
+kind: System
 metadata:
   name: fkala
   description: "FKALA Repository"
@@ -13,5 +13,4 @@ metadata:
 spec:
   type: service
   lifecycle: production
-  owner: nx6
-  system: fkala
+  owner: nx6  
