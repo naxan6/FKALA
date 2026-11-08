@@ -46,6 +46,8 @@ namespace FKala.Core.DataLayers
         private TimeOnly AtMidnight = new TimeOnly(0, 0, 0);
 
         private LockManager LockManager;
+        // pro Instanz wäre die Sortier-Rewrite-Lock-Sektion pro Query wirkungslos
+        private static readonly LockManager SharedLockManager = new LockManager();
 
         private StorageAccess(IDataLayer dataLayer, KalaQlContext context)
         {
@@ -56,7 +58,7 @@ namespace FKala.Core.DataLayers
             optionFindFilesRecursive.BufferSize = dataLayer.ReadBuffer;
             ReadBuffer = dataLayer.ReadBuffer;
             WriteBuffer = dataLayer.WriteBuffer;
-            LockManager = new LockManager();
+            LockManager = SharedLockManager;
         }
 
         public static StorageAccess ForReadMultiFile(string measurementPath, string measurementPathPart, DateTime startTime, DateTime endTime, KalaQl.KalaQlContext context)

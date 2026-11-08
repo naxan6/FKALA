@@ -146,9 +146,11 @@ namespace FKala.Core.DataLayer.Cache
             string newest = GetNewestCacheFilepath(sanitizedMeasurement, cache, aggregateFunction);
             var parts = newest.Split('_');
             var cacheYear = int.Parse(parts[parts.Length - 2]);
-            var newestInRaw = DataLayer.LoadNewestDatapoint(sanitizedMeasurement);
-            var newestInCache = cache.LoadNewestDatapoint(newest);
-            return cache.ShouldUpdateFromWhere(cacheYear, newestInCache.First(), newestInRaw.First());
+            // FirstOrDefault: leere Raw-Dateien (z.B. nur eine leere neueste Datei) oder fehlender Messwert
+            // liefern eine leere Sequenz; ShouldUpdateFromWhere behandelt null als "kein Refresh noetig".
+            var newestInRaw = DataLayer.LoadNewestDatapoint(sanitizedMeasurement).FirstOrDefault();
+            var newestInCache = cache.LoadNewestDatapoint(newest).FirstOrDefault();
+            return cache.ShouldUpdateFromWhere(cacheYear, newestInCache, newestInRaw);
         }
 
 

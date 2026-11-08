@@ -35,6 +35,11 @@ namespace FKala.Core.DataLayer.Cache
             var parts = newestFile.Split('_');
             var fileYear = int.Parse(parts[parts.Length - 2]);
             var lastLine = LastLineReader.ReadLastLine(newestFile);
+            if (string.IsNullOrEmpty(lastLine))
+            {
+                // leerer Cache (z.B. Jahr ohne Daten) -> kein neuester Punkt, nicht abstuerzen
+                yield break;
+            }
             var datapoint = ReadLine(fileYear, lastLine);
             datapoint.Source = $"{newestFile}, Last Line";
             yield return datapoint;

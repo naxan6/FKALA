@@ -26,8 +26,10 @@ namespace FKala.Core
     public class DataLayer_Readable_Caching_V1 : IDataLayer, IDisposable
     {
         private readonly int FilenameDatePatternLength = "yyyy.MM.dd.dat".Length;
-        public int ReadBuffer { get; } = 131072;
-        public int WriteBuffer { get; } = 131072;
+        // Abschlussname einer Tagesdatei: "<measurement><#|_>yyyy-MM-dd.dat"
+        private const int DayFileSuffixLength = 15; // "_yyyy-MM-dd.dat"
+        public int ReadBuffer { get; private set; } = 131072;
+        public int WriteBuffer { get; private set; } = 131072;
 
         public string DataDirectory { get; init; }
         public string BlacklistDirectory { get; init; }
@@ -50,8 +52,16 @@ namespace FKala.Core
         private readonly ConcurrentQueue<DateTime> _processedItemsTimestamps = new ConcurrentQueue<DateTime>();
         private readonly ConcurrentQueue<string> _lastExceptions = new ConcurrentQueue<string>();
 
-        public DataLayer_Readable_Caching_V1(string storagePath)
+        public DataLayer_Readable_Caching_V1(string storagePath) : this(storagePath, 131072, 131072)
         {
+        }
+
+        public DataLayer_Readable_Caching_V1(string storagePath, int readBuffer, int writeBuffer)
+        {
+            // vor BufferedWriterSvc zuweisen: der Dienst und StorageAccess holen den Buffer beim Anlegen
+            this.ReadBuffer = readBuffer;
+            this.WriteBuffer = writeBuffer;
+
             storagePath = storagePath.Replace('\\', Path.DirectorySeparatorChar)
                                        .Replace('/', Path.DirectorySeparatorChar);
 
@@ -63,13 +73,6 @@ namespace FKala.Core
             BufferedWriterSvc = new BufferedWriterService(WriteBuffer, this);
             LoadMeasureBlacklist();
             _queueProcessorTask = Task.Run(ProcessInsertQueueAsync);
-        }
-
-
-        public DataLayer_Readable_Caching_V1(string storagePath, int readBuffer, int writeBuffer) : this(storagePath)
-        {
-            this.WriteBuffer = writeBuffer;
-            this.ReadBuffer = readBuffer;
         }
 
         public IEnumerable<DataPoint> LoadData(string measurement, DateTime startTime, DateTime endTime, CacheResolution cacheResolution, bool newestOnly, KalaQlContext context, bool dontInvalidateCache_ForUseWhileCacheRebuild)
@@ -132,6 +135,99 @@ namespace FKala.Core
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Neuester Zeitstempel aus als sortiert markierten (#) Tagesdateien. Nur bei diesen ist die letzte Zeile
+        /// garantiert das Maximum der Datei und damit als Wasserlinie fuer die verspaetete-Insert-Entscheidung brauchbar.
+        /// Die letzte Zeile einer unsortierten (_) Datei ist beliebig und darf die Wasserlinie nie setzen.
+        /// </summary>
+        private DateTime? GetNewestTimestampOfSortedFiles(string measurement)
+        {
+            var measurementSubPath = PathSanitizer.SanitizePath(measurement);
+            var measurementPath = Path.Combine(DataDirectory, measurementSubPath);
+            if (!Directory.Exists(measurementPath))
+            {
+                return null;
+            }
+            foreach (var yearPath in Directory.GetDirectories(measurementPath).OrderDescending())
+            {
+                foreach (var monthDir in Directory.GetDirectories(yearPath).OrderDescending())
+                {
+                    foreach (var file in EnumerateDayFiles(monthDir, measurementSubPath)
+                                .Where(StorageAccess.IsSortMarkSet)
+                                .OrderByDescending(GetFileDateKey))
+                    {
+                        var lastLine = LastLineReader.ReadLastLine(file);
+                        if (string.IsNullOrEmpty(lastLine))
+                        {
+                            continue;
+                        }
+                        if (!TryGetDayFileDate(file, out int fileyear, out int filemonth, out int fileday))
+                        {
+                            continue;
+                        }
+                        try
+                        {
+                            return DatFileParser.ParseLine(fileyear, filemonth, fileday, lastLine, file, -1).StartTime;
+                        }
+                        catch (Exception ex)
+                        {
+                            LogException(ex, $"Reading last line of sorted file {file}");
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Tagesdateien dieses Messwerts im Monatsordner mit exaktem Namensaufbau
+        /// "&lt;measurement&gt;&lt;#|_&gt;yyyy-MM-dd.dat". Bewusst ohne Directory-Suchmuster: Messwerte koennen
+        /// wildcard-artige Zeichen enthalten (z.B. "[%]"), und eine reine Praefixbetrachtung wuerde
+        /// Nachbar-Messwerte mit gleichem Praefix einfangen.
+        /// </summary>
+        private static IEnumerable<string> EnumerateDayFiles(string monthDir, string measurementSubPath)
+        {
+            return Directory.EnumerateFiles(monthDir)
+                .Where(fp =>
+                {
+                    var name = Path.GetFileName(fp);
+                    return name.Length == measurementSubPath.Length + DayFileSuffixLength
+                        && name.StartsWith(measurementSubPath, StringComparison.Ordinal)
+                        && (name[measurementSubPath.Length] == '#' || name[measurementSubPath.Length] == '_');
+                });
+        }
+
+        /// <summary>
+        /// Der Datumsteil des Dateinamens ohne Sortier-Marker, damit '#' und '_' nie an der Sortierung teilhaben.
+        /// </summary>
+        private static string GetFileDateKey(string filepath)
+        {
+            return filepath.Substring(filepath.Length - (DayFileSuffixLength - 1), DayFileSuffixLength - 1);
+        }
+
+        private static bool TryGetDayFileDate(string filepath, out int year, out int month, out int day)
+        {
+            // Dateisteil: "yyyy-MM-dd.dat", Datum beginnt direkt nach dem Sortier-Marker
+            var name = Path.GetFileName(filepath);
+            var datePart = name.AsSpan(name.Length - (DayFileSuffixLength - 1), 10);
+            year = month = day = 0;
+            if (!int.TryParse(datePart.Slice(0, 4), out year)
+                || !int.TryParse(datePart.Slice(5, 2), out month)
+                || !int.TryParse(datePart.Slice(8, 2), out day))
+            {
+                return false;
+            }
+            try
+            {
+                _ = new DateOnly(year, month, day);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                return false;
+            }
+            return true;
         }
 
         private IEnumerable<DataPoint> LoadFullResolution(string measurement, DateTime startTime, DateTime endTime, KalaQlContext context, bool dontInvalidateCache_ForUseWhileCacheRebuild)
@@ -337,15 +433,8 @@ namespace FKala.Core
             var toCheckTime = datetime_yyyy_MM_ddTHH_mm_ss_fffffff.ToString();
             if (!this.LatestEntries.ContainsKey(measurement))
             {
-                var newest = this.LoadNewestDatapoint(measurement).FirstOrDefault();
-                if (newest != null)
-                {
-                    this.LatestEntries[measurement] = newest.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
-                }
-                else
-                {
-                    this.LatestEntries[measurement] = DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
-                }
+                var newest = GetNewestTimestampOfSortedFiles(measurement);
+                this.LatestEntries.TryAdd(measurement, (newest ?? DateTime.MinValue).ToString("yyyy-MM-ddTHH:mm:ss.fffffff"));
             }
 
             if (this.LatestEntries[measurement].CompareTo(toCheckTime) < 0)
@@ -367,6 +456,7 @@ namespace FKala.Core
             {
                 newBl.AddOrUpdate(Path.GetFileName(blDir), true, (string dir, bool old) => true);
             }
+            this.MeasurementBlacklist = newBl;
         }
 
         public bool IsBlacklisted(string measurement, bool checkOnDisk = true)
